@@ -2379,23 +2379,19 @@ RUNTIME     : ${runtime}
             {
                 text: "⬅️ Back",
                 callback_data:
-                    `tasks_page_${
-                        page - 1
-                    }`
+                    `tasks_page_0`
             },
 
             {
                 text: "🔄 Refresh",
                 callback_data:
-                    `tasks_page_${page}`
+                    `tasks_page_0`
             },
 
             {
                 text: "➡️ Next",
                 callback_data:
-                    `tasks_page_${
-                        page + 1
-                    }`
+                    `tasks_page_1`
             }
         ]
     ];
@@ -2429,9 +2425,28 @@ bot.command(
                         "HTML",
 
                     reply_markup: {
-                        inline_keyboard:
-                            pageData.keyboard
-                    }
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "⬅️ Back",
+                                callback_data:
+                                    "tasks_page_0"
+                            },
+                
+                            {
+                                text: "🔄 Refresh",
+                                callback_data:
+                                    "tasks_page_0"
+                            },
+                
+                            {
+                                text: "➡️ Next",
+                                callback_data:
+                                    "tasks_page_1"
+                            }
+                        ]
+                    ]
+                }
                 }
             );
 
@@ -2451,16 +2466,15 @@ bot.command(
 // =========================
 
 bot.action(
-    /tasks_page_(.+)/,
+    /^tasks_page_(\d+)$/,
     async (ctx) => {
 
         try {
 
-            const raw =
-                ctx.match[1];
-
             let page =
-                parseInt(raw);
+                Number(
+                    ctx.match[1]
+                );
 
             if (
                 isNaN(page)
@@ -2468,11 +2482,19 @@ bot.action(
                 page = 0;
             }
 
+            const tasks =
+                Array.from(
+                    activeTasks.values()
+                );
+
+            const perPage = 3;
+
             const totalPages =
                 Math.max(
                     1,
                     Math.ceil(
-                        activeTasks.size / 3
+                        tasks.length /
+                        perPage
                     )
                 );
 
@@ -2487,60 +2509,115 @@ bot.action(
                     totalPages - 1;
             }
 
-            const pageData =
-                generateTaskPage(
-                    page
+            const start =
+                page * perPage;
+
+            const current =
+                tasks.slice(
+                    start,
+                    start + perPage
                 );
 
-            // ANSWER BUTTON
-            await ctx.answerCbQuery(
-                `Page ${
-                    page + 1
-                }`
-            );
+            let text = `
+<pre>
+V O G U E  •  TASK MANAGER
+──────────────────────────
 
-            // EDIT MESSAGE
-            try {
+SYSTEM TASK OVERVIEW
 
-                await ctx.editMessageText(
-                    pageData.text,
-                    {
-                        parse_mode: "HTML",
-            
-                        reply_markup: {
-                            inline_keyboard:
-                                pageData.keyboard
-                        }
+Total Active Task : ${tasks.length}
+Page              : ${page + 1}/${totalPages}
+Updated           : ${moment().format("HH:mm:ss")}
+
+──────────────────────────`;
+
+            if (
+                current.length < 1
+            ) {
+
+                text += `
+
+No active task detected.
+`;
+
+            } else {
+
+                current.forEach(
+                    (
+                        task,
+                        index
+                    ) => {
+
+                        const runtime =
+                            formatRuntime(
+                                Date.now() -
+                                task.started
+                            );
+
+                        text += `
+
+TASK #${start + index + 1}
+
+ID          : ${task.id}
+TYPE        : ${task.type}
+TARGET      : ${task.target}
+USER        : ${task.user}
+STATUS      : ${task.status}
+RUNTIME     : ${runtime}
+
+──────────────────────────`;
                     }
                 );
-            
-            } catch (e) {
-            
-                if (
-                    e.description?.includes(
-                        "message is not modified"
-                    )
-                ) {
-            
-                    return ctx.answerCbQuery(
-                        "Already updated."
-                    );
-                }
-            
-                console.log(e);
             }
+
+            text += `
+</pre>`;
+
+            await ctx.answerCbQuery();
+
+            await ctx.editMessageText(
+                text,
+                {
+                    parse_mode:
+                        "HTML",
+
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "⬅️ Back",
+                                    callback_data:
+                                        `tasks_page_${Math.max(0, page - 1)}`
+                                },
+
+                                {
+                                    text: "🔄 Refresh",
+                                    callback_data:
+                                        `tasks_page_${page}`
+                                },
+
+                                {
+                                    text: "➡️ Next",
+                                    callback_data:
+                                        `tasks_page_${Math.min(totalPages - 1, page + 1)}`
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
 
         } catch (err) {
 
             console.log(
-                "[TASK ERROR]",
-                err.message
+                "[TASK BUTTON ERROR]",
+                err
             );
 
             try {
 
                 await ctx.answerCbQuery(
-                    "Refresh failed.",
+                    "Failed refresh.",
                     {
                         show_alert: true
                     }
