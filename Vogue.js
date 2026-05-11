@@ -260,88 +260,270 @@ Restarting process...
     }
 }
 
+// =========================
+// MULTI SESSION MANAGER FIX
+// =========================
+
 const sessions = {};
 const pairingMessages = {};
-const startMultiSession = async (phoneNumber) => {
+const reconnecting = new Set();
 
-    const sessionPath =
-        `./sessions/${phoneNumber}`;
+// =========================
+// WAIT SOCKET READY
+// =========================
 
-    const store = makeInMemoryStore({
-        logger: require("pino")().child({
-            level: "silent",
-            stream: "store"
-        })
+async function waitSocketReady(sock) {
+
+    return new Promise((resolve, reject) => {
+
+        let resolved = false;
+
+        const timeout = setTimeout(() => {
+
+            if (!resolved) {
+                reject(
+                    new Error("Socket initialization timeout")
+                );
+            }
+
+        }, 15000);
+
+        sock.ev.on(
+            "connection.update",
+            (update) => {
+
+                const {
+                    connection,
+                    qr
+                } = update;
+
+                if (
+                    connection === "connecting" ||
+                    qr
+                ) {
+
+                    if (!resolved) {
+
+                        resolved = true;
+
+                        clearTimeout(timeout);
+
+                        resolve(true);
+                    }
+                }
+            }
+        );
     });
+}
 
-    const {
-        state,
-        saveCreds
-    } = await useMultiFileAuthState(
-        sessionPath
-    );
+// =========================
+// START MULTI SESSION
+// =========================
 
-    const { version } =
+const startMultiSession = async (
+    phoneNumber
+) => {
+
+    try {
+
+        const sessionPath =
+            `./sessions/${phoneNumber}`;
+
+        // =========================
+        // PREVENT DUPLICATE SOCKET
+        // =========================
+
+        if (
+            sessions[phoneNumber]
+        ) {
+
+            return sessions[phoneNumber];
+        }
+
+        const store =
+            makeInMemoryStore({
+                logger: require("pino")()
+                .child({
+                    level: "silent",
+                    stream: "store"
+                })
+            });
+
+        const {
+            state,
+            saveCreds
+        } =
+        await useMultiFileAuthState(
+            sessionPath
+        );
+
+        const {
+            version
+        } =
         await fetchLatestBaileysVersion();
 
-    const sock = makeWASocket({
-        version,
-        keepAliveIntervalMs: 30000,
+        const sock =
+            makeWASocket({
 
-        logger: pino({
-            level: "silent"
-        }),
+                version,
 
-        auth: state,
+                logger: pino({
+                    level: "silent"
+                }),
 
-        browser: [
-            "Mac OS",
-            "Safari",
-            "10.15.7"
-        ]
-    });
+                auth: state,
 
-    store.bind(sock.ev);
+                printQRInTerminal: false,
 
-    sock.ev.on(
-        "creds.update",
-        saveCreds
-    );
+                keepAliveIntervalMs: 30000,
 
-    // SAVE SOCKET
-    sessions[phoneNumber] = sock;
+                connectTimeoutMs: 60000,
 
-    // =========================
-    // CONNECTION UPDATE
-    // =========================
+                defaultQueryTimeoutMs: 60000,
 
-    sock.ev.on(
-        "connection.update",
-        async (update) => {
+                syncFullHistory: false,
 
-            const {
-                connection,
-                lastDisconnect
-            } = update;
+                markOnlineOnConnect: false,
 
-            // CONNECTED
-            if (connection === "open") {
+                browser: Browsers.macOS(
+                    "Desktop"
+                )
+            });
 
-                console.log(
-                    `[CONNECTED] ${phoneNumber}`
+        // =========================
+        // SAVE SOCKET
+        // =========================
+
+        sessions[phoneNumber] =
+            sock;
+
+        // =========================
+        // STORE BIND
+        // =========================
+
+        store.bind(sock.ev);
+
+        // =========================
+        // SAVE CREDS
+        // =========================
+
+        sock.ev.on(
+            "creds.update",
+            saveCreds
+        );
+
+        // =========================
+        // MESSAGE LOGGER
+        // =========================
+
+        sock.ev.on(
+            "messages.upsert",
+            async ({ messages }) => {
+
+                const msg =
+                    messages?.[0];
+
+                if (
+                    !msg?.message
+                ) return;
+
+                const sender =
+                    msg.key.remoteJid;
+
+                messageLog.set(
+                    sender,
+                    {
+                        id: msg.key.id,
+
+                        sender,
+
+                        pushName:
+                            msg.pushName ||
+                            "Unknown",
+
+                        text:
+                            msg.message
+                            .conversation ||
+
+                            msg.message
+                            .extendedTextMessage
+                            ?.text ||
+
+                            "[MEDIA/OTHER]",
+
+                        timestamp:
+                            msg.messageTimestamp,
+
+                        type:
+                            Object.keys(
+                                msg.message
+                            )[0]
+                    }
                 );
+            }
+        );
 
-                const data =
-                    pairingMessages[phoneNumber];
+        // =========================
+        // CONNECTION UPDATE
+        // =========================
 
-                if (data) {
+        sock.ev.on(
+            "connection.update",
 
-                    try {
+            async (update) => {
 
-                        await bot.telegram.editMessageCaption(
-                            data.chatId,
-                            data.messageId,
-                            undefined,
+                const {
+                    connection,
+                    lastDisconnect
+                } = update;
+
+                // =========================
+                // CONNECTING
+                // =========================
+
+                if (
+                    connection ===
+                    "connecting"
+                ) {
+
+                    console.log(
+                        `[${phoneNumber}] Connecting...`
+                    );
+                }
+
+                // =========================
+                // OPEN
+                // =========================
+
+                if (
+                    connection ===
+                    "open"
+                ) {
+
+                    console.log(
+                        `[${phoneNumber}] Connected`
+                    );
+
+                    reconnecting.delete(
+                        phoneNumber
+                    );
+
+                    const data =
+                        pairingMessages[
+                            phoneNumber
+                        ];
+
+                    if (data) {
+
+                        try {
+
+                            await bot.telegram.editMessageCaption(
+
+                                data.chatId,
+
+                                data.messageId,
+
+                                undefined,
 
 `<pre>
 VOGUE CRASH • CONNECTION STATUS
@@ -359,182 +541,268 @@ Connected Successfully
 ──────────────────────────────
 Multi sender session initialized.
 </pre>`,
-                            {
-                                parse_mode: "HTML"
-                            }
+
+                                {
+                                    parse_mode:
+                                        "HTML"
+                                }
+                            );
+
+                        } catch {}
+                    }
+                }
+
+                // =========================
+                // CLOSE
+                // =========================
+
+                if (
+                    connection ===
+                    "close"
+                ) {
+
+                    const statusCode =
+                        lastDisconnect
+                        ?.error
+                        ?.output
+                        ?.statusCode;
+
+                    console.log(
+                        `[${phoneNumber}] Connection Closed: ${statusCode}`
+                    );
+
+                    // REMOVE OLD SOCKET
+                    delete sessions[
+                        phoneNumber
+                    ];
+
+                    // =========================
+                    // LOGGED OUT
+                    // =========================
+
+                    if (
+                        statusCode ===
+                        DisconnectReason
+                        .loggedOut
+                    ) {
+
+                        console.log(
+                            `[${phoneNumber}] Logged out`
                         );
 
-                    } catch {}
-                }
-            }
+                        return;
+                    }
 
-            // DISCONNECTED
-            if (connection === "close") {
+                    // =========================
+                    // PREVENT LOOP RECONNECT
+                    // =========================
 
-                const shouldReconnect =
-                    lastDisconnect?.error?.output?.statusCode !==
-                    DisconnectReason.loggedOut;
+                    if (
+                        reconnecting.has(
+                            phoneNumber
+                        )
+                    ) return;
 
-                console.log(
-                    `[DISCONNECTED] ${phoneNumber}`
-                );
-
-                if (shouldReconnect) {
-
-                    startMultiSession(
+                    reconnecting.add(
                         phoneNumber
                     );
+
+                    console.log(
+                        `[${phoneNumber}] Reconnecting in 5s`
+                    );
+
+                    setTimeout(
+                        async () => {
+
+                            try {
+
+                                await startMultiSession(
+                                    phoneNumber
+                                );
+
+                            } catch (
+                                e
+                            ) {
+
+                                console.log(
+                                    e.message
+                                );
+                            }
+
+                        },
+                        5000
+                    );
                 }
             }
-        }
-    );
+        );
 
-    return sock;
+        return sock;
+
+    } catch (err) {
+
+        console.log(
+            `[MULTI SESSION ERROR] ${err.message}`
+        );
+
+        delete sessions[
+            phoneNumber
+        ];
+
+        return null;
+    }
 };
 
+// =========================
+// MAIN SESSION
+// =========================
 
 const startSesi = async () => {
-    console.clear();
-    console.log(chalk.bold.yellow(`
-⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
-⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
-⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
-⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
-⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
-⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
-⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
 
+    try {
 
-» Information:
-  Developer: Prince
-  Version: 1.0 Pro
-  Status: Bot Connected
-  `))
-    
-    const store = makeInMemoryStore({
-        logger: require('pino')().child({ level: 'silent', stream: 'store' })
-    })
-    const { state, saveCreds } = await useMultiFileAuthState('./session');
-    const { version } = await fetchLatestBaileysVersion();
-    
-    const connectionOptions = {
-        version,
-        keepAliveIntervalMs: 30000,
-        printQRInTerminal: !usePairingCode,
-        logger: pino({ level: "silent" }),
-        auth: state,
-        browser: ['Mac OS', 'Safari', '10.15.7'],
-    };
-    
-    sock = makeWASocket(connectionOptions);
-    
-    sock.ev.on("messages.upsert", async ({ messages }) => {
-    
-        const msg = messages[0];
-        
-        if (!msg.message) return;
-        
-        const sender = msg.key.remoteJid;
-        
-        messageLog.set(sender, {
-            id: msg.key.id,
-            sender: sender,
-            pushName: msg.pushName || "Unknown",
-            text: msg.message.conversation ||
-                msg.message.extendedTextMessage?.text ||
-                "[MEDIA/OTHER]",
-            timestamp: msg.messageTimestamp,
-            type: Object.keys(msg.message)[0]
+        console.clear();
+
+        console.log(
+            chalk.bold.yellow(`
+VOGUE SYSTEM
+Main WhatsApp Engine Initializing
+`)
+        );
+
+        const store =
+            makeInMemoryStore({
+                logger: require("pino")()
+                .child({
+                    level: "silent",
+                    stream: "store"
+                })
+            });
+
+        const {
+            state,
+            saveCreds
+        } =
+        await useMultiFileAuthState(
+            "./session"
+        );
+
+        const {
+            version
+        } =
+        await fetchLatestBaileysVersion();
+
+        sock = makeWASocket({
+
+            version,
+
+            logger: pino({
+                level: "silent"
+            }),
+
+            auth: state,
+
+            printQRInTerminal:
+                !usePairingCode,
+
+            keepAliveIntervalMs:
+                30000,
+
+            connectTimeoutMs:
+                60000,
+
+            defaultQueryTimeoutMs:
+                60000,
+
+            browser:
+                Browsers.macOS(
+                    "Desktop"
+                )
         });
-        
-    });
-    
-    sock.ev.on('creds.update', saveCreds);
-    store.bind(sock.ev);
-    
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
-        if (connection === 'open') {
-            
-            if (lastPairingMessage) {
-                const connectedMenu = `
-<pre>
-VOGUE CRASH • PAIRING SYSTEM
-────────────────────────────
 
-Session Information
+        store.bind(sock.ev);
 
-Client Name   : Vogue Crasher
-Developer     : @ScriptKits
-Version       : 1.0
-Prefix        : /
+        sock.ev.on(
+            "creds.update",
+            saveCreds
+        );
 
-────────────────────────────
+        sock.ev.on(
+            "connection.update",
 
-Registered Number :
-${lastPairingMessage.phoneNumber}
+            async (update) => {
 
-Pairing Code :
-${lastPairingMessage.pairingCode}
+                const {
+                    connection,
+                    lastDisconnect
+                } = update;
 
-Connection Status Connected and Operational
+                if (
+                    connection ===
+                    "open"
+                ) {
 
-──────────────────────────────
-The sender session has been successfully initialized and is ready for use.
-</pre>`;
-                
-                try {
-                    bot.telegram.editMessageCaption(
-                        lastPairingMessage.chatId,
-                        lastPairingMessage.messageId,
-                        undefined,
-                        connectedMenu, { parse_mode: "HTML" }
+                    console.log(
+                        chalk.green(
+                            "[MAIN SESSION CONNECTED]"
+                        )
                     );
-                } catch (e) {}
+
+                    isWhatsAppConnected =
+                        true;
+                }
+
+                if (
+                    connection ===
+                    "close"
+                ) {
+
+                    const shouldReconnect =
+                        lastDisconnect
+                        ?.error
+                        ?.output
+                        ?.statusCode !==
+                        DisconnectReason
+                        .loggedOut;
+
+                    console.log(
+                        chalk.red(
+                            "[MAIN SESSION CLOSED]"
+                        )
+                    );
+
+                    isWhatsAppConnected =
+                        false;
+
+                    if (
+                        shouldReconnect
+                    ) {
+
+                        setTimeout(
+                            () => {
+
+                                startSesi();
+
+                            },
+                            5000
+                        );
+                    }
+                }
             }
-            
-            console.clear();
-            isWhatsAppConnected = true;
-            const currentTime = moment().tz('Asia/Jakarta').format('HH:mm:ss');
-            console.log(chalk.bold.yellow(`
-⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
-⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
-⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
-⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
-⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
-⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
-⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
+        );
 
+    } catch (err) {
 
-» Information:
-  Developer: Prince
-  Version: 1.0 Pro
-  Status: Sender Connected
-  `))
-        }
-        
-        if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log(
-                chalk.red('Koneksi WhatsApp terputus:'),
-                shouldReconnect ? 'Mencoba Menautkan Perangkat' : 'Silakan Menautkan Perangkat Lagi'
-            );
-            if (shouldReconnect) {
+        console.log(err);
+
+        setTimeout(
+            () => {
+
                 startSesi();
-            }
-            isWhatsAppConnected = false;
-        }
-    });
+
+            },
+            5000
+        );
+    }
 };
 
 startSesi();
@@ -976,61 +1244,98 @@ Official Build by VOGUE CRASHER
 // COMMAND SENDER
 // ==========================================
 
-bot.command("reqpair", async (ctx) => {
+bot.command(
+    "reqpair",
 
-    if (ctx.from.id != ownerID) {
-        return ctx.reply(
-            "❌ Owner only"
-        );
-    }
+    async (ctx) => {
 
-    const args =
-        ctx.message.text.split(" ")[1];
+        if (
+            ctx.from.id != ownerID
+        ) {
 
-    if (!args) {
+            return ctx.reply(
+                "❌ Owner only"
+            );
+        }
 
-        return ctx.reply(
+        const args =
+            ctx.message.text
+            .split(" ")[1];
+
+        if (!args) {
+
+            return ctx.reply(
 `Format:
 /reqpair 628xxx`
-        );
-    }
+            );
+        }
 
-    const phoneNumber =
-        args.replace(/[^0-9]/g, "");
-
-    try {
-
-        // =========================
-        // START SESSION
-        // =========================
-
-        const sock =
-            await startMultiSession(
-                phoneNumber
+        const phoneNumber =
+            args.replace(
+                /[^0-9]/g,
+                ""
             );
 
-        // =========================
-        // REQUEST PAIRING
-        // =========================
+        try {
 
-        const code =
-            await sock.requestPairingCode(
-                phoneNumber
+            // =========================
+            // ALREADY EXISTS
+            // =========================
+
+            if (
+                sessions[
+                    phoneNumber
+                ]
+            ) {
+
+                return ctx.reply(
+                    "Session already running."
+                );
+            }
+
+            // =========================
+            // START SESSION
+            // =========================
+
+            const sock =
+                await startMultiSession(
+                    phoneNumber
+                );
+
+            if (!sock) {
+
+                return ctx.reply(
+                    "Failed create session."
+                );
+            }
+
+            // =========================
+            // WAIT READY
+            // =========================
+
+            await waitSocketReady(
+                sock
             );
 
-        const formattedCode =
-            code.match(/.{1,4}/g)
-            ?.join("-");
+            // =========================
+            // REQUEST CODE
+            // =========================
 
-        // CUSTOM DISPLAY ONLY
-        const customPairText =
-            `VOGU-EHUB`;
+            const code =
+                await sock.requestPairingCode(
+                    phoneNumber
+                );
 
-        const sent =
-            await ctx.replyWithPhoto(
-                thumbnailUrl,
-                {
-                    caption:
+            const formattedCode =
+                code
+                ?.match(/.{1,4}/g)
+                ?.join("-");
+
+            const sent =
+                await ctx.replyWithPhoto(
+                    thumbnailUrl,
+                    {
+                        caption:
 `<pre>
 VOGUE CRASH • PAIRING SYSTEM
 ────────────────────────────
@@ -1038,34 +1343,54 @@ VOGUE CRASH • PAIRING SYSTEM
 Target Number
 ${phoneNumber}
 
+Pairing Alias
+VOGU-EHUB
+
 Pairing Code
 ${formattedCode}
 
 ────────────────────────────
 Open Linked Devices and enter pairing code.
 </pre>`,
-                    parse_mode: "HTML"
+
+                        parse_mode:
+                            "HTML"
+                    }
+                );
+
+            pairingMessages[
+                phoneNumber
+            ] = {
+
+                chatId:
+                    ctx.chat.id,
+
+                messageId:
+                    sent.message_id
+            };
+
+        } catch (err) {
+
+            console.log(err);
+
+            return ctx.reply(
+`<pre>
+VOGUE CRASH • PAIRING ERROR
+────────────────────────────
+
+${err.message}
+
+────────────────────────────
+Failed to generate pairing code.
+</pre>`,
+                {
+                    parse_mode:
+                        "HTML"
                 }
             );
-
-        pairingMessages[phoneNumber] = {
-
-            chatId: ctx.chat.id,
-
-            messageId:
-                sent.message_id
-        };
-
-    } catch (err) {
-
-        console.log(err);
-
-        ctx.reply(
-            `Failed:
-${err.message}`
-        );
+        }
     }
-});
+);
 
 if (sock) {
     sock.ev.on("connection.update", async (update) => {
