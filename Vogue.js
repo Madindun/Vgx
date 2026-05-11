@@ -256,67 +256,6 @@ Restarting process...
     }
 }
 
-// =========================
-// TASK MANAGER SYSTEM
-// =========================
-
-const activeTasks = new Map();
-
-
-function createTask(
-    taskId,
-    data = {}
-) {
-
-    activeTasks.set(
-        taskId,
-        {
-            id: taskId,
-
-            target:
-                data.target || "-",
-
-            type:
-                data.type || "Unknown",
-
-            user:
-                data.user || "Unknown",
-
-            started:
-                Date.now(),
-
-            status:
-                "RUNNING"
-        }
-    );
-}
-
-function completeTask(taskId) {
-    if (
-        activeTasks.has(taskId)
-    ) {
-        activeTasks.delete(
-            taskId
-        );
-    }
-}
-
-
-
-function formatRuntime(ms) {
-    const sec =
-        Math.floor(ms / 1000);
-    const min =
-        Math.floor(sec / 60);
-    const hrs =
-        Math.floor(min / 60);
-    return `${hrs}h ${
-        min % 60
-    }m ${
-        sec % 60
-    }s`;
-}
-
 const startSesi = async () => {
     console.clear();
     console.log(chalk.bold.yellow(`
@@ -2286,60 +2225,140 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+// =========================
+// TASK MANAGER SYSTEM
+// =========================
 
-// ==========================================
-// TASK INFO
-// ==========================================
+const activeTasks = new Map();
 
-bot.action(
-    "refresh_tasks",
-    async (ctx) => {
+function createTask(
+    taskId,
+    data = {}
+) {
 
-        try {
+    activeTasks.set(
+        taskId,
+        {
+            id: taskId,
 
-            const total =
-                activeTasks.size;
+            target:
+                data.target || "-",
 
-            let text = `
+            type:
+                data.type || "Unknown",
+
+            user:
+                data.user || "Unknown",
+
+            started:
+                Date.now(),
+
+            status:
+                "RUNNING"
+        }
+    );
+}
+
+function completeTask(taskId) {
+
+    if (
+        activeTasks.has(taskId)
+    ) {
+
+        activeTasks.delete(
+            taskId
+        );
+    }
+}
+
+function formatRuntime(ms) {
+
+    const sec =
+        Math.floor(ms / 1000);
+
+    const min =
+        Math.floor(sec / 60);
+
+    const hrs =
+        Math.floor(min / 60);
+
+    return `${hrs}h ${
+        min % 60
+    }m ${
+        sec % 60
+    }s`;
+}
+
+// =========================
+// PAGE RENDER
+// =========================
+
+function generateTaskPage(
+    page = 0
+) {
+
+    const tasks =
+        Array.from(
+            activeTasks.values()
+        );
+
+    const perPage = 3;
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                tasks.length / perPage
+            )
+        );
+
+    const start =
+        page * perPage;
+
+    const current =
+        tasks.slice(
+            start,
+            start + perPage
+        );
+
+    let text = `
 <pre>
 V O G U E  •  TASK MANAGER
 ──────────────────────────
 
 SYSTEM TASK OVERVIEW
 
-Total Active Task : ${total}
+Total Active Task : ${tasks.length}
+Page              : ${page + 1}/${totalPages}
 
-──────────────────────────
-`;
+──────────────────────────`;
 
-            if (total < 1) {
+    if (current.length < 1) {
 
-                text += `
+        text += `
+
 No active task detected.
 `;
 
-            } else {
+    } else {
 
-                let index = 1;
+        current.forEach(
+            (
+                task,
+                index
+            ) => {
 
-                for (
-                    const [
-                        id,
-                        task
-                    ] of activeTasks
-                ) {
+                const runtime =
+                    formatRuntime(
+                        Date.now() -
+                        task.started
+                    );
 
-                    const runtime =
-                        formatRuntime(
-                            Date.now() -
-                            task.started
-                        );
+                text += `
 
-                    text += `
+TASK #${start + index + 1}
 
-TASK #${index}
-
-ID          : ${id}
+ID          : ${task.id}
 TYPE        : ${task.type}
 TARGET      : ${task.target}
 USER        : ${task.user}
@@ -2347,40 +2366,49 @@ STATUS      : ${task.status}
 RUNTIME     : ${runtime}
 
 ──────────────────────────`;
-
-                    index++;
-                }
             }
+        );
+    }
 
-            text += `
+    text += `
 </pre>`;
 
-            await ctx.editMessageCaption(
-                text,
-                {
-                    parse_mode:
-                        "HTML",
+    const keyboard = [
+        [
+            {
+                text: "⬅️ Back",
+                callback_data:
+                    `tasks_page_${
+                        page - 1
+                    }`
+            },
 
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: "Refresh",
-                                    callback_data:
-                                        "refresh_tasks"
-                                }
-                            ]
-                        ]
-                    }
-                }
-            );
+            {
+                text: "🔄 Refresh",
+                callback_data:
+                    `tasks_page_${page}`
+            },
 
-        } catch (err) {
+            {
+                text: "➡️ Next",
+                callback_data:
+                    `tasks_page_${
+                        page + 1
+                    }`
+            }
+        ]
+    ];
 
-            console.log(err);
-        }
-    }
-);
+    return {
+        text,
+        keyboard,
+        totalPages
+    };
+}
+
+// =========================
+// TASK COMMAND
+// =========================
 
 bot.command(
     "tasks",
@@ -2388,80 +2416,20 @@ bot.command(
 
         try {
 
-            const total =
-                activeTasks.size;
+            const pageData =
+                generateTaskPage(
+                    0
+                );
 
-            let text = `
-<pre>
-V O G U E  •  TASK MANAGER
-──────────────────────────
-
-SYSTEM TASK OVERVIEW
-
-Total Active Task : ${total}
-
-──────────────────────────
-`;
-
-            if (total < 1) {
-
-                text += `
-No active task detected.
-`;
-
-            } else {
-
-                let index = 1;
-
-                for (
-                    const [
-                        id,
-                        task
-                    ] of activeTasks
-                ) {
-
-                    const runtime =
-                        formatRuntime(
-                            Date.now() -
-                            task.started
-                        );
-
-                    text += `
-
-TASK #${index}
-
-ID          : ${id}
-TYPE        : ${task.type}
-TARGET      : ${task.target}
-USER        : ${task.user}
-STATUS      : ${task.status}
-RUNTIME     : ${runtime}
-
-──────────────────────────`;
-
-                    index++;
-                }
-            }
-
-            text += `
-</pre>`;
-
-            return ctx.reply(
-                text,
+            await ctx.reply(
+                pageData.text,
                 {
                     parse_mode:
                         "HTML",
 
                     reply_markup: {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: "Refresh",
-                                    callback_data:
-                                        "refresh_tasks"
-                                }
-                            ]
-                        ]
+                        inline_keyboard:
+                            pageData.keyboard
                     }
                 }
             );
@@ -2470,9 +2438,97 @@ RUNTIME     : ${runtime}
 
             console.log(err);
 
-            return ctx.reply(
+            ctx.reply(
                 "Failed to load task manager."
             );
+        }
+    }
+);
+
+// =========================
+// TASK PAGE BUTTON
+// =========================
+
+bot.action(
+    /tasks_page_(.+)/,
+    async (ctx) => {
+
+        try {
+
+            const raw =
+                ctx.match[1];
+
+            let page =
+                parseInt(raw);
+
+            if (
+                isNaN(page)
+            ) {
+                page = 0;
+            }
+
+            const totalPages =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        activeTasks.size / 3
+                    )
+                );
+
+            // LIMIT PAGE
+            if (page < 0)
+                page = 0;
+
+            if (
+                page >= totalPages
+            ) {
+                page =
+                    totalPages - 1;
+            }
+
+            const pageData =
+                generateTaskPage(
+                    page
+                );
+
+            // ANSWER BUTTON
+            await ctx.answerCbQuery(
+                `Page ${
+                    page + 1
+                }`
+            );
+
+            // EDIT MESSAGE
+            await ctx.editMessageText(
+                pageData.text,
+                {
+                    parse_mode:
+                        "HTML",
+
+                    reply_markup: {
+                        inline_keyboard:
+                            pageData.keyboard
+                    }
+                }
+            );
+
+        } catch (err) {
+
+            console.log(
+                "[TASK ERROR]",
+                err.message
+            );
+
+            try {
+
+                await ctx.answerCbQuery(
+                    "Refresh failed.",
+                    {
+                        show_alert: true
+                    }
+                );
+
+            } catch {}
         }
     }
 );
