@@ -1924,7 +1924,7 @@ Status      : Processing
                     
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    autoRestartOn408(err);
+                    autoRestartOn408(e);
                 }
             }
             
