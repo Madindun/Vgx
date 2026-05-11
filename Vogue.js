@@ -1112,6 +1112,163 @@ for command execution.
     });
 }
 
+// =========================
+// LIST PAIR / SESSION STATUS
+// =========================
+
+bot.command("listpair", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+            "❌ Access denied"
+        );
+    }
+
+    try {
+
+        // =========================
+        // READ SESSION FOLDER
+        // =========================
+
+        const basePath = "./sessions";
+
+        if (!fs.existsSync(basePath)) {
+
+            return ctx.reply(
+`<pre>
+VOGUE CRASH • SESSION MANAGER
+────────────────────────────
+
+No active sessions detected.
+
+────────────────────────────
+The session directory is empty.
+</pre>`,
+                {
+                    parse_mode: "HTML"
+                }
+            );
+        }
+
+        const folders = fs.readdirSync(basePath);
+
+        if (!folders.length) {
+
+            return ctx.reply(
+`<pre>
+VOGUE CRASH • SESSION MANAGER
+────────────────────────────
+
+No registered sender sessions.
+
+────────────────────────────
+Create a pairing session first.
+</pre>`,
+                {
+                    parse_mode: "HTML"
+                }
+            );
+        }
+
+        // =========================
+        // BUILD SESSION LIST
+        // =========================
+
+        let text = `
+<pre>
+VOGUE CRASH • SESSION MANAGER
+────────────────────────────
+
+TOTAL SESSIONS : ${folders.length}
+
+`;
+
+        let onlineCount = 0;
+        let offlineCount = 0;
+
+        for (const number of folders) {
+
+            const sockSession =
+                sessions[number];
+
+            let status =
+                "OFFLINE";
+
+            let device =
+                "-";
+
+            // =========================
+            // ONLINE CHECK
+            // =========================
+
+            if (
+                sockSession &&
+                sockSession?.user
+            ) {
+
+                status = "ONLINE";
+                onlineCount++;
+
+                device =
+                    sockSession?.authState?.creds
+                    ?.platform || "Unknown";
+
+            } else {
+
+                offlineCount++;
+            }
+
+            text += `
+Number   : ${number}
+Status   : ${status}
+Device   : ${device}
+
+────────────────────────────
+`;
+        }
+
+        text += `
+ONLINE   : ${onlineCount}
+OFFLINE  : ${offlineCount}
+
+────────────────────────────
+Multi sender manager operational.
+</pre>`;
+
+        // =========================
+        // SEND RESULT
+        // =========================
+
+        await ctx.reply(
+            text,
+            {
+                parse_mode: "HTML"
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.reply(
+`<pre>
+VOGUE CRASH • SESSION MANAGER
+────────────────────────────
+
+SYSTEM ERROR
+
+${err.message}
+
+────────────────────────────
+Unable to retrieve session data.
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+});
+
 // ==========================================
 //  PERMIUM COMMAND
 // ==========================================
