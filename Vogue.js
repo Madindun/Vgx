@@ -596,6 +596,192 @@ You can now use the bot normally.`
     }
 );
 
+// ========================================
+// DAILY LIMIT SYSTEM
+// ========================================
+
+const LIMIT_FILE =
+    "./database/userlimit.json";
+let userLimits = {};
+
+
+if (fs.existsSync(LIMIT_FILE)) {
+
+    userLimits =
+        JSON.parse(
+            fs.readFileSync(
+                LIMIT_FILE
+            )
+        );
+}
+
+function saveLimits() {
+
+    fs.writeFileSync(
+        LIMIT_FILE,
+        JSON.stringify(
+            userLimits,
+            null,
+            2
+        )
+    );
+}
+
+function getToday() {
+
+    return new Date()
+        .toISOString()
+        .split("T")[0];
+}
+
+function checkUserLimit(userId) {
+
+    const today = getToday();
+
+    if (!userLimits[userId]) {
+
+        userLimits[userId] = {
+
+            date: today,
+            used: 0
+        };
+    }
+
+    if (
+        userLimits[userId].date !== today
+    ) {
+
+        userLimits[userId] = {
+
+            date: today,
+            used: 0
+        };
+    }
+
+    if (
+        userLimits[userId].used >= 15
+    ) {
+
+        return {
+
+            allowed: false,
+
+            remaining: 0,
+
+            used:
+                userLimits[userId].used
+        };
+    }
+
+    return {
+
+        allowed: true,
+
+        remaining:
+            15 -
+            userLimits[userId].used,
+
+        used:
+            userLimits[userId].used
+    };
+}
+
+// =========================
+// ADD LIMIT
+// =========================
+
+function addUserLimit(userId) {
+
+    const today = getToday();
+
+    if (!userLimits[userId]) {
+
+        userLimits[userId] = {
+
+            date: today,
+            used: 0
+        };
+    }
+
+    if (
+        userLimits[userId].date !== today
+    ) {
+
+        userLimits[userId] = {
+
+            date: today,
+            used: 0
+        };
+    }
+
+    userLimits[userId].used += 1;
+
+    saveLimits();
+}
+
+// ========================================
+// LIMIT MIDDLEWARE
+// ========================================
+
+async function checkExecutionLimit(
+    ctx,
+    next
+) {
+
+    // OWNER BYPASS
+    if (ctx.from.id == ownerID) {
+        return next();
+    }
+
+    const userId =
+        String(ctx.from.id);
+
+    const limit =
+        checkUserLimit(userId);
+
+    // LIMIT REACHED
+    if (!limit.allowed) {
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+Daily execution limit reached.
+
+User        : ${ctx.from.first_name}
+Limit       : 15 / 15
+Status      : Blocked
+
+──────────────────────────
+Limit will reset automatically tomorrow.
+To avoid the sender being banned.
+</pre>`,
+                parse_mode: "HTML",
+
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Be A Developer",
+                                url: "https://t.me/ScriptKits",
+                                style: "danger"
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+    }
+
+    addUserLimit(userId);
+
+    return next();
+}
+
 
 bot.start(async (ctx) => {
     
@@ -2205,8 +2391,8 @@ bot.command('delayhard', checkWhatsAppConnection, checkPremiumAccess, async (ctx
     let executionCount =
         parseInt(args[2]) || 1;
     
-    if (executionCount > 30) {
-        executionCount = 30;
+    if (executionCount > 20) {
+        executionCount = 20;
     }
     
     if (!q) return ctx.reply(
@@ -2270,7 +2456,7 @@ Dispatch engine initialized.
         
                 try {
         
-                    for (let i = 0; i < 20; i++) {
+                    for (let i = 0; i < 15; i++) {
         
                         try {
         
@@ -2307,7 +2493,6 @@ Dispatch engine initialized.
                 }
             };
         
-            // 🔥 BANGUN SEMUA INSTANCE SEKALIGUS
             const allInstances = Array.from(
                 { length: totalInstances },
                 (_, i) => createInstance(i + 1)
@@ -2423,8 +2608,8 @@ bot.command('hardspam', checkWhatsAppConnection, checkPremiumAccess, async (ctx)
     let executionCount =
         parseInt(args[2]) || 1;
     
-    if (executionCount > 30) {
-        executionCount = 30;
+    if (executionCount > 20) {
+        executionCount = 20;
     }
     
     if (!q) return ctx.reply(
@@ -2488,7 +2673,7 @@ Dispatch engine initialized.
         
                 try {
         
-                    for (let i = 0; i < 20; i++) {
+                    for (let i = 0; i < 10; i++) {
         
                         try {
         
