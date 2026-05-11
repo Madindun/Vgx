@@ -578,7 +578,12 @@ Select one of the available options below to continue system interaction.
     const msg = ctx.callbackQuery?.message;
     
     if (!chatId || !msg || !msg.message_id) {
-        return ctx.answerCbQuery("Invalid callback context");
+        
+        if (ctx.updateType === "callback_query") {
+            return ctx.answerCbQuery("Invalid callback context");
+        }
+        
+        return;
     }
     
     activeAnimatedMenus.set(
