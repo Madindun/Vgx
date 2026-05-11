@@ -511,7 +511,7 @@ setInterval(async () => {
         );
     }
 
-}, 1000);
+}, 3000);
 
 
 bot.start(async (ctx) => {
