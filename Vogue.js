@@ -1813,7 +1813,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('androinvis', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -1821,10 +1821,10 @@ bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx
         `Invalid Format
 
 Usage:
-/spamandro <target_number>
+/androinvis <target_number>
 
 Example:
-/spamandro 628xxxxxxxx`
+/androinvis 628xxxxxxxx`
     );
     
     let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
