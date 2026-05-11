@@ -1670,7 +1670,7 @@ Status      : Processing
             
             const instanceId = Date.now() + Math.random(); // unik per user instance
             
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 100; i++) {
                 
                 try {
                     
