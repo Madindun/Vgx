@@ -110,6 +110,13 @@ const requiredChannel = "@MysticHavenID"; // ganti ini
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
 const claimFile = './database/premium_claimed.json';
+const styleCycle = [
+    "primary",
+    "success",
+    "danger"
+];
+let currentStyleIndex = 0;
+const activeAnimatedMenus = new Map();
 
 const loadClaimed = () => {
     try {
@@ -422,6 +429,91 @@ const checkPremium = (ctx, next) => {
 // HOME PAGE START BOT
 // ==========================================
 
+setInterval(async () => {
+
+    try {
+
+        if (activeAnimatedMenus.size < 1) return;
+
+        currentStyleIndex =
+            (currentStyleIndex + 1) %
+            styleCycle.length;
+
+        const currentStyle =
+            styleCycle[currentStyleIndex];
+
+        const animatedKeyboard = [
+            [
+                {
+                    text: "Control",
+                    callback_data: "/controls",
+                    style: currentStyle,
+                    icon_custom_emoji_id: "5220166546491459639"
+                },
+                {
+                    text: "Bug Menu",
+                    callback_data: "/bug",
+                    style: currentStyle,
+                    icon_custom_emoji_id: "5220166546491459639"
+                }
+            ],
+            [
+                {
+                    text: "Developer",
+                    callback_data: "/tqto",
+                    style: currentStyle,
+                    icon_custom_emoji_id: "5220166546491459639"
+                }
+            ],
+            [
+                {
+                    text: "🎁 Free 1 Day Premium",
+                    callback_data: "free_premium_info",
+                    style: currentStyle,
+                    icon_custom_emoji_id: "5220166546491459639"
+                }
+            ]
+        ];
+
+        for (const [key, data] of activeAnimatedMenus.entries()) {
+
+            try {
+
+                await bot.telegram.editMessageReplyMarkup(
+                    data.chatId,
+                    data.messageId,
+                    undefined,
+                    {
+                        inline_keyboard: animatedKeyboard
+                    }
+                );
+
+            } catch (e) {
+
+                const err =
+                    String(e).toLowerCase();
+
+                if (
+                    err.includes("message is not modified") ||
+                    err.includes("message to edit not found") ||
+                    err.includes("chat not found")
+                ) {
+
+                    activeAnimatedMenus.delete(key);
+                }
+            }
+        }
+
+    } catch (err) {
+
+        console.log(
+            `[MENU ANIMATION ERROR] ${err.message}`
+        );
+    }
+
+}, 1000);
+
+
 bot.start(async (ctx) => {
     const menuMessage = `
 <pre>
@@ -479,7 +571,15 @@ Select one of the available options below to continue system interaction.
         }
     });
     
+    activeAnimatedMenus.set(
+        `${ctx.chat.id}_${sent.message_id}`,
+        {
+            chatId: ctx.chat.id,
+            messageId: sent.message_id
+        }
+    );
 });
+
 
 bot.action('/start', async (ctx) => {
 
@@ -550,6 +650,14 @@ Select one of the available options below to continue system interaction.
                 reply_markup: {
                     inline_keyboard: keyboard
                 }
+            }
+        );
+        
+        activeAnimatedMenus.set(
+            `${ctx.chat.id}_${ctx.callbackQuery.message.message_id}`,
+            {
+                chatId: ctx.chat.id,
+                messageId: ctx.callbackQuery.message.message_id
             }
         );
 
