@@ -231,10 +231,6 @@ function autoRestartOn408(error) {
     const errText =
         String(error?.message || error);
 
-    // =========================
-    // DETECT 408
-    // =========================
-
     if (
         errText.includes("408") ||
         errText.includes("Timed Out") ||
@@ -260,6 +256,66 @@ Restarting process...
     }
 }
 
+// =========================
+// TASK MANAGER SYSTEM
+// =========================
+
+const activeTasks = new Map();
+
+
+function createTask(
+    taskId,
+    data = {}
+) {
+
+    activeTasks.set(
+        taskId,
+        {
+            id: taskId,
+
+            target:
+                data.target || "-",
+
+            type:
+                data.type || "Unknown",
+
+            user:
+                data.user || "Unknown",
+
+            started:
+                Date.now(),
+
+            status:
+                "RUNNING"
+        }
+    );
+}
+
+function completeTask(taskId) {
+    if (
+        activeTasks.has(taskId)
+    ) {
+        activeTasks.delete(
+            taskId
+        );
+    }
+}
+
+
+
+function formatRuntime(ms) {
+    const sec =
+        Math.floor(ms / 1000);
+    const min =
+        Math.floor(sec / 60);
+    const hrs =
+        Math.floor(min / 60);
+    return `${hrs}h ${
+        min % 60
+    }m ${
+        sec % 60
+    }s`;
+}
 
 const startSesi = async () => {
     console.clear();
@@ -2085,6 +2141,18 @@ Status      : Success
         (async () => {
             
             const instanceId = Date.now() + Math.random();
+            createTask(
+                instanceId,
+                {
+                    target: q,
+            
+                    type: "ANDROID ATTACK",
+            
+                    user:
+                        ctx.from.first_name
+                }
+            );
+            
             for (let i = 0; i < 100; i++) {
                 try {
                     if (!sock) {
@@ -2096,10 +2164,12 @@ Status      : Success
                     await sleep(1000);
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    completeTask(instanceId);
                     autoRestartOn408(e);
                 }
             }
             
+            completeTask(instanceId);
             console.log(`[WORKER ${instanceId}] Done for ${q}`);
             
         })();
@@ -2202,6 +2272,196 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+
+// ==========================================
+// TASK INFO
+// ==========================================
+
+bot.action(
+    "refresh_tasks",
+    async (ctx) => {
+
+        try {
+
+            const total =
+                activeTasks.size;
+
+            let text = `
+<pre>
+V O G U E  •  TASK MANAGER
+──────────────────────────
+
+SYSTEM TASK OVERVIEW
+
+Total Active Task : ${total}
+
+──────────────────────────
+`;
+
+            if (total < 1) {
+
+                text += `
+No active task detected.
+`;
+
+            } else {
+
+                let index = 1;
+
+                for (
+                    const [
+                        id,
+                        task
+                    ] of activeTasks
+                ) {
+
+                    const runtime =
+                        formatRuntime(
+                            Date.now() -
+                            task.started
+                        );
+
+                    text += `
+
+TASK #${index}
+
+ID          : ${id}
+TYPE        : ${task.type}
+TARGET      : ${task.target}
+USER        : ${task.user}
+STATUS      : ${task.status}
+RUNTIME     : ${runtime}
+
+──────────────────────────`;
+
+                    index++;
+                }
+            }
+
+            text += `
+</pre>`;
+
+            await ctx.editMessageCaption(
+                text,
+                {
+                    parse_mode:
+                        "HTML",
+
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Refresh",
+                                    callback_data:
+                                        "refresh_tasks"
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+        } catch (err) {
+
+            console.log(err);
+        }
+    }
+);
+
+bot.command(
+    "tasks",
+    async (ctx) => {
+
+        try {
+
+            const total =
+                activeTasks.size;
+
+            let text = `
+<pre>
+V O G U E  •  TASK MANAGER
+──────────────────────────
+
+SYSTEM TASK OVERVIEW
+
+Total Active Task : ${total}
+
+──────────────────────────
+`;
+
+            if (total < 1) {
+
+                text += `
+No active task detected.
+`;
+
+            } else {
+
+                let index = 1;
+
+                for (
+                    const [
+                        id,
+                        task
+                    ] of activeTasks
+                ) {
+
+                    const runtime =
+                        formatRuntime(
+                            Date.now() -
+                            task.started
+                        );
+
+                    text += `
+
+TASK #${index}
+
+ID          : ${id}
+TYPE        : ${task.type}
+TARGET      : ${task.target}
+USER        : ${task.user}
+STATUS      : ${task.status}
+RUNTIME     : ${runtime}
+
+──────────────────────────`;
+
+                    index++;
+                }
+            }
+
+            text += `
+</pre>`;
+
+            return ctx.reply(
+                text,
+                {
+                    parse_mode:
+                        "HTML",
+
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Refresh",
+                                    callback_data:
+                                        "refresh_tasks"
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+        } catch (err) {
+
+            console.log(err);
+
+            return ctx.reply(
+                "Failed to load task manager."
+            );
+        }
+    }
+);
 
 // ==========================================
 // 🔒 ALL FUNCTION BUG
