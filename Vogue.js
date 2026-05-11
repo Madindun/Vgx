@@ -638,23 +638,6 @@ Framework   : Javascript
     
 });
 
-bot.action("check_join", async (ctx) => {
-
-    const joined = await checkChannelJoin(ctx);
-
-    if (!joined) {
-
-        return ctx.answerCbQuery(
-            "You haven't joined yet."
-        );
-
-    }
-
-    return ctx.editMessageText(
-        "Verification successful. You can now use the bot."
-    );
-});
-
 
 bot.action('/start', async (ctx) => {
 
