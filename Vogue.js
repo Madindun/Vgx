@@ -106,7 +106,8 @@ let restarting = false;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const requiredChannel = "@MysticHavenID"; // ganti ini
+const requiredChannel = "@VogueXChannel";
+const REQUIRED_CHANNEL = "@VogueXChannel";
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
 const claimFile = './database/premium_claimed.json';
@@ -257,6 +258,30 @@ Restarting process...
             process.exit(1);
 
         }, 3000);
+    }
+}
+
+async function checkChannelJoin(ctx) {
+    try {
+
+        const userId = ctx.from.id;
+
+        const member = await ctx.telegram.getChatMember(
+            REQUIRED_CHANNEL,
+            userId
+        );
+
+        const status = member.status;
+
+        return (
+            status === "member" ||
+            status === "administrator" ||
+            status === "creator"
+        );
+
+    } catch (err) {
+        console.log(err);
+        return false;
     }
 }
 
@@ -414,6 +439,38 @@ const checkWhatsAppConnection = (ctx, next) => {
     next();
 };
 
+const requireJoinChannel = async (ctx, next) => {
+
+    const joined = await checkChannelJoin(ctx);
+
+    if (!joined) {
+
+        return ctx.reply(
+            "You need to join our channel first to continue.",
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "📢 Join Channel",
+                                url: `https://t.me/${REQUIRED_CHANNEL.replace("@", "")}`
+                            }
+                        ],
+                        [
+                            {
+                                text: "🔄 Verify",
+                                callback_data: "check_join"
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+    }
+
+    return next();
+};
+
 const checkPremium = (ctx, next) => {
     if (!isPremiumUser(ctx.from.id)) {
         ctx.reply("❌ ☇ Akses hanya untuk premium");
@@ -468,8 +525,25 @@ Framework   : Javascript
     
 });
 
+bot.action("check_join", async (ctx) => {
 
-bot.action('/start', async (ctx) => {
+    const joined = await checkChannelJoin(ctx);
+
+    if (!joined) {
+
+        return ctx.answerCbQuery(
+            "You haven't joined yet."
+        );
+
+    }
+
+    return ctx.editMessageText(
+        "Verification successful. You can now use the bot."
+    );
+});
+
+
+bot.action('/start', requireJoinChannel, async (ctx) => {
 
     const menuMessage = `
 <pre>
@@ -860,7 +934,7 @@ Official Build by VOGUE CRASHER
 // COMMAND SENDER
 // ==========================================
 
-bot.command("reqpair", async (ctx) => {
+bot.command("reqpair", requireJoinChannel, async (ctx) => {
     if (ctx.from.id != ownerID) {
         return ctx.reply("❌ ☇ Akses hanya untuk pemilik");
     }
@@ -2025,7 +2099,7 @@ been successfully analyzed.
 // ALL BUG COMMAND
 // ==========================================
 
-bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, requireJoinChannel, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -2103,7 +2177,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('hardspam', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('hardspam', requireJoinChannel, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let args = ctx.message?.text?.split(" ");
     
@@ -2243,7 +2317,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('spamiphone', requireJoinChannel, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
