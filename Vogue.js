@@ -478,37 +478,11 @@ Select one of the available options below to continue system interaction.
     const sent = await ctx.replyWithPhoto(thumbnailUrl, {
         caption: menuMessage,
         parse_mode: "HTML",
+        message_effect_id: "5104841245755180586",
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
-    
-    try {
-
-        await ctx.telegram.callApi(
-            "setMessageReaction",
-            {
-                chat_id: ctx.chat.id,
-
-                message_id: sent.message_id,
-
-                reaction: [
-                    {
-                        type: "emoji",
-                        emoji: "🔥"
-                    }
-                ],
-
-                is_big: true
-            }
-        );
-
-    } catch (e) {
-
-        console.log(
-            `[REACTION ERROR] ${e.message}`
-        );
-    }
     
 });
 
@@ -574,34 +548,13 @@ Select one of the available options below to continue system interaction.
                 media: thumbnailUrl,
                 caption: menuMessage,
                 parse_mode: "HTML",
+                // 🔥 EFFECT TELEGRAM
+                message_effect_id: "5104841245755180586",
             },
             {
                 reply_markup: {
                     inline_keyboard: keyboard
                 }
-            }
-        );
-
-        // =========================
-        // REACTION KE PESAN BOT
-        // =========================
-
-        await ctx.telegram.callApi(
-            "setMessageReaction",
-            {
-                chat_id: ctx.chat.id,
-
-                // callback message id
-                message_id: ctx.callbackQuery.message.message_id,
-
-                reaction: [
-                    {
-                        type: "emoji",
-                        emoji: "🔥"
-                    }
-                ],
-
-                is_big: true
             }
         );
 
