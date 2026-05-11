@@ -2080,17 +2080,6 @@ Status      : Success
         (async () => {
             
             const instanceId = Date.now() + Math.random();
-            createTask(
-                instanceId,
-                {
-                    target: q,
-            
-                    type: "ANDROID ATTACK",
-            
-                    user:
-                        ctx.from.first_name
-                }
-            );
             
             for (let i = 0; i < 100; i++) {
                 try {
