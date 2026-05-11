@@ -1236,23 +1236,6 @@ ${error.message}
             );
         }
 
-        if (stderr) {
-            return ctx.telegram.editMessageText(
-                ctx.chat.id,
-                msg.message_id,
-                null,
-`<pre>
-V O G U E  •  U P D A T E
-──────────────────────────
-
-Git Warning
-
-${stderr}
-</pre>`,
-                { parse_mode: "HTML" }
-            );
-        }
-
         await ctx.telegram.editMessageText(
             ctx.chat.id,
             msg.message_id,
