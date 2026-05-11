@@ -475,7 +475,7 @@ Select one of the available options below to continue system interaction.
         }]
     ];
     
-    ctx.replyWithPhoto(thumbnailUrl, {
+    const sent = await ctx.replyWithPhoto(thumbnailUrl, {
         caption: menuMessage,
         parse_mode: "HTML",
         reply_markup: {
@@ -513,6 +513,7 @@ Select one of the available options below to continue system interaction.
 });
 
 bot.action('/start', async (ctx) => {
+
     const menuMessage = `
 <pre>
 V O G U E  •  C R A S H E R
@@ -535,54 +536,63 @@ All operations are monitored and executed through the central dispatch system.
 
 Select one of the available options below to continue system interaction.
 </pre>`;
-    
+
     const keyboard = [
         [
-        {
-            text: "Control",
-            callback_data: "/controls"
-        },
-        {
-            text: "Bug Menu",
-            callback_data: "/bug"
-        }],
-        [
-        {
-            text: "Developer",
-            callback_data: "/tqto"
-        }],
-        [
-        {
-            text: "🎁 Free 1 Day Premium",
-            callback_data: "free_premium_info"
-        }]
-    ];
-    
-    try {
-        await ctx.editMessageMedia({
-            type: 'photo',
-            media: thumbnailUrl,
-            caption: menuMessage,
-            parse_mode: "HTML",
-        }, {
-            reply_markup: {
-                inline_keyboard: keyboard
+            {
+                text: "Control",
+                callback_data: "/controls"
+            },
+            {
+                text: "Bug Menu",
+                callback_data: "/bug"
             }
-        });
-    } catch (error) {
-        if (error.response && error.response.error_code === 400 && error.response.description === "Bad Request: message is not modified") {
-            await ctx.answerCbQuery();
-        } else {}
-    }
-    
+        ],
+        [
+            {
+                text: "Developer",
+                callback_data: "/tqto"
+            }
+        ],
+        [
+            {
+                text: "🎁 Free 1 Day Premium",
+                callback_data: "free_premium_info"
+            }
+        ]
+    ];
+
     try {
+
+        // =========================
+        // EDIT MESSAGE
+        // =========================
+
+        await ctx.editMessageMedia(
+            {
+                type: 'photo',
+                media: thumbnailUrl,
+                caption: menuMessage,
+                parse_mode: "HTML",
+            },
+            {
+                reply_markup: {
+                    inline_keyboard: keyboard
+                }
+            }
+        );
+
+        // =========================
+        // REACTION KE PESAN BOT
+        // =========================
 
         await ctx.telegram.callApi(
             "setMessageReaction",
             {
                 chat_id: ctx.chat.id,
 
-                message_id: sent.message_id,
+                // callback message id
+                message_id: ctx.callbackQuery.message.message_id,
 
                 reaction: [
                     {
@@ -595,11 +605,23 @@ Select one of the available options below to continue system interaction.
             }
         );
 
-    } catch (e) {
+    } catch (error) {
 
-        console.log(
-            `[REACTION ERROR] ${e.message}`
-        );
+        if (
+            error.response &&
+            error.response.error_code === 400 &&
+            error.response.description ===
+            "Bad Request: message is not modified"
+        ) {
+
+            await ctx.answerCbQuery();
+
+        } else {
+
+            console.log(
+                `[START ERROR] ${error.message}`
+            );
+        }
     }
 });
 
