@@ -2382,7 +2382,7 @@ been successfully analyzed.
 // ALL BUG COMMAND
 // ==========================================
 
-bot.command('delayhard', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('delayhard', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let args = ctx.message?.text?.split(" ");
     
@@ -2521,7 +2521,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -2599,7 +2599,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('hardspam', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('hardspam', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let args = ctx.message?.text?.split(" ");
     
@@ -2739,7 +2739,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('spamiphone', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
