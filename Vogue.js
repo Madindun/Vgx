@@ -426,83 +426,6 @@ const checkPremium = (ctx, next) => {
 // HOME PAGE START BOT
 // ==========================================
 
-setInterval(async () => {
-    try {
-        if (activeAnimatedMenus.size < 1) return;
-
-        currentStyleIndex =
-            (currentStyleIndex + 1) % styleCycle.length;
-
-        const currentStyle = styleCycle[currentStyleIndex];
-
-        const animatedKeyboard = [
-            [
-                {
-                    text: "Control",
-                    callback_data: "/controls",
-                    style: currentStyle,
-                    icon_custom_emoji_id: "5220166546491459639"
-                },
-                {
-                    text: "Bug Menu",
-                    callback_data: "/bug",
-                    style: currentStyle,
-                    icon_custom_emoji_id: "5220166546491459639"
-                }
-            ],
-            [
-                {
-                    text: "Developer",
-                    callback_data: "/tqto",
-                    style: currentStyle,
-                    icon_custom_emoji_id: "5220166546491459639"
-                }
-            ],
-            [
-                {
-                    text: "🎁 Free 1 Day Premium",
-                    callback_data: "free_premium_info",
-                    style: currentStyle,
-                    icon_custom_emoji_id: "5220166546491459639"
-                }
-            ]
-        ];
-
-        for (const [key, data] of activeAnimatedMenus.entries()) {
-
-            // 🔥 hanya menu start yang boleh animasi
-            if (data.type !== "start") continue;
-
-            // 🔥 skip jika sudah di-lock (button lain)
-            if (lockedMenus.has(key)) continue;
-
-            try {
-                await bot.telegram.editMessageReplyMarkup(
-                    data.chatId,
-                    data.messageId,
-                    undefined,
-                    {
-                        inline_keyboard: animatedKeyboard
-                    }
-                );
-            } catch (e) {
-                const err = String(e).toLowerCase();
-
-                if (
-                    err.includes("message is not modified") ||
-                    err.includes("message to edit not found") ||
-                    err.includes("chat not found")
-                ) {
-                    activeAnimatedMenus.delete(key);
-                }
-            }
-        }
-
-    } catch (err) {
-        console.log(`[MENU ANIMATION ERROR] ${err.message}`);
-    }
-}, 3000);
-
 
 bot.start(async (ctx) => {
     
@@ -543,13 +466,6 @@ Framework   : Javascript
         }
     });
     
-    const key = `${ctx.chat.id}_${sent.message_id}`;
-    
-    activeAnimatedMenus.set(key, {
-        chatId: ctx.chat.id,
-        messageId: sent.message_id,
-        type: "start"
-    });
 });
 
 
@@ -625,15 +541,7 @@ Select one of the available options below to continue system interaction.
             }
         );
         
-        activeAnimatedMenus.set(
-            `${ctx.chat.id}_${sent.message_id}`,
-            {
-                chatId: ctx.chat.id,
-                messageId: sent.message_id,
-                type: "start"
-            }
-        );
-
+        
     } catch (error) {
 
         if (
@@ -743,19 +651,6 @@ One-time reward activated.
     }
 });
 
-bot.action(["/controls", "/bug", "/tqto", "free_premium_info"], async (ctx) => {
-
-    const msg = ctx.callbackQuery.message;
-    const key = `${msg.chat.id}_${msg.message_id}`;
-
-    // 🔥 LOCK MENU INI SUPAYA TIDAK DI ANIMASI
-    lockedMenus.add(key);
-
-    // ❗ STOP ANIMATION ENTRY UNTUK MESSAGE INI
-    activeAnimatedMenus.delete(key);
-
-    return ctx.answerCbQuery("Menu dibuka");
-});
 
 bot.action('/controls', async (ctx) => {
     const controlsMenu = `
