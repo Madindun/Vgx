@@ -476,7 +476,10 @@ setInterval(async () => {
         ];
 
         for (const [key, data] of activeAnimatedMenus.entries()) {
-
+            
+            // 🔥 HANYA START YANG DI ANIMASI
+            if (data.type !== "start") continue;
+            
             try {
 
                 await bot.telegram.editMessageReplyMarkup(
@@ -572,10 +575,11 @@ Select one of the available options below to continue system interaction.
     });
     
     activeAnimatedMenus.set(
-        `${ctx.chat.id}_${sent.message_id}`,
+        `${ctx.chat.id}_${ctx.callbackQuery.message.message_id}`,
         {
             chatId: ctx.chat.id,
-            messageId: sent.message_id
+            messageId: ctx.callbackQuery.message.message_id,
+            type: "start"
         }
     );
 });
@@ -654,10 +658,11 @@ Select one of the available options below to continue system interaction.
         );
         
         activeAnimatedMenus.set(
-            `${ctx.chat.id}_${ctx.callbackQuery.message.message_id}`,
+            `${ctx.chat.id}_${sent.message_id}`,
             {
                 chatId: ctx.chat.id,
-                messageId: ctx.callbackQuery.message.message_id
+                messageId: sent.message_id,
+                type: "start"
             }
         );
 
