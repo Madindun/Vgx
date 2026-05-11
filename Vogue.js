@@ -2468,8 +2468,8 @@ bot.command('hardspam', checkExecutionLimit, checkWhatsAppConnection, checkPremi
     let executionCount =
         parseInt(args[2]) || 1;
     
-    if (executionCount > 20) {
-        executionCount = 20;
+    if (executionCount > 100) {
+        executionCount = 100;
     }
     
     if (!q) return ctx.reply(
@@ -2545,7 +2545,7 @@ Dispatch engine initialized.
                             await sleep(3000)
         
                             console.log(
-                                `[INSTANCE ${instanceId}] Exec ${i + 1}/20`
+                                `[INSTANCE ${instanceId}] Exec ${i + 1}`
                             );
         
                         } catch (e) {
