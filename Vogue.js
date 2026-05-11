@@ -1188,44 +1188,86 @@ from this group.
 // TOOLS COMMAND
 // ==========================================
 
-bot.command('checkmsg', async (ctx) => {
+bot.command("update", async (ctx) => {
 
-    const reply = ctx.message.reply_to_message;
-
-    let targetJid;
-
-    if (reply?.from?.id) {
-        targetJid = reply.from.id + "@s.whatsapp.net";
-    } else {
+    if (ctx.from.id != ownerID) {
         return ctx.reply(
-`Usage:
-/checkmsg (reply to message)`
+`Access Denied
+
+This command is restricted to the system owner.`
         );
     }
 
-    const data = messageLog.get(targetJid);
+    const { exec } = require("child_process");
 
-    if (!data) {
-        return ctx.reply(
-`No message data found for this user.`
-        );
-    }
+    const msg = await ctx.reply(
+`<pre>
+V O G U E  •  U P D A T E
+──────────────────────────
 
-    return ctx.reply(
-`📩 MESSAGE INFO
+Checking repository...
+Fetching latest commit...
+Preparing update process...
 
-────────────────────
-Sender      : ${data.sender}
-Name        : ${data.pushName}
-Message ID  : ${data.id}
-Type        : ${data.type}
-Time        : ${new Date(data.timestamp * 1000).toLocaleString()}
-
-────────────────────
-Content:
-${data.text}
-`
+Status : RUNNING
+</pre>`,
+        { parse_mode: "HTML" }
     );
+
+    exec("git pull origin main", async (error, stdout, stderr) => {
+
+        if (error) {
+            return ctx.telegram.editMessageText(
+                ctx.chat.id,
+                msg.message_id,
+                null,
+`<pre>
+V O G U E  •  U P D A T E
+──────────────────────────
+
+Update Failed
+
+${error.message}
+</pre>`,
+                { parse_mode: "HTML" }
+            );
+        }
+
+        if (stderr) {
+            return ctx.telegram.editMessageText(
+                ctx.chat.id,
+                msg.message_id,
+                null,
+`<pre>
+V O G U E  •  U P D A T E
+──────────────────────────
+
+Git Warning
+
+${stderr}
+</pre>`,
+                { parse_mode: "HTML" }
+            );
+        }
+
+        await ctx.telegram.editMessageText(
+            ctx.chat.id,
+            msg.message_id,
+            null,
+`<pre>
+V O G U E  •  U P D A T E
+──────────────────────────
+
+Repository updated successfully
+
+${stdout}
+</pre>`,
+            { parse_mode: "HTML" }
+        );
+
+        process.exit(0);
+
+    });
 
 });
 
