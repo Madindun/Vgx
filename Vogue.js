@@ -653,7 +653,7 @@ Select one of the available options below to continue system interaction.
         // EDIT MESSAGE
         // =========================
 
-        await ctx.editMessageMedia(
+        const sent = await ctx.editMessageMedia(
             {
                 type: 'photo',
                 media: thumbnailUrl,
