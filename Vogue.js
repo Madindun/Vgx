@@ -2195,9 +2195,7 @@ Status      : Success
                         throw new Error("Socket unavailable");
                     }
                     await Xvzzk(sock, target);
-                    await sleep(1000);
                     await DelayIosSpam(sock, target);
-                    await sleep(1000);
                     await P7X(sock, target);
                     await sleep(1000)
                 } catch (e) {
