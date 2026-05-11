@@ -574,11 +574,18 @@ Select one of the available options below to continue system interaction.
         }
     });
     
+    const chatId = ctx.chat?.id;
+    const msg = ctx.callbackQuery?.message;
+    
+    if (!chatId || !msg || !msg.message_id) {
+        return ctx.answerCbQuery("Invalid callback context");
+    }
+    
     activeAnimatedMenus.set(
-        `${ctx.chat.id}_${ctx.callbackQuery.message.message_id}`,
+        `${chatId}_${msg.message_id}`,
         {
-            chatId: ctx.chat.id,
-            messageId: ctx.callbackQuery.message.message_id,
+            chatId,
+            messageId: msg.message_id,
             type: "start"
         }
     );
