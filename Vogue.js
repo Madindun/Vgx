@@ -742,9 +742,22 @@ One-time reward activated.
         );
     }
 });
-bot.action('/controls', async (ctx) => {
+
+bot.action(["/controls", "/bug", "/tqto", "free_premium_info"], async (ctx) => {
+
+    const msg = ctx.callbackQuery.message;
+    const key = `${msg.chat.id}_${msg.message_id}`;
+
+    // 🔥 LOCK MENU INI SUPAYA TIDAK DI ANIMASI
     lockedMenus.add(key);
+
+    // ❗ STOP ANIMATION ENTRY UNTUK MESSAGE INI
     activeAnimatedMenus.delete(key);
+
+    return ctx.answerCbQuery("Menu dibuka");
+});
+
+bot.action('/controls', async (ctx) => {
     const controlsMenu = `
 <pre>  
 V O G U E  •  C R A S H E R  
@@ -837,8 +850,6 @@ SYSTEM STATUS
 });
 
 bot.action('/bug', async (ctx) => {
-    lockedMenus.add(key);
-    activeAnimatedMenus.delete(key);
     const bugMenu = `
 <pre>
 V O G U E  •  C R A S H E R
@@ -888,8 +899,6 @@ I P H O N E
 });
 
 bot.action('/tqto', async (ctx) => {
-    lockedMenus.add(key);
-    activeAnimatedMenus.delete(key);
     const tqtoMenu = `
 <pre>
 V O G U E  •  C R A S H E R
