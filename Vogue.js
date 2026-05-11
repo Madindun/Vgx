@@ -2075,7 +2075,8 @@ Status      : Success
                 inline_keyboard: [
                     [{
                         text: "Check Target",
-                        url: `https://wa.me/${q}`
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
                     }]
                 ]
             }
@@ -2154,7 +2155,8 @@ Status      : Success
                     [
                     {
                         text: "Check Target",
-                        url: `https://wa.me/${q}`
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
                     }]
                 ]
             }
