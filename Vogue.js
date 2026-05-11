@@ -427,7 +427,7 @@ const checkPremium = (ctx, next) => {
 // HOME PAGE START BOT
 // ==========================================
 
-bot.start(ctx => {
+bot.start(async (ctx) => {
     const menuMessage = `
 <pre>
 V O G U E  •  C R A S H E R
