@@ -960,6 +960,153 @@ for command execution.
 }
 
 // ==========================================
+//  DEVELOPER COMMAND
+// ==========================================
+
+let maintenanceMode = false;
+
+const maintenanceMessage = `
+<pre>
+V O G U E  •  S Y S T E M
+──────────────────────────
+
+SYSTEM MAINTENANCE
+
+Status      : Unavailable
+Engine      : Updating
+Access      : Restricted
+
+──────────────────────────
+The system is currently under maintenance.
+
+Please wait until the maintenance
+process has been completed.
+</pre>`;
+
+
+bot.use(async (ctx, next) => {
+
+    if (ctx.from?.id == ownerID) {
+        return next();
+    }
+
+    if (maintenanceMode) {
+
+        if (ctx.callbackQuery) {
+            return ctx.answerCbQuery(
+                "System under maintenance.",
+                {
+                    show_alert: true
+                }
+            );
+        }
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption: maintenanceMessage,
+                parse_mode: "HTML",
+
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Developer",
+                                url: "https://t.me/ScriptKits",
+                                style: "danger"
+                            }
+                        ],
+                        [
+                            {
+                                text: "System Status",
+                                callback_data: "maintenance_status",
+                                style: "danger"
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+    }
+
+    return next();
+});
+
+
+bot.action(
+    "maintenance_status",
+    async (ctx) => {
+
+        return ctx.answerCbQuery(
+            "Maintenance currently active.",
+            {
+                show_alert: true
+            }
+        );
+    }
+);
+
+bot.command(
+    "maintenance",
+    async (ctx) => {
+
+        if (ctx.from.id != ownerID) {
+            return;
+        }
+
+        maintenanceMode = true;
+
+        return ctx.reply(
+`<pre>
+V O G U E  •  S Y S T E M
+──────────────────────────
+
+MAINTENANCE ENABLED
+
+Status      : Active
+Access      : Owner Only
+
+──────────────────────────
+Public access has been disabled.
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+);
+
+bot.command(
+    "unmaintenance",
+    async (ctx) => {
+
+        if (ctx.from.id != ownerID) {
+            return;
+        }
+
+        maintenanceMode = false;
+
+        return ctx.reply(
+`<pre>
+V O G U E  •  S Y S T E M
+──────────────────────────
+
+MAINTENANCE DISABLED
+
+Status      : Online
+Access      : Public Restored
+
+──────────────────────────
+System access has been restored.
+</pre>`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+);
+
+// ==========================================
 //  PERMIUM COMMAND
 // ==========================================
 
