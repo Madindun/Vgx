@@ -662,6 +662,8 @@ OWNER MANAGEMENT
 › Restart Bot
 /update
 › Update the script
+/ping
+› Check latency bot
 
 
 ──────────────────────────
@@ -1432,41 +1434,43 @@ the current session data.
     
 });
 
-bot.command('info', async (ctx) => {
-    
-    const os = require('os');
-    
+bot.command("info", async (ctx) => {
+
     const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
     const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
     const usedRam = (totalRam - freeRam).toFixed(2);
-    
+
     const uptime = process.uptime();
-    
+
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = Math.floor(uptime % 60);
-    
+
     const runtime =
         `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    
+
     const cpuModel = os.cpus()[0].model;
     const cpuCores = os.cpus().length;
-    
+    const cpuArch = os.arch();
+    const cpuLoad = os.loadavg()[0].toFixed(2);
+
     const platform = os.platform();
     const hostname = os.hostname();
-    
+
     const senderStatus =
-        isWhatsAppConnected ? "Connected" : "Disconnected";
-    
-    const currentTime =
-        moment()
-        .tz('Asia/Jakarta')
-        .format('DD/MM/YYYY HH:mm:ss');
-    
-    const infoMessage = `
-<pre>
-┏━ V O G U E • S Y S T E M • I N F O ━┓
+        isWhatsAppConnected
+            ? "Connected"
+            : "Disconnected";
+
+    const currentTime = moment()
+        .tz("Asia/Jakarta")
+        .format("DD/MM/YYYY HH:mm:ss");
+
+    const pages = [
+
+`<pre>
+┏━ V O G U E • I N F O ━┓
 
 ⌬ BOT INFORMATION
 
@@ -1475,79 +1479,331 @@ bot.command('info', async (ctx) => {
 
 › Version
   1.0 Pro
-  
+
 › Developer
   @ScriptKits
 
 › Runtime
   ${runtime}
-  
+
 › Status
   Active and Operational
 
-────────────────────────────
-
-⌬ WHATSAPP INFORMATION
-
-› Sender Status
-  ${senderStatus}
-  
-› Connection Mode
-  Single Device
-
-────────────────────────────
-
-⌬ VPS INFORMATION
-
-› Hostname
-  ${hostname}
-› Platform
-  ${platform}
-› CPU Model
-  ${cpuModel}
-› CPU Cores
-  ${cpuCores} Cores
-› RAM Usage
-  ${usedRam} GB / ${totalRam} GB
-› Free RAM
-  ${freeRam} GB
-
-────────────────────────────
-
-⌬ SYSTEM INFORMATION
-
-› NodeJS Version
-  ${process.version}
-› Current Time
-  ${currentTime} WIB
 › Process ID
   ${process.pid}
 
-────────────────────────────
+› NodeJS Version
+  ${process.version}
 
-System operating normally without
-critical exception or service failure.
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`,
 
-┗━ V O G U E • C R A S H E R ━┛
-</pre>`;
-    
-    if (infoMessage.length > 1024) {
-        return ctx.reply(
-            infoMessage,
-            {
-                parse_mode: "HTML"
-            }
-        );
-    }
-    
-    ctx.replyWithPhoto(thumbnailUrl, {
-        caption: infoMessage,
-        parse_mode: "HTML",
+`<pre>
+┏━ W H A T S A P P ━┓
+
+⌬ CONNECTION INFORMATION
+
+› Sender Status
+  ${senderStatus}
+
+› Connection Mode
+  Single Device
+
+› Current Time
+  ${currentTime} WIB
+
+› Platform
+  Telegram x WhatsApp Bridge
+
+› Service State
+  Stable Connection
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`,
+
+`<pre>
+┏━ V P S • I N F O ━┓
+
+⌬ SERVER INFORMATION
+
+› Hostname
+  ${hostname}
+
+› Platform
+  ${platform}
+
+› Architecture
+  ${cpuArch}
+
+› CPU Model
+  ${cpuModel}
+
+› CPU Cores
+  ${cpuCores} Cores
+
+› CPU Load
+  ${cpuLoad}
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`,
+
+`<pre>
+┏━ R A M • U S A G E ━┓
+
+⌬ MEMORY INFORMATION
+
+› Total RAM
+  ${totalRam} GB
+
+› Used RAM
+  ${usedRam} GB
+
+› Free RAM
+  ${freeRam} GB
+
+› Memory Usage
+  ${(
+      (usedRam / totalRam) * 100
+  ).toFixed(1)}%
+
+────────────────────────
+
+System operating normally
+without critical exception
+or service failure.
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`
+
+    ];
+
+    let currentPage = 0;
+
+    const keyboard = (page) => ({
+        inline_keyboard: [
+            [
+                {
+                    text: "◀ Back",
+                    callback_data: `info_back_${page}`
+                },
+                {
+                    text: `${page + 1}/${pages.length}`,
+                    callback_data: "info_page"
+                },
+                {
+                    text: "Next ▶",
+                    callback_data: `info_next_${page}`
+                }
+            ]
+        ]
     });
-    
+
+    await ctx.replyWithPhoto(thumbnailUrl, {
+        caption: pages[currentPage],
+        parse_mode: "HTML",
+        reply_markup: keyboard(currentPage)
+    });
+
 });
 
-bot.command('pingsys', async (ctx) => {
+bot.on("callback_query", async (ctx) => {
+
+    const data = ctx.callbackQuery.data;
+
+    if (!data.startsWith("info_")) return;
+
+    const totalPages = 4;
+
+    let page = parseInt(data.split("_")[2]);
+
+    if (data.startsWith("info_next")) {
+        page = (page + 1) % totalPages;
+    }
+
+    if (data.startsWith("info_back")) {
+        page = (page - 1 + totalPages) % totalPages;
+    }
+
+    const os = require("os");
+    const moment = require("moment-timezone");
+
+    const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+    const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+    const usedRam = (totalRam - freeRam).toFixed(2);
+
+    const uptime = process.uptime();
+
+    const days = Math.floor(uptime / 86400);
+    const hours = Math.floor((uptime % 86400) / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = Math.floor(uptime % 60);
+
+    const runtime =
+        `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+    const cpuModel = os.cpus()[0].model;
+    const cpuCores = os.cpus().length;
+    const cpuArch = os.arch();
+    const cpuLoad = os.loadavg()[0].toFixed(2);
+
+    const platform = os.platform();
+    const hostname = os.hostname();
+
+    const senderStatus =
+        isWhatsAppConnected
+            ? "Connected"
+            : "Disconnected";
+
+    const currentTime = moment()
+        .tz("Asia/Jakarta")
+        .format("DD/MM/YYYY HH:mm:ss");
+
+    const pages = [
+
+`<pre>
+┏━ V O G U E • I N F O ━┓
+
+⌬ BOT INFORMATION
+
+› Bot Name
+  Vogue Crasher
+
+› Version
+  1.0 Pro
+
+› Developer
+  @ScriptKits
+
+› Runtime
+  ${runtime}
+
+› Status
+  Active and Operational
+
+› Process ID
+  ${process.pid}
+
+› NodeJS Version
+  ${process.version}
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`,
+
+`<pre>
+┏━ W H A T S A P P ━┓
+
+⌬ CONNECTION INFORMATION
+
+› Sender Status
+  ${senderStatus}
+
+› Connection Mode
+  Single Device
+
+› Current Time
+  ${currentTime} WIB
+
+› Platform
+  Telegram x WhatsApp Bridge
+
+› Service State
+  Stable Connection
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`,
+
+`<pre>
+┏━ V P S • I N F O ━┓
+
+⌬ SERVER INFORMATION
+
+› Hostname
+  ${hostname}
+
+› Platform
+  ${platform}
+
+› Architecture
+  ${cpuArch}
+
+› CPU Model
+  ${cpuModel}
+
+› CPU Cores
+  ${cpuCores} Cores
+
+› CPU Load
+  ${cpuLoad}
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`,
+
+`<pre>
+┏━ R A M • U S A G E ━┓
+
+⌬ MEMORY INFORMATION
+
+› Total RAM
+  ${totalRam} GB
+
+› Used RAM
+  ${usedRam} GB
+
+› Free RAM
+  ${freeRam} GB
+
+› Memory Usage
+  ${(
+      (usedRam / totalRam) * 100
+  ).toFixed(1)}%
+
+────────────────────────
+
+System operating normally
+without critical exception
+or service failure.
+
+┗━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>`
+
+    ];
+
+    const keyboard = {
+        inline_keyboard: [
+            [
+                {
+                    text: "◀ Back",
+                    callback_data: `info_back_${page}`
+                },
+                {
+                    text: `${page + 1}/${pages.length}`,
+                    callback_data: "info_page"
+                },
+                {
+                    text: "Next ▶",
+                    callback_data: `info_next_${page}`
+                }
+            ]
+        ]
+    };
+
+    try {
+
+        await ctx.editMessageCaption(
+            pages[page],
+            {
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            }
+        );
+
+        await ctx.answerCbQuery();
+
+    } catch (e) {}
+
+});
+
+bot.command('ping', async (ctx) => {
     
     const start = Date.now();
     
