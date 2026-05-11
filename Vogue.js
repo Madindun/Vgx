@@ -761,7 +761,7 @@ Prefix      : /
 
 A N D R O I D
 /spamandro  : Hard Delay 100%
-/androinvis : Delay Hard V2
+/hardspam   : Delay Hard 9000%
 
 ──────────────────────────
 
