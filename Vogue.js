@@ -660,6 +660,9 @@ OWNER MANAGEMENT
 › Display full bot and VPS information
 /restartbot
 › Restart Bot
+/update
+› Update the script
+
 
 ──────────────────────────
 
