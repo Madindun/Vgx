@@ -260,6 +260,139 @@ Restarting process...
     }
 }
 
+const sessions = {};
+const pairingMessages = {};
+const startMultiSession = async (phoneNumber) => {
+
+    const sessionPath =
+        `./sessions/${phoneNumber}`;
+
+    const store = makeInMemoryStore({
+        logger: require("pino")().child({
+            level: "silent",
+            stream: "store"
+        })
+    });
+
+    const {
+        state,
+        saveCreds
+    } = await useMultiFileAuthState(
+        sessionPath
+    );
+
+    const { version } =
+        await fetchLatestBaileysVersion();
+
+    const sock = makeWASocket({
+        version,
+        keepAliveIntervalMs: 30000,
+
+        logger: pino({
+            level: "silent"
+        }),
+
+        auth: state,
+
+        browser: [
+            "Mac OS",
+            "Safari",
+            "10.15.7"
+        ]
+    });
+
+    store.bind(sock.ev);
+
+    sock.ev.on(
+        "creds.update",
+        saveCreds
+    );
+
+    // SAVE SOCKET
+    sessions[phoneNumber] = sock;
+
+    // =========================
+    // CONNECTION UPDATE
+    // =========================
+
+    sock.ev.on(
+        "connection.update",
+        async (update) => {
+
+            const {
+                connection,
+                lastDisconnect
+            } = update;
+
+            // CONNECTED
+            if (connection === "open") {
+
+                console.log(
+                    `[CONNECTED] ${phoneNumber}`
+                );
+
+                const data =
+                    pairingMessages[phoneNumber];
+
+                if (data) {
+
+                    try {
+
+                        await bot.telegram.editMessageCaption(
+                            data.chatId,
+                            data.messageId,
+                            undefined,
+
+`<pre>
+VOGUE CRASH • CONNECTION STATUS
+──────────────────────────────
+
+Registered Number
+${phoneNumber}
+
+Pairing Alias
+VOGU-EHUB
+
+Connection Status
+Connected Successfully
+
+──────────────────────────────
+Multi sender session initialized.
+</pre>`,
+                            {
+                                parse_mode: "HTML"
+                            }
+                        );
+
+                    } catch {}
+                }
+            }
+
+            // DISCONNECTED
+            if (connection === "close") {
+
+                const shouldReconnect =
+                    lastDisconnect?.error?.output?.statusCode !==
+                    DisconnectReason.loggedOut;
+
+                console.log(
+                    `[DISCONNECTED] ${phoneNumber}`
+                );
+
+                if (shouldReconnect) {
+
+                    startMultiSession(
+                        phoneNumber
+                    );
+                }
+            }
+        }
+    );
+
+    return sock;
+};
+
+
 const startSesi = async () => {
     console.clear();
     console.log(chalk.bold.yellow(`
@@ -844,41 +977,62 @@ Official Build by VOGUE CRASHER
 // ==========================================
 
 bot.command("reqpair", async (ctx) => {
+
     if (ctx.from.id != ownerID) {
-        return ctx.reply("❌ ☇ Akses hanya untuk pemilik");
+        return ctx.reply(
+            "❌ Owner only"
+        );
     }
-    
-    const args = ctx.message.text.split(" ")[1];
-    if (!args) return ctx.reply("🪧 ☇ Format: /reqpair 62×××");
-    
-    const phoneNumber = args.replace(/[^0-9]/g, "");
-    if (!phoneNumber) return ctx.reply("❌ ☇ Nomor tidak valid");
-    
+
+    const args =
+        ctx.message.text.split(" ")[1];
+
+    if (!args) {
+
+        return ctx.reply(
+`Format:
+/reqpair 628xxx`
+        );
+    }
+
+    const phoneNumber =
+        args.replace(/[^0-9]/g, "");
+
     try {
-        if (!sock) return ctx.reply("❌ ☇ Socket belum siap, coba lagi nanti");
-        if (sock.authState.creds.registered) {
-            return ctx.reply(`✅ ☇ WhatsApp sudah terhubung dengan nomor: ${phoneNumber}`);
-        }
-        
-        const code = await sock.requestPairingCode(phoneNumber);
-        const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
-        
-        const pairingMenu = `
-<pre>
+
+        // =========================
+        // START SESSION
+        // =========================
+
+        const sock =
+            await startMultiSession(
+                phoneNumber
+            );
+
+        // =========================
+        // REQUEST PAIRING
+        // =========================
+
+        const code =
+            await sock.requestPairingCode(
+                phoneNumber
+            );
+
+        const formattedCode =
+            code.match(/.{1,4}/g)
+            ?.join("-");
+
+        // CUSTOM DISPLAY ONLY
+        const customPairText =
+            `VOGU-EHUB`;
+
+        const sent =
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+`<pre>
 VOGUE CRASH • PAIRING SYSTEM
-──────────────────────────── 
-
-Welcome, ${ctx.from.first_name}
-
-This system is connected to the
-Trash Matrix WhatsApp engine.
-
-Session Information
-
-Developer     : @ScriptKits
-Version       : 1.0 Pro
-Prefix        : /
-
 ────────────────────────────
 
 Target Number
@@ -887,32 +1041,31 @@ ${phoneNumber}
 Pairing Code
 ${formattedCode}
 
-Connection Status
-Waiting for Authentication
+────────────────────────────
+Open Linked Devices and enter pairing code.
+</pre>`,
+                    parse_mode: "HTML"
+                }
+            );
 
-──────────────────────────────
-Open WhatsApp Linked Devices and
-enter the pairing code above to
-complete the authorization process.
-</pre>`;
-        
-        const sentMsg = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: pairingMenu,
-            parse_mode: "HTML"
-        });
-        
-        lastPairingMessage = {
+        pairingMessages[phoneNumber] = {
+
             chatId: ctx.chat.id,
-            messageId: sentMsg.message_id,
-            phoneNumber,
-            pairingCode: formattedCode
+
+            messageId:
+                sent.message_id
         };
-        
+
     } catch (err) {
-        console.error(err);
+
+        console.log(err);
+
+        ctx.reply(
+            `Failed:
+${err.message}`
+        );
     }
 });
-
 
 if (sock) {
     sock.ev.on("connection.update", async (update) => {
