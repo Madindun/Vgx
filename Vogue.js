@@ -110,13 +110,10 @@ const requiredChannel = "@MysticHavenID"; // ganti ini
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
 const claimFile = './database/premium_claimed.json';
-const styleCycle = [
-    "primary",
-    "success",
-    "danger"
-];
-let currentStyleIndex = 0;
 const activeAnimatedMenus = new Map();
+const lockedMenus = new Set();
+const styleCycle = ["primary", "success", "danger"];
+let currentStyleIndex = 0;
 
 const loadClaimed = () => {
     try {
@@ -430,17 +427,13 @@ const checkPremium = (ctx, next) => {
 // ==========================================
 
 setInterval(async () => {
-
     try {
-
         if (activeAnimatedMenus.size < 1) return;
 
         currentStyleIndex =
-            (currentStyleIndex + 1) %
-            styleCycle.length;
+            (currentStyleIndex + 1) % styleCycle.length;
 
-        const currentStyle =
-            styleCycle[currentStyleIndex];
+        const currentStyle = styleCycle[currentStyleIndex];
 
         const animatedKeyboard = [
             [
@@ -476,12 +469,14 @@ setInterval(async () => {
         ];
 
         for (const [key, data] of activeAnimatedMenus.entries()) {
-            
-            // 🔥 HANYA START YANG DI ANIMASI
-            if (data.type !== "start") continue;
-            
-            try {
 
+            // 🔥 hanya menu start yang boleh animasi
+            if (data.type !== "start") continue;
+
+            // 🔥 skip jika sudah di-lock (button lain)
+            if (lockedMenus.has(key)) continue;
+
+            try {
                 await bot.telegram.editMessageReplyMarkup(
                     data.chatId,
                     data.messageId,
@@ -490,34 +485,27 @@ setInterval(async () => {
                         inline_keyboard: animatedKeyboard
                     }
                 );
-
             } catch (e) {
-
-                const err =
-                    String(e).toLowerCase();
+                const err = String(e).toLowerCase();
 
                 if (
                     err.includes("message is not modified") ||
                     err.includes("message to edit not found") ||
                     err.includes("chat not found")
                 ) {
-
                     activeAnimatedMenus.delete(key);
                 }
             }
         }
 
     } catch (err) {
-
-        console.log(
-            `[MENU ANIMATION ERROR] ${err.message}`
-        );
+        console.log(`[MENU ANIMATION ERROR] ${err.message}`);
     }
-
 }, 3000);
 
 
 bot.start(async (ctx) => {
+    
     const menuMessage = `
 <pre>
 V O G U E  •  C R A S H E R
@@ -531,69 +519,37 @@ Version     : 1.0 Pro
 Prefix      : /
 Framework   : Javascript
 
-Description
-
-This Telegram automation system is connected with WhatsApp session integration and advanced function execution modules.
-
-All operations are monitored and executed through the central dispatch system.
-
 ──────────────────────────
-
-Select one of the available options below to continue system interaction.
 </pre>`;
-    
     
     const keyboard = [
         [
-        {
-            text: "Control",
-            callback_data: "/controls"
-        },
-        {
-            text: "Bug Menu",
-            callback_data: "/bug"
-        }, ],
+            { text: "Control", callback_data: "/controls" },
+            { text: "Bug Menu", callback_data: "/bug" }
+        ],
         [
-        {
-            text: "Developer",
-            callback_data: "/tqto"
-        }],
+            { text: "Developer", callback_data: "/tqto" }
+        ],
         [
-        {
-            text: "🎁 Free 1 Day Premium",
-            callback_data: "free_premium_info"
-        }]
+            { text: "🎁 Free 1 Day Premium", callback_data: "free_premium_info" }
+        ]
     ];
     
     const sent = await ctx.replyWithPhoto(thumbnailUrl, {
         caption: menuMessage,
         parse_mode: "HTML",
-        message_effect_id: "5104841245755180586",
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     
-    const chatId = ctx.chat?.id;
-    const msg = ctx.callbackQuery?.message;
+    const key = `${ctx.chat.id}_${sent.message_id}`;
     
-    if (!chatId || !msg || !msg.message_id) {
-        
-        if (ctx.updateType === "callback_query") {
-            return ctx.answerCbQuery("Invalid callback context");
-        }
-        
-        return;
-    }
-    
-    activeAnimatedMenus.set(
-        `${chatId}_${msg.message_id}`,
-        {
-            chatId,
-            messageId: msg.message_id,
-            type: "start"
-        }
-    );
+    activeAnimatedMenus.set(key, {
+        chatId: ctx.chat.id,
+        messageId: sent.message_id,
+        type: "start"
+    });
 });
 
 
@@ -787,6 +743,8 @@ One-time reward activated.
     }
 });
 bot.action('/controls', async (ctx) => {
+    lockedMenus.add(key);
+    activeAnimatedMenus.delete(key);
     const controlsMenu = `
 <pre>  
 V O G U E  •  C R A S H E R  
@@ -847,6 +805,7 @@ SYSTEM STATUS
 ──────────────────────────
 </pre>`;
     
+    
     const keyboard = [
         [
         {
@@ -878,6 +837,8 @@ SYSTEM STATUS
 });
 
 bot.action('/bug', async (ctx) => {
+    lockedMenus.add(key);
+    activeAnimatedMenus.delete(key);
     const bugMenu = `
 <pre>
 V O G U E  •  C R A S H E R
@@ -927,7 +888,8 @@ I P H O N E
 });
 
 bot.action('/tqto', async (ctx) => {
-    
+    lockedMenus.add(key);
+    activeAnimatedMenus.delete(key);
     const tqtoMenu = `
 <pre>
 V O G U E  •  C R A S H E R
