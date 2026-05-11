@@ -482,6 +482,34 @@ Select one of the available options below to continue system interaction.
             inline_keyboard: keyboard
         }
     });
+    
+    try {
+
+        await ctx.telegram.callApi(
+            "setMessageReaction",
+            {
+                chat_id: ctx.chat.id,
+
+                message_id: sent.message_id,
+
+                reaction: [
+                    {
+                        type: "emoji",
+                        emoji: "🔥"
+                    }
+                ],
+
+                is_big: true
+            }
+        );
+
+    } catch (e) {
+
+        console.log(
+            `[REACTION ERROR] ${e.message}`
+        );
+    }
+    
 });
 
 bot.action('/start', async (ctx) => {
@@ -545,6 +573,33 @@ Select one of the available options below to continue system interaction.
         if (error.response && error.response.error_code === 400 && error.response.description === "Bad Request: message is not modified") {
             await ctx.answerCbQuery();
         } else {}
+    }
+    
+    try {
+
+        await ctx.telegram.callApi(
+            "setMessageReaction",
+            {
+                chat_id: ctx.chat.id,
+
+                message_id: sent.message_id,
+
+                reaction: [
+                    {
+                        type: "emoji",
+                        emoji: "🔥"
+                    }
+                ],
+
+                is_big: true
+            }
+        );
+
+    } catch (e) {
+
+        console.log(
+            `[REACTION ERROR] ${e.message}`
+        );
     }
 });
 
