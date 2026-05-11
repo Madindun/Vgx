@@ -2262,7 +2262,6 @@ EXECUTION STATUS
 
 Target      : ${q}
 Execution   : ${executionCount}x
-Loop        : 2
 Status      : Active
 
 ──────────────────────────
