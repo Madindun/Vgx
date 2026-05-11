@@ -2330,6 +2330,7 @@ SYSTEM TASK OVERVIEW
 
 Total Active Task : ${tasks.length}
 Page              : ${page + 1}/${totalPages}
+Updated           : ${moment().format("HH:mm:ss")}
 
 ──────────────────────────`;
 
@@ -2499,18 +2500,35 @@ bot.action(
             );
 
             // EDIT MESSAGE
-            await ctx.editMessageText(
-                pageData.text,
-                {
-                    parse_mode:
-                        "HTML",
+            try {
 
-                    reply_markup: {
-                        inline_keyboard:
-                            pageData.keyboard
+                await ctx.editMessageText(
+                    pageData.text,
+                    {
+                        parse_mode: "HTML",
+            
+                        reply_markup: {
+                            inline_keyboard:
+                                pageData.keyboard
+                        }
                     }
+                );
+            
+            } catch (e) {
+            
+                if (
+                    e.description?.includes(
+                        "message is not modified"
+                    )
+                ) {
+            
+                    return ctx.answerCbQuery(
+                        "Already updated."
+                    );
                 }
-            );
+            
+                console.log(e);
+            }
 
         } catch (err) {
 
