@@ -1217,7 +1217,7 @@ Status : RUNNING
         { parse_mode: "HTML" }
     );
 
-    exec("git pull origin main", async (error, stdout, stderr) => {
+    exec("git pull", async (error, stdout, stderr) => {
 
         if (error) {
             return ctx.telegram.editMessageText(
