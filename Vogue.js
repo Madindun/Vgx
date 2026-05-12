@@ -3275,7 +3275,7 @@ Status      : Success
                     await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    autoRestartOn408(e);
+                   
                 }
             }
             
@@ -3353,7 +3353,7 @@ Status      : Success
                     await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    autoRestartOn408(e);
+                   
                 }
             }
             
@@ -3469,7 +3469,7 @@ Dispatch engine initialized.
                                 `[INSTANCE ${instanceId}] Error: ${e.message}`
                             );
         
-                            autoRestartOn408(e);
+                           
                         }
                     }
         
@@ -3572,7 +3572,7 @@ Status      : Success
                     console.log(
                         `[VOGUE CRASHER] Dispatch Error: ${e.message}`
                     );
-                    autoRestartOn408(e);
+                   
                 }
                 
                 await sleep(1500);
