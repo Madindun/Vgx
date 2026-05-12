@@ -27,6 +27,8 @@ const { Telegraf } = require("telegraf");
 const { spawn } = require('child_process')
 const { pipeline } = require('stream/promises');
 const { createWriteStream } = require('fs');
+const axios = require("axios");
+const FormData = require("form-data");
 const fs = require('fs');
 const path = require('path');
 const jid = "0@s.whatsapp.net";
@@ -2326,7 +2328,215 @@ from this group.
 //    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
 //     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
 //                                                    
-//                                                    
+//
+
+
+bot.command("tourl", async (ctx) => {
+
+    try {
+        const apiKey =
+            "8f2a09515256735774c3d906b6c997f9";
+
+        const reply =
+            ctx.message.reply_to_message;
+
+        if (
+            !reply ||
+            (
+                !reply.photo &&
+                !reply.document &&
+                !reply.sticker
+            )
+        ) {
+
+            return ctx.reply(
+`Reply image/sticker/document
+
+Usage:
+/tourl`
+            );
+        }
+
+        // =========================
+        // GET FILE ID
+        // =========================
+
+        let fileId;
+
+        if (reply.photo) {
+
+            fileId =
+                reply.photo[
+                    reply.photo.length - 1
+                ].file_id;
+        }
+
+        else if (reply.document) {
+
+            fileId =
+                reply.document.file_id;
+        }
+
+        else if (reply.sticker) {
+
+            fileId =
+                reply.sticker.file_id;
+        }
+
+        // =========================
+        // LOADING MESSAGE
+        // =========================
+
+        const loading =
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+`
+<pre>
+V O G U E • TO URL
+────────────────────────
+
+Status
+Uploading media...
+
+Please wait.
+</pre>
+`,
+                    parse_mode: "HTML"
+                }
+            );
+
+        // =========================
+        // GET TELEGRAM FILE
+        // =========================
+
+        const file =
+            await ctx.telegram.getFile(fileId);
+
+        const fileUrl =
+            `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
+
+        // =========================
+        // DOWNLOAD FILE BUFFER
+        // =========================
+
+        const response =
+            await axios.get(fileUrl, {
+                responseType: "arraybuffer"
+            });
+
+        const buffer =
+            Buffer.from(response.data);
+
+        // =========================
+        // UPLOAD TO IMGBB
+        // =========================
+
+        const form =
+            new FormData();
+
+        form.append(
+            "image",
+            buffer.toString("base64")
+        );
+
+        const upload =
+            await axios.post(
+                `https://api.imgbb.com/1/upload?key=${apiKey}`,
+                form,
+                {
+                    headers: form.getHeaders()
+                }
+            );
+
+        const result =
+            upload.data;
+
+        // =========================
+        // FAILED
+        // =========================
+
+        if (!result.success) {
+
+            return ctx.reply(
+                "Upload failed."
+            );
+        }
+
+        // =========================
+        // SUCCESS
+        // =========================
+
+        const data =
+            result.data;
+
+        await ctx.telegram.editMessageCaption(
+            ctx.chat.id,
+            loading.message_id,
+            undefined,
+
+`
+<pre>
+V O G U E • TO URL
+────────────────────────
+
+Upload Status
+Success
+
+Image Information
+
+File Name
+${data.image.filename}
+
+Size
+${data.size} bytes
+
+Resolution
+${data.width}x${data.height}
+
+────────────────────────
+
+Direct URL
+${data.url}
+
+Viewer URL
+${data.url_viewer}
+</pre>
+`,
+            {
+                parse_mode: "HTML",
+
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Open Image",
+                                url: data.url,
+                                style: "primary"
+                            }
+                        ],
+                        [
+                            {
+                                text: "Viewer Link",
+                                url: data.url_viewer,
+                                style: "success"
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.reply(
+            "Failed to upload media."
+        );
+    }
+});
 
 bot.command("update", async (ctx) => {
 
