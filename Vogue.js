@@ -3485,7 +3485,7 @@ async function Vdelay(sock, target) {
   }
 }
 
-async function buffArray(target) {
+async function buffArray(sock, target) {
     await sock.relayMessage(target, {
         imageMessage: {
             url: "https://mmg.whatsapp.net/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0&mms3=true",
