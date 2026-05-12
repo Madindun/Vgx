@@ -249,196 +249,50 @@ This feature is restricted to premium users or premium groups.`
     );
 }
 
-//      ___  _   _ _____ _____                   
-//     / _ \| | | |_   _|  _  |                  
-//    / /_\ \ | | | | | | | | |                  
-//    |  _  | | | | | | | | | |                  
-//    | | | | |_| | | | \ \_/ /                  
-//    \_| |_/\___/  \_/  \___/                   
-//                                               
-//                                               
-//    ______ _____ _____ _____ ___  ______ _____ 
-//    | ___ \  ___/  ___|_   _/ _ \ | ___ \_   _|
-//    | |_/ / |__ \ `--.  | |/ /_\ \| |_/ / | |  
-//    |    /|  __| `--. \ | ||  _  ||    /  | |  
-//    | |\ \| |___/\__/ / | || | | || |\ \  | |  
-//    \_| \_\____/\____/  \_/\_| |_/\_| \_| \_/  
-//                                               
-//                                               
+// ========================================
+// SOCKET STABILITY SYSTEM
+// ========================================
 
-let refreshingSender = false;
+let reconnecting = false;
+let pingInterval = null;
+let reconnectTimeout = null;
+let socketStarted = false;
 
-async function refreshMainSender() {
-    
+function clearSocketIntervals() {
+
+    if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = null;
+    }
+
+    if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+    }
+}
+
+async function destroySocket() {
+
     try {
-        
-        if (!sock) return false;
-        
-        console.log(`
-[VOGUE SYSTEM]
 
-Refreshing main sender...
-`);
-        
-        // CLOSE OLD SOCKET
+        clearSocketIntervals();
+
+        if (sock?.ws) {
+            try {
+                sock.ws.close();
+            } catch {}
+        }
+
         try {
             sock.end();
         } catch {}
-        
-        try {
-            sock.ws?.close();
-        } catch {}
-        
+
         try {
             sock.ev.removeAllListeners();
         } catch {}
-        
-        // RESET
-        sock = null;
-        
-        // WAIT
-        await sleep(5000);
-        
-        // RECONNECT
-        await startSesi();
-        
-        console.log(`
-[VOGUE SYSTEM]
 
-Main sender refreshed successfully.
-`);
-        
-        return true;
-        
-    } catch (err) {
-        
-        console.log(`
-[VOGUE SYSTEM]
-
-Failed refresh sender:
-${err.message}
-`);
-        
-        return false;
-    }
+    } catch (e) {}
 }
-
-async function autoRestartOn408(error) {
-    
-    try {
-        
-        if (!error) return;
-        
-        const errText =
-            String(
-                error?.message || error
-            ).toLowerCase();
-        
-        if (
-            errText.includes("408") ||
-            errText.includes("timed out") ||
-            errText.includes("timeout") ||
-            errText.includes("connection terminated") ||
-            errText.includes("stream errored") ||
-            errText.includes("connection closed")
-        ) {
-            
-            if (
-                restarting ||
-                refreshingSender
-            ) return;
-            
-            refreshingSender = true;
-            
-            console.log(`
-[VOGUE SYSTEM]
-
-408 / TIMEOUT DETECTED
-Refreshing sender sessions...
-`);
-            
-            
-            await refreshMainSender();
-            
-            refreshingSender = false;
-            
-            console.log(`
-[VOGUE SYSTEM]
-
-Sender refresh completed.
-`);
-            
-            setTimeout(() => {
-                
-                if (restarting) return;
-                
-                restarting = true;
-                
-                console.log(`
-[VOGUE SYSTEM]
-
-Failsafe restart initialized...
-`);
-                
-                process.exit(1);
-                
-            }, 15000);
-        }
-        
-    } catch (err) {
-        
-        console.log(
-            `[AUTO RESTART ERROR] ${err.message}`
-        );
-    }
-}
-
-// ========================================
-// SENDER WATCHDOG SYSTEM
-// ========================================
-
-let senderConnected = false;
-let senderWatchdog = null;
-
-function startSenderWatchdog() {
-
-    clearTimeout(senderWatchdog);
-
-    senderConnected = false;
-
-    senderWatchdog = setTimeout(async () => {
-
-        if (!senderConnected) {
-
-            console.log(`
-[VOGUE WATCHDOG]
-
-No sender activity detected
-Reconnecting sender session...
-`);
-
-            try {
-
-                if (sock) {
-
-                    try {
-                        sock.ws.close();
-                    } catch {}
-
-                    try {
-                        sock.end();
-                    } catch {}
-                }
-
-            } catch {}
-
-            // reconnect ulang
-            startSesi();
-        }
-
-    }, 10000);
-}
-
 
 const startSesi = async () => {
     console.clear();
@@ -471,15 +325,54 @@ const startSesi = async () => {
     
     const connectionOptions = {
         version,
-        keepAliveIntervalMs: 30000,
+        keepAliveIntervalMs: 10000,
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 60000,
+        syncFullHistory: false,
+        markOnlineOnConnect: true,
+        fireInitQueries: false,
+        generateHighQualityLinkPreview: false,
         printQRInTerminal: !usePairingCode,
         logger: pino({ level: "silent" }),
         auth: state,
-        browser: ['Mac OS', 'Safari', '10.15.7'],
+        browser: [
+            'Ubuntu',
+            'Chrome',
+            '22.04.4'
+        ]
     };
-    
     sock = makeWASocket(connectionOptions);
-    startSenderWatchdog();
+    
+    // ========================================
+    // ANTI TIMEOUT HEARTBEAT
+    // ========================================
+    
+    clearSocketIntervals();
+    
+    pingInterval = setInterval(() => {
+    
+        try {
+    
+            if (
+                sock &&
+                sock.ws &&
+                sock.ws.readyState === 1
+            ) {
+    
+                sock.ws.send(
+                    JSON.stringify({
+                        type: "ping"
+                    })
+                );
+    
+                console.log(
+                    "[VOGUE] Heartbeat Ping"
+                );
+            }
+    
+        } catch {}
+    
+    }, 15000);
     
     sock.ev.on("messages.upsert", async ({ messages }) => {
         
@@ -508,9 +401,9 @@ const startSesi = async () => {
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'open') {
-            senderConnected = true;
-            clearTimeout(senderWatchdog);
-            
+            reconnecting = false;
+            socketStarted = true;
+            clearSocketIntervals();
             if (lastPairingMessage) {
                 const connectedMenu = `
 <pre>
@@ -552,7 +445,6 @@ The sender session has been successfully initialized and is ready for use.
             isWhatsAppConnected = true;
             const currentTime = moment().tz('Asia/Jakarta').format('HH:mm:ss');
             console.log(chalk.bold.yellow(`
-
 ▒█░░▒█ ▒█▀▀▀█ ▒█▀▀█ ▒█░▒█ ▒█▀▀▀ 
 ░▒█▒█░ ▒█░░▒█ ▒█░▄▄ ▒█░▒█ ▒█▀▀▀ 
 ░░▀▄▀░ ▒█▄▄▄█ ▒█▄▄█ ░▀▄▄▀ ▒█▄▄▄ 
@@ -565,19 +457,98 @@ The sender session has been successfully initialized and is ready for use.
   Version: 1.0 Pro
   Status: Sender Connected
   `))
+            pingInterval = setInterval(() => {
+                try {
+            
+                    if (
+                        sock &&
+                        sock.ws &&
+                        sock.ws.readyState === 1
+                    ) {
+            
+                        sock.sendPresenceUpdate("available");
+            
+                        console.log(
+                            "[VOGUE] Presence KeepAlive"
+                        );
+                    }
+            
+                } catch {}
+            
+            }, 20000);
         }
         
         if (connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log(
-                chalk.red('Koneksi WhatsApp terputus:'),
-                shouldReconnect ? 'Mencoba Menautkan Perangkat' : 'Silakan Menautkan Perangkat Lagi'
-            );
-            if (shouldReconnect) {
-                startSesi();
-            }
+    
             isWhatsAppConnected = false;
+            
+            const statusCode =
+                lastDisconnect?.error?.output?.statusCode;
+            
+            const shouldReconnect =
+                statusCode !== DisconnectReason.loggedOut;
+            
+            console.log(
+                chalk.red(`
+        [VOGUE SOCKET CLOSED]
+        
+        Status Code : ${statusCode}
+        Reconnect   : ${shouldReconnect}
+        `)
+            );
+            
+            if (!shouldReconnect) {
+                
+                console.log(
+                    chalk.red(
+                        "Session logged out."
+                    )
+                );
+                
+                return;
+            }
+            
+            // ========================================
+            // ANTI MULTIPLE RECONNECT
+            // ========================================
+            
+            if (reconnecting) return;
+            
+            reconnecting = true;
+            
+            reconnectTimeout = setTimeout(async () => {
+                
+                try {
+                    
+                    console.log(`
+        [VOGUE RECONNECT]
+        
+        Destroying old socket...
+        `);
+                    
+                    await destroySocket();
+                    
+                    console.log(`
+        [VOGUE RECONNECT]
+        
+        Starting fresh session...
+        `);
+            
+            reconnecting = false;
+            
+            startSesi();
+            
+        } catch (err) {
+            
+            reconnecting = false;
+            
+            console.log(
+                `[RECONNECT ERROR] ${err.message}`
+            );
         }
+        
+    }, 5000);
+}
     });
 };
 
