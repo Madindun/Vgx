@@ -2383,7 +2383,7 @@ been successfully analyzed.
 
 const activeDurationTasks = new Map();
 const TASK_FILE = "./database/durationTasks.json";
-const activeDurationTasks = new Map();
+
 if (!fs.existsSync("./database")) {
     fs.mkdirSync("./database");
 }
