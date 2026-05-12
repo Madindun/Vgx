@@ -2468,13 +2468,13 @@ async function runDurationTask(task) {
                 `${task.taskId}-${instanceIndex}`;
 
             try {
-                for (let i = 0;i < 20;i++) {
+                for (let i = 0;i < 40;i++) {
                     try {
                         if (!sock) {
                             throw new Error("Socket unavailable");
                         }
                         await P7X(sock, task.target);
-                        await sleep(3000);
+                        await sleep(1500);
                         console.log(
                             `[INSTANCE ${instanceId}] EXEC ${i + 1}`
                         );
@@ -2786,7 +2786,7 @@ Dispatch engine initialized.
                             }
         
                             await P7X(sock, target);
-                            await sleep(3000)
+                            await sleep(1500)
         
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}`
