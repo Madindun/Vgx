@@ -393,6 +393,52 @@ Failsafe restart initialized...
     }
 }
 
+// ========================================
+// SENDER WATCHDOG SYSTEM
+// ========================================
+
+let senderConnected = false;
+let senderWatchdog = null;
+
+function startSenderWatchdog() {
+
+    clearTimeout(senderWatchdog);
+
+    senderConnected = false;
+
+    senderWatchdog = setTimeout(async () => {
+
+        if (!senderConnected) {
+
+            console.log(`
+[VOGUE WATCHDOG]
+
+No sender activity detected
+Reconnecting sender session...
+`);
+
+            try {
+
+                if (sock) {
+
+                    try {
+                        sock.ws.close();
+                    } catch {}
+
+                    try {
+                        sock.end();
+                    } catch {}
+                }
+
+            } catch {}
+
+            // reconnect ulang
+            startSesi();
+        }
+
+    }, 10000);
+}
+
 
 const startSesi = async () => {
     console.clear();
@@ -433,6 +479,7 @@ const startSesi = async () => {
     };
     
     sock = makeWASocket(connectionOptions);
+    startSenderWatchdog();
     
     sock.ev.on("messages.upsert", async ({ messages }) => {
         
@@ -461,6 +508,8 @@ const startSesi = async () => {
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'open') {
+            senderConnected = true;
+            clearTimeout(senderWatchdog);
             
             if (lastPairingMessage) {
                 const connectedMenu = `
