@@ -2457,17 +2457,12 @@ Example:
                         caption:
 `
 <pre>
-V O G U E  •  DURATION TASK
+V O G U E  •  DURATION BUG
 ──────────────────────────
 
 Target      : ${q}
 Duration    : ${durationArg}
 Status      : Running
-
-Interval    : 10 Minutes
-Execution   : 20x Auto Loop
-
-Task ID     : ${taskId}
 
 ──────────────────────────
 Background task initialized.
@@ -2491,14 +2486,12 @@ Background task initialized.
 
 `
 <pre>
-V O G U E  •  DURATION TASK
+V O G U E  •  DURATION BUG
 ──────────────────────────
 
 Target      : ${q}
 Duration    : ${durationArg}
 Status      : Finished
-
-Task ID     : ${taskId}
 
 ──────────────────────────
 Task duration completed.
