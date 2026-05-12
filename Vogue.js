@@ -1,6 +1,27 @@
-// ==========================================
-//  LOAD CONFIG, VARIABLE, SENDER
-// ==========================================
+//     _____ _____ _   _ ______ _____ _____ 
+//    /  __ \  _  | \ | ||  ___|_   _|  __ \
+//    | /  \/ | | |  \| || |_    | | | |  \/
+//    | |   | | | | . ` ||  _|   | | | | __ 
+//    | \__/\ \_/ / |\  || |    _| |_| |_\ \
+//     \____/\___/\_| \_/\_|    \___/ \____/
+//                                          
+//                                          
+//     _   _  ___  ______                   
+//    | | | |/ _ \ | ___ \                  
+//    | | | / /_\ \| |_/ /                  
+//    | | | |  _  ||    /                   
+//    \ \_/ / | | || |\ \                   
+//     \___/\_| |_/\_| \_|                  
+//                                          
+//                                          
+//     _____ _____ _   _______ ___________  
+//    /  ___|  ___| \ | |  _  \  ___| ___ \ 
+//    \ `--.| |__ |  \| | | | | |__ | |_/ / 
+//     `--. \  __|| . ` | | | |  __||    /  
+//    /\__/ / |___| |\  | |/ /| |___| |\ \  
+//    \____/\____/\_| \_/___/ \____/\_| \_| 
+//                                          
+//                                          
 
 const { Telegraf } = require("telegraf");
 const { spawn } = require('child_process')
@@ -423,13 +444,22 @@ const checkPremium = (ctx, next) => {
     next();
 };
 
-// ==========================================
-// HOME PAGE START BOT
-// ==========================================
-
-// ========================================
-// REQUIRED CHANNEL SYSTEM
-// ========================================
+//     _____  _   _   ___   _   _  _   _  _____ _     
+//    /  __ \| | | | / _ \ | \ | || \ | ||  ___| |    
+//    | /  \/| |_| |/ /_\ \|  \| ||  \| || |__ | |    
+//    | |    |  _  ||  _  || . ` || . ` ||  __|| |    
+//    | \__/\| | | || | | || |\  || |\  || |___| |____
+//     \____/\_| |_/\_| |_/\_| \_/\_| \_/\____/\_____/
+//                                                    
+//                                                    
+//     _______   _______ _____ ________  ___          
+//    /  ___\ \ / /  ___|_   _|  ___|  \/  |          
+//    \ `--. \ V /\ `--.  | | | |__ | .  . |          
+//     `--. \ \ /  `--. \ | | |  __|| |\/| |          
+//    /\__/ / | | /\__/ / | | | |___| |  | |          
+//    \____/  \_/ \____/  \_/ \____/\_|  |_/          
+//                                                    
+//                                                    
 
 const REQUIRED_CHANNELS = [
     "@VogueXChannel"
@@ -537,10 +567,6 @@ press the verification button below.
     }
 }
 
-// ========================================
-// GLOBAL MIDDLEWARE
-// ========================================
-
 bot.use(async (ctx, next) => {
 
     if (ctx.from?.id == ownerID) {
@@ -596,14 +622,27 @@ You can now use the bot normally.`
     }
 );
 
-// ========================================
-// DAILY LIMIT SYSTEM
-// ========================================
+//     _     ________  ________ _____ 
+//    | |   |_   _|  \/  |_   _|_   _|
+//    | |     | | | .  . | | |   | |  
+//    | |     | | | |\/| | | |   | |  
+//    | |_____| |_| |  | |_| |_  | |  
+//    \_____/\___/\_|  |_/\___/  \_/  
+//                                    
+//                                    
+//     _   _ _____ ___________        
+//    | | | /  ___|  ___| ___ \       
+//    | | | \ `--.| |__ | |_/ /       
+//    | | | |`--. \  __||    /        
+//    | |_| /\__/ / |___| |\ \        
+//     \___/\____/\____/\_| \_|       
+//                                    
+//                                    
 
 const LIMIT_FILE =
     "./database/userlimit.json";
-let userLimits = {};
 
+let userLimits = {};
 
 if (fs.existsSync(LIMIT_FILE)) {
 
@@ -643,10 +682,14 @@ function checkUserLimit(userId) {
         userLimits[userId] = {
 
             date: today,
-            used: 0
+
+            used: 0,
+
+            bonus: 0
         };
     }
 
+    // RESET HARIAN
     if (
         userLimits[userId].date !== today
     ) {
@@ -654,12 +697,27 @@ function checkUserLimit(userId) {
         userLimits[userId] = {
 
             date: today,
-            used: 0
+
+            used: 0,
+
+            bonus:
+                userLimits[userId]
+                ?.bonus || 0
         };
     }
 
+    // TOTAL LIMIT
+    const maxLimit =
+        15 +
+        (
+            userLimits[userId]
+            .bonus || 0
+        );
+
+    // LIMIT HABIS
     if (
-        userLimits[userId].used >= 15
+        userLimits[userId].used >=
+        maxLimit
     ) {
 
         return {
@@ -669,7 +727,11 @@ function checkUserLimit(userId) {
             remaining: 0,
 
             used:
-                userLimits[userId].used
+                userLimits[userId]
+                .used,
+
+            total:
+                maxLimit
         };
     }
 
@@ -678,17 +740,19 @@ function checkUserLimit(userId) {
         allowed: true,
 
         remaining:
-            15 -
-            userLimits[userId].used,
+            maxLimit -
+            userLimits[userId]
+            .used,
 
         used:
-            userLimits[userId].used
+            userLimits[userId]
+            .used,
+
+        total:
+            maxLimit
     };
 }
 
-// =========================
-// ADD LIMIT
-// =========================
 
 function addUserLimit(userId) {
 
@@ -699,10 +763,14 @@ function addUserLimit(userId) {
         userLimits[userId] = {
 
             date: today,
-            used: 0
+
+            used: 0,
+
+            bonus: 0
         };
     }
 
+    // RESET HARIAN
     if (
         userLimits[userId].date !== today
     ) {
@@ -710,7 +778,12 @@ function addUserLimit(userId) {
         userLimits[userId] = {
 
             date: today,
-            used: 0
+
+            used: 0,
+
+            bonus:
+                userLimits[userId]
+                ?.bonus || 0
         };
     }
 
@@ -719,16 +792,73 @@ function addUserLimit(userId) {
     saveLimits();
 }
 
-// ========================================
-// LIMIT MIDDLEWARE
-// ========================================
+function addBonusLimit(
+    userId,
+    amount
+) {
+
+    const today = getToday();
+
+    if (!userLimits[userId]) {
+
+        userLimits[userId] = {
+
+            date: today,
+
+            used: 0,
+
+            bonus: 0
+        };
+    }
+
+    if (
+        !userLimits[userId].bonus
+    ) {
+
+        userLimits[userId].bonus = 0;
+    }
+
+    userLimits[userId].bonus += amount;
+
+    saveLimits();
+}
+
+function removeBonusLimit(
+    userId,
+    amount
+) {
+
+    if (!userLimits[userId]) {
+        return false;
+    }
+
+    if (
+        !userLimits[userId].bonus
+    ) {
+
+        userLimits[userId].bonus = 0;
+    }
+
+    userLimits[userId].bonus -= amount;
+
+    if (
+        userLimits[userId].bonus < 0
+    ) {
+
+        userLimits[userId].bonus = 0;
+    }
+
+    saveLimits();
+
+    return true;
+}
+
 
 async function checkExecutionLimit(
     ctx,
     next
 ) {
 
-    // OWNER BYPASS
     if (ctx.from.id == ownerID) {
         return next();
     }
@@ -739,7 +869,6 @@ async function checkExecutionLimit(
     const limit =
         checkUserLimit(userId);
 
-    // LIMIT REACHED
     if (!limit.allowed) {
 
         return ctx.replyWithPhoto(
@@ -753,12 +882,12 @@ V O G U E  •  C R A S H E R
 Daily execution limit reached.
 
 User        : ${ctx.from.first_name}
-Limit       : 15 / 15
+Limit       : ${limit.used} / ${limit.total}
 Status      : Blocked
 
 ──────────────────────────
 Limit will reset automatically tomorrow.
-To avoid the sender being banned.
+To avoid sender overload and ban risk.
 </pre>`,
                 parse_mode: "HTML",
 
@@ -766,7 +895,7 @@ To avoid the sender being banned.
                     inline_keyboard: [
                         [
                             {
-                                text: "Be A Developer",
+                                text: "Developer",
                                 url: "https://t.me/ScriptKits",
                                 style: "danger"
                             }
@@ -782,6 +911,319 @@ To avoid the sender being banned.
     return next();
 }
 
+bot.command("addlimit", async (ctx) => {
+
+    try {
+
+        if (ctx.from.id != ownerID) {
+            return ctx.reply("Owner only.");
+        }
+
+        const args = ctx.message.text.split(" ");
+
+        let targetUserId;
+        let targetName;
+        let amount;
+
+        if (ctx.message.reply_to_message) {
+
+            targetUserId = String(
+                ctx.message.reply_to_message.from.id
+            );
+
+            targetName =
+                ctx.message.reply_to_message.from.first_name;
+
+            amount = parseInt(args[1]);
+
+        }
+
+        else {
+
+            if (!args[1] || !args[2]) {
+
+                return ctx.reply(
+`Usage:
+/addlimit <id> <amount>
+
+/addlimit 123456789 10
+
+Or reply user:
+/addlimit 10`
+                );
+            }
+
+            targetUserId =
+                args[1].replace("@", "");
+
+            targetName = args[1];
+
+            amount = parseInt(args[2]);
+        }
+
+
+        if (!amount || amount < 1) {
+            return ctx.reply(
+                "Invalid limit amount."
+            );
+        }
+
+        addBonusLimit(
+            targetUserId,
+            amount
+        );
+
+        const data = checkUserLimit(
+            targetUserId
+        );
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`
+<pre>
+V O G U E • LIMIT MANAGER
+────────────────────────
+
+Status
+Success
+
+Target
+${targetName}
+
+User ID
+${targetUserId}
+
+Added Bonus
++${amount}
+
+Current Limit
+${data.used} / ${data.total}
+
+────────────────────────
+User limit updated successfully.
+</pre>
+`,
+                parse_mode: "HTML"
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.reply(
+            "Failed to add limit."
+        );
+    }
+});
+
+bot.command("remlimit", async (ctx) => {
+
+    try {
+
+        if (ctx.from.id != ownerID) {
+            return ctx.reply("Owner only.");
+        }
+
+        const args = ctx.message.text.split(" ");
+
+        let targetUserId;
+        let targetName;
+        let amount;
+
+        if (ctx.message.reply_to_message) {
+
+            targetUserId = String(
+                ctx.message.reply_to_message.from.id
+            );
+
+            targetName =
+                ctx.message.reply_to_message.from.first_name;
+
+            amount = parseInt(args[1]);
+
+        }
+
+        else {
+
+            if (!args[1] || !args[2]) {
+
+                return ctx.reply(
+`Usage:
+/remlimit <id> <amount>`
+                );
+            }
+
+            targetUserId =
+                args[1].replace("@", "");
+
+            targetName = args[1];
+
+            amount = parseInt(args[2]);
+        }
+
+        if (!amount || amount < 1) {
+            return ctx.reply(
+                "Invalid amount."
+            );
+        }
+
+        const removed =
+            removeBonusLimit(
+                targetUserId,
+                amount
+            );
+
+        if (!removed) {
+            return ctx.reply(
+                "User not found."
+            );
+        }
+
+        const data = checkUserLimit(
+            targetUserId
+        );
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`
+<pre>
+V O G U E • LIMIT MANAGER
+────────────────────────
+
+Status
+Success
+
+Target
+${targetName}
+
+Removed Bonus
+-${amount}
+
+Current Limit
+${data.used} / ${data.total}
+
+────────────────────────
+User bonus limit updated.
+</pre>
+`,
+                parse_mode: "HTML"
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.reply(
+            "Failed to remove limit."
+        );
+    }
+});
+
+bot.command("checklimit", async (ctx) => {
+
+    try {
+
+        const args =
+            ctx.message.text.split(" ");
+
+        let targetUserId;
+        let targetName;
+
+        if (ctx.message.reply_to_message) {
+
+            targetUserId = String(
+                ctx.message.reply_to_message.from.id
+            );
+
+            targetName =
+                ctx.message.reply_to_message.from.first_name;
+        }
+
+        else if (!args[1]) {
+
+            targetUserId =
+                String(ctx.from.id);
+
+            targetName =
+                ctx.from.first_name;
+        }
+
+        else {
+
+            targetUserId =
+                args[1].replace("@", "");
+
+            targetName = args[1];
+        }
+
+        const data = checkUserLimit(
+            targetUserId
+        );
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`
+<pre>
+V O G U E • LIMIT CHECKER
+────────────────────────
+
+Target
+${targetName}
+
+User ID
+${targetUserId}
+
+Used
+${data.used}
+
+Remaining
+${data.remaining}
+
+Total
+${data.total}
+
+────────────────────────
+Daily limit information.
+</pre>
+`,
+                parse_mode: "HTML"
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.reply(
+            "Failed to check limit."
+        );
+    }
+});
+
+//     _____ _____ ___  ______ _____ 
+//    /  ___|_   _/ _ \ | ___ \_   _|
+//    \ `--.  | |/ /_\ \| |_/ / | |  
+//     `--. \ | ||  _  ||    /  | |  
+//    /\__/ / | || | | || |\ \  | |  
+//    \____/  \_/\_| |_/\_| \_| \_/  
+//                                   
+//                                   
+//    ______  _____ _____            
+//    | ___ \|  _  |_   _|           
+//    | |_/ /| | | | | |             
+//    | ___ \| | | | | |             
+//    | |_/ /\ \_/ / | |             
+//    \____/  \___/  \_/             
+//                                   
+//                                   
 
 bot.start(async (ctx) => {
     
@@ -877,17 +1319,12 @@ Select one of the available options below to continue system interaction.
 
     try {
 
-        // =========================
-        // EDIT MESSAGE
-        // =========================
-
         const sent = await ctx.editMessageMedia(
             {
                 type: 'photo',
                 media: thumbnailUrl,
                 caption: menuMessage,
                 parse_mode: "HTML",
-                // 🔥 EFFECT TELEGRAM
                 message_effect_id: "5104841245755180586",
             },
             {
@@ -1212,9 +1649,22 @@ Official Build by VOGUE CRASHER
     }
 });
 
-// ==========================================
-// COMMAND SENDER
-// ==========================================
+//     _____ _____ _   _______ ___________            
+//    /  ___|  ___| \ | |  _  \  ___| ___ \           
+//    \ `--.| |__ |  \| | | | | |__ | |_/ /           
+//     `--. \  __|| . ` | | | |  __||    /            
+//    /\__/ / |___| |\  | |/ /| |___| |\ \            
+//    \____/\____/\_| \_/___/ \____/\_| \_|           
+//                                                    
+//                                                    
+//     _____ ________  ______  ___  ___   _   _______ 
+//    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \
+//    | /  \/ | | | .  . || .  . |/ /_\ \|  \| | | | |
+//    | |   | | | | |\/| || |\/| ||  _  || . ` | | | |
+//    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
+//     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
+//                                                    
+//                                                    
 
 bot.command("reqpair", async (ctx) => {
     if (ctx.from.id != ownerID) {
@@ -1332,9 +1782,22 @@ for command execution.
     });
 }
 
-// ==========================================
-//  DEVELOPER COMMAND
-// ==========================================
+//    ______ _____ _   _ _____ _     ___________ ___________ 
+//    |  _  \  ___| | | |  ___| |   |  _  | ___ \  ___| ___ \
+//    | | | | |__ | | | | |__ | |   | | | | |_/ / |__ | |_/ /
+//    | | | |  __|| | | |  __|| |   | | | |  __/|  __||    / 
+//    | |/ /| |___\ \_/ / |___| |___\ \_/ / |   | |___| |\ \ 
+//    |___/ \____/ \___/\____/\_____/\___/\_|   \____/\_| \_|
+//                                                           
+//                                                           
+//     _____ ________  ______  ___  ___   _   _______        
+//    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \       
+//    | /  \/ | | | .  . || .  . |/ /_\ \|  \| | | | |       
+//    | |   | | | | |\/| || |\/| ||  _  || . ` | | | |       
+//    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ /        
+//     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/         
+//                                                           
+//                                                           
 
 let maintenanceMode = false;
 
@@ -1479,9 +1942,22 @@ System access has been restored.
     }
 );
 
-// ==========================================
-//  PERMIUM COMMAND
-// ==========================================
+//    ____________ ________  ________ _   ____  ___   
+//    | ___ \ ___ \  ___|  \/  |_   _| | | |  \/  |   
+//    | |_/ / |_/ / |__ | .  . | | | | | | | .  . |   
+//    |  __/|    /|  __|| |\/| | | | | | | | |\/| |   
+//    | |   | |\ \| |___| |  | |_| |_| |_| | |  | |   
+//    \_|   \_| \_\____/\_|  |_/\___/ \___/\_|  |_/   
+//                                                    
+//                                                    
+//     _____ ________  ______  ___  ___   _   _______ 
+//    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \
+//    | /  \/ | | | .  . || .  . |/ /_\ \|  \| | | | |
+//    | |   | | | | |\/| || |\/| ||  _  || . ` | | | |
+//    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
+//     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
+//                                                    
+//                                                    :
 
 bot.command('addprem', async (ctx) => {
     if (ctx.from.id != ownerID) {
@@ -1709,9 +2185,22 @@ from this group.
     
 });
 
-// ==========================================
-// TOOLS COMMAND
-// ==========================================
+//     _____ _____  _____ _      _____                
+//    |_   _|  _  ||  _  | |    /  ___|               
+//      | | | | | || | | | |    \ `--.                
+//      | | | | | || | | | |     `--. \               
+//      | | \ \_/ /\ \_/ / |____/\__/ /               
+//      \_/  \___/  \___/\_____/\____/                
+//                                                    
+//                                                    
+//     _____ ________  ______  ___  ___   _   _______ 
+//    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \
+//    | /  \/ | | | .  . || .  . |/ /_\ \|  \| | | | |
+//    | |   | | | | |\/| || |\/| ||  _  || . ` | | | |
+//    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
+//     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
+//                                                    
+//                                                    
 
 bot.command("update", async (ctx) => {
 
@@ -2378,9 +2867,22 @@ been successfully analyzed.
     
 });
 
-// ==========================================
-// DEVELOPER BUG
-// ==========================================
+//    ______ _   _ _____  _____                       
+//    | ___ \ | | |  __ \/  ___|                      
+//    | |_/ / | | | |  \/\ `--.                       
+//    | ___ \ | | | | __  `--. \                      
+//    | |_/ / |_| | |_\ \/\__/ /                      
+//    \____/ \___/ \____/\____/                       
+//                                                    
+//                                                    
+//     _____ ________  ______  ___  ___   _   _______ 
+//    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \
+//    | /  \/ | | | .  . || .  . |/ /_\ \|  \| | | | |
+//    | |   | | | | |\/| || |\/| ||  _  || . ` | | | |
+//    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
+//     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
+//                                                    
+//                                                    
 
 const activeDurationTasks = new Map();
 const TASK_FILE = "./database/durationTasks.json";
@@ -2621,10 +3123,6 @@ Persistent task created. Task will survive restart.
         );
     }
 );
-
-// ==========================================
-// ALL BUG CMD
-// ==========================================
 
 bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
@@ -2929,9 +3427,22 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-// ==========================================
-// 🔒 ALL FUNCTION BUG
-// ==========================================
+//    ______ _   _ _   _ _____ _____ _____ _____ _   _ 
+//    |  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |
+//    | |_  | | | |  \| | /  \/ | |   | | | | | |  \| |
+//    |  _| | | | | . ` | |     | |   | | | | | | . ` |
+//    | |   | |_| | |\  | \__/\ | |  _| |_\ \_/ / |\  |
+//    \_|    \___/\_| \_/\____/ \_/  \___/ \___/\_| \_/
+//                                                     
+//                                                     
+//    ______ _   _ _____                               
+//    | ___ \ | | |  __ \                              
+//    | |_/ / | | | |  \/                              
+//    | ___ \ | | | | __                               
+//    | |_/ / |_| | |_\ \                              
+//    \____/ \___/ \____/                              
+//                                                     
+//                                                     
 
 
 async function Ipongforcloseivs(sock, target) {
@@ -3652,5 +4163,30 @@ async function Vdelay(sock, target) {
     await new Promise((r) => setTimeout(r, 2000));
   }
 }
+
+//     _       ___  _   _ _   _ _____  _   _        
+//    | |     / _ \| | | | \ | /  __ \| | | |       
+//    | |    / /_\ \ | | |  \| | /  \/| |_| |       
+//    | |    |  _  | | | | . ` | |    |  _  |       
+//    | |____| | | | |_| | |\  | \__/\| | | |       
+//    \_____/\_| |_/\___/\_| \_/\____/\_| |_/       
+//                                                  
+//                                                  
+//     _   _  _____ _____ _   _ _____               
+//    | | | ||  _  |  __ \ | | |  ___|              
+//    | | | || | | | |  \/ | | | |__                
+//    | | | || | | | | __| | | |  __|               
+//    \ \_/ /\ \_/ / |_\ \ |_| | |___               
+//     \___/  \___/ \____/\___/\____/               
+//                                                  
+//                                                  
+//     _____ ______  ___   _____ _   _  ___________ 
+//    /  __ \| ___ \/ _ \ /  ___| | | ||  ___| ___ \
+//    | /  \/| |_/ / /_\ \\ `--.| |_| || |__ | |_/ /
+//    | |    |    /|  _  | `--. \  _  ||  __||    / 
+//    | \__/\| |\ \| | | |/\__/ / | | || |___| |\ \ 
+//     \____/\_| \_\_| |_/\____/\_| |_/\____/\_| \_|
+//                                                  
+//                                                  
 
 bot.launch()
