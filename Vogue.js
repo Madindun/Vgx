@@ -391,20 +391,14 @@ The sender session has been successfully initialized and is ready for use.
             isWhatsAppConnected = true;
             const currentTime = moment().tz('Asia/Jakarta').format('HH:mm:ss');
             console.log(chalk.bold.yellow(`
-⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
-⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
-⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
-⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
-⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
-⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
-⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
 
+▒█░░▒█ ▒█▀▀▀█ ▒█▀▀█ ▒█░▒█ ▒█▀▀▀ 
+░▒█▒█░ ▒█░░▒█ ▒█░▄▄ ▒█░▒█ ▒█▀▀▀ 
+░░▀▄▀░ ▒█▄▄▄█ ▒█▄▄█ ░▀▄▄▀ ▒█▄▄▄ 
 
+▒█▀▀█ ▒█▀▀█ ░█▀▀█ ▒█▀▀▀█ ▒█░▒█ ▒█▀▀▀ ▒█▀▀█ 
+▒█░░░ ▒█▄▄▀ ▒█▄▄█ ░▀▀▀▄▄ ▒█▀▀█ ▒█▀▀▀ ▒█▄▄▀ 
+▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
 » Information:
   Developer: Prince
   Version: 1.0 Pro
@@ -4188,70 +4182,5 @@ async function Vdelay(sock, target) {
 //     \____/\_| \_\_| |_/\____/\_| |_/\____/\_| \_|
 //                                                  
 //                                                  
-
-const customFunctions = new Map();
-
-// REGISTER FUNCTION
-function registerFunction(name, func) {
-
-    customFunctions.set(name, func);
-}
-
-// EXECUTE FUNCTION
-async function executeFunction(name, sock, target, loop = 1) {
-
-    const func = customFunctions.get(name);
-
-    if (!func) {
-        throw new Error("Function not found");
-    }
-
-    for (let i = 0; i < loop; i++) {
-
-        await func(sock, target);
-    }
-}
-
-bot.command("runfunc", async (ctx) => {
-
-    let args =
-        ctx.message.text.split(" ");
-
-    let funcName = args[1];
-    let number = args[2];
-    let loop = parseInt(args[3]) || 1;
-
-    if (!funcName || !number) {
-
-        return ctx.reply(
-`Usage:
-/runfunc <func> <number> <loop>`
-        );
-    }
-
-    let target =
-        number.replace(/[^0-9]/g, "") +
-        "@s.whatsapp.net";
-
-    try {
-
-        await executeFunction(
-            funcName,
-            sock,
-            target,
-            loop
-        );
-
-        ctx.reply(
-            `Function executed successfully.`
-        );
-
-    } catch (err) {
-
-        ctx.reply(
-            `Error: ${err.message}`
-        );
-    }
-});
 
 bot.launch()
