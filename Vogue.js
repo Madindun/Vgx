@@ -266,7 +266,6 @@ This feature is restricted to premium users or premium groups.`
 //                                               
 //                                               
 
-let restarting = false;
 let refreshingSender = false;
 
 async function refreshMainSender() {
