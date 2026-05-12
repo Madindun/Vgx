@@ -249,35 +249,148 @@ This feature is restricted to premium users or premium groups.`
     );
 }
 
-function autoRestartOn408(error) {
+//      ___  _   _ _____ _____                   
+//     / _ \| | | |_   _|  _  |                  
+//    / /_\ \ | | | | | | | | |                  
+//    |  _  | | | | | | | | | |                  
+//    | | | | |_| | | | \ \_/ /                  
+//    \_| |_/\___/  \_/  \___/                   
+//                                               
+//                                               
+//    ______ _____ _____ _____ ___  ______ _____ 
+//    | ___ \  ___/  ___|_   _/ _ \ | ___ \_   _|
+//    | |_/ / |__ \ `--.  | |/ /_\ \| |_/ / | |  
+//    |    /|  __| `--. \ | ||  _  ||    /  | |  
+//    | |\ \| |___/\__/ / | || | | || |\ \  | |  
+//    \_| \_\____/\____/  \_/\_| |_/\_| \_| \_/  
+//                                               
+//                                               
 
-    if (!error) return;
+let restarting = false;
+let refreshingSender = false;
 
-    const errText =
-        String(error?.message || error);
-
-    if (
-        errText.includes("408") ||
-        errText.includes("Timed Out") ||
-        errText.includes("timeout")
-    ) {
-
-        if (restarting) return;
-
-        restarting = true;
-
+async function refreshMainSender() {
+    
+    try {
+        
+        if (!sock) return false;
+        
         console.log(`
 [VOGUE SYSTEM]
 
-408 DETECTED
-Restarting process...
+Refreshing main sender...
 `);
+        
+        // CLOSE OLD SOCKET
+        try {
+            sock.end();
+        } catch {}
+        
+        try {
+            sock.ws?.close();
+        } catch {}
+        
+        try {
+            sock.ev.removeAllListeners();
+        } catch {}
+        
+        // RESET
+        sock = null;
+        
+        // WAIT
+        await sleep(5000);
+        
+        // RECONNECT
+        await startSesi();
+        
+        console.log(`
+[VOGUE SYSTEM]
 
-        setTimeout(() => {
+Main sender refreshed successfully.
+`);
+        
+        return true;
+        
+    } catch (err) {
+        
+        console.log(`
+[VOGUE SYSTEM]
 
-            process.exit(1);
+Failed refresh sender:
+${err.message}
+`);
+        
+        return false;
+    }
+}
 
-        }, 3000);
+async function autoRestartOn408(error) {
+    
+    try {
+        
+        if (!error) return;
+        
+        const errText =
+            String(
+                error?.message || error
+            ).toLowerCase();
+        
+        if (
+            errText.includes("408") ||
+            errText.includes("timed out") ||
+            errText.includes("timeout") ||
+            errText.includes("connection terminated") ||
+            errText.includes("stream errored") ||
+            errText.includes("connection closed")
+        ) {
+            
+            if (
+                restarting ||
+                refreshingSender
+            ) return;
+            
+            refreshingSender = true;
+            
+            console.log(`
+[VOGUE SYSTEM]
+
+408 / TIMEOUT DETECTED
+Refreshing sender sessions...
+`);
+            
+            
+            await refreshMainSender();
+            
+            refreshingSender = false;
+            
+            console.log(`
+[VOGUE SYSTEM]
+
+Sender refresh completed.
+`);
+            
+            setTimeout(() => {
+                
+                if (restarting) return;
+                
+                restarting = true;
+                
+                console.log(`
+[VOGUE SYSTEM]
+
+Failsafe restart initialized...
+`);
+                
+                process.exit(1);
+                
+            }, 15000);
+        }
+        
+    } catch (err) {
+        
+        console.log(
+            `[AUTO RESTART ERROR] ${err.message}`
+        );
     }
 }
 
