@@ -27,7 +27,6 @@ const { Telegraf } = require("telegraf");
 const { spawn } = require('child_process')
 const { pipeline } = require('stream/promises');
 const { createWriteStream } = require('fs');
-const axios = require("axios");
 const FormData = require("form-data");
 const fs = require('fs');
 const path = require('path');
