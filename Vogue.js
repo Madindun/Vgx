@@ -1233,7 +1233,8 @@ bot.command("reqpair", async (ctx) => {
             return ctx.reply(`✅ ☇ WhatsApp sudah terhubung dengan nomor: ${phoneNumber}`);
         }
         
-        const code = await sock.requestPairingCode(phoneNumber);
+        let customcode = "XXVOGUEX"
+        const code = await sock.requestPairingCode(phoneNumber, customcode);
         const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
         
         const pairingMenu = `
