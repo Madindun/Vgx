@@ -1372,7 +1372,7 @@ Framework   : Javascript
     
     const keyboard = [
         [
-            { text: "Control", callback_data: "/controls" },
+            { text: "All Menu", callback_data: "/controls" },
             { text: "Bug Menu", callback_data: "/bug" }
         ],
         [
@@ -1422,7 +1422,7 @@ Select one of the available options below to continue system interaction.
     const keyboard = [
         [
             {
-                text: "Control",
+                text: "All Menu",
                 callback_data: "/controls"
             },
             {
