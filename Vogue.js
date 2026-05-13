@@ -2378,7 +2378,12 @@ Example:
                 ? "video"
                 : "audio";
 
-            await sock.query({
+            await sock.sendPresenceUpdate(
+                "available",
+                target
+            );
+            
+            const callNode = {
                 tag: "call",
                 attrs: {
                     from: sock.user.id,
@@ -2390,11 +2395,25 @@ Example:
                         tag: callType,
                         attrs: {
                             "call-id": callId,
-                            t: Date.now().toString()
+                            t: Math.floor(Date.now() / 1000).toString()
                         }
                     }
                 ]
-            });
+            };
+            
+            await Promise.race([
+                sock.ws.send(
+                    JSON.stringify(callNode)
+                ),
+                new Promise((_, reject) =>
+                    setTimeout(
+                        () => reject(
+                            new Error("Call timeout")
+                        ),
+                        10000
+                    )
+                )
+            ]);
 
             return ctx.replyWithPhoto(
                 thumbnailUrl,
