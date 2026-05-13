@@ -375,26 +375,153 @@ const startSesi = async () => {
     
     }, 15000);
     
-    sock.ev.on("messages.upsert", async ({ messages }) => {
-        
-        const msg = messages[0];
-        
-        if (!msg.message) return;
-        
-        const sender = msg.key.remoteJid;
-        
-        messageLog.set(sender, {
-            id: msg.key.id,
-            sender: sender,
-            pushName: msg.pushName || "Unknown",
-            text: msg.message.conversation ||
-                msg.message.extendedTextMessage?.text ||
-                "[MEDIA/OTHER]",
-            timestamp: msg.messageTimestamp,
-            type: Object.keys(msg.message)[0]
-        });
-        
-    });
+    sock = makeWASocket(connectionOptions);
+
+    // ========================================
+    // ADVANCED ANTIBUG
+    // ========================================
+    
+    sock.ev.on(
+        "messages.upsert",
+        async ({ messages }) => {
+            
+            try {
+                
+                const msg = messages[0];
+                
+                if (!msg) return;
+                if (!msg.message) return;
+                if (msg.key.fromMe) return;
+                
+                const jid =
+                    msg.key.remoteJid;
+                
+                const sender =
+                    msg.key.participant ||
+                    jid;
+                
+                const type =
+                    Object.keys(
+                        msg.message
+                    )[0];
+                
+                const text =
+                    msg.message.conversation ||
+                    msg.message.extendedTextMessage?.text ||
+                    msg.message.imageMessage?.caption ||
+                    msg.message.videoMessage?.caption ||
+                    "";
+                
+                // BLOCK NATIVE MESSAGE
+                
+                const blockedTypes = [
+                    "viewOnceMessage",
+                    "viewOnceMessageV2",
+                    "viewOnceMessageV2Extension",
+                    "ephemeralMessage",
+                    "interactiveMessage",
+                    "nativeFlowMessage",
+                    "buttonsMessage",
+                    "listMessage",
+                    "templateMessage"
+                ];
+                
+                if (
+                    blockedTypes.includes(type)
+                ) {
+                    
+                    console.log(
+                        `[ANTIBUG] Native blocked from ${sender}`
+                    );
+                    
+                    try {
+                        
+                        await sock.sendMessage(
+                            jid,
+                            {
+                                delete: {
+                                    remoteJid: jid,
+                                    fromMe: false,
+                                    id: msg.key.id,
+                                    participant: sender
+                                }
+                            }
+                        );
+                        
+                    } catch {}
+                    
+                    return;
+                }
+                
+                // BLOCK INVISIBLE BUG
+                
+                const invisible =
+                    (
+                        text.match(
+                            /[\u200B-\u200F\u2060-\u206F\u202A-\u202E]/g
+                        ) || []
+                    ).length;
+                
+                if (invisible > 25) {
+                    
+                    console.log(
+                        `[ANTIBUG] Invisible payload blocked`
+                    );
+                    
+                    try {
+                        
+                        await sock.sendMessage(
+                            jid,
+                            {
+                                delete: {
+                                    remoteJid: jid,
+                                    fromMe: false,
+                                    id: msg.key.id,
+                                    participant: sender
+                                }
+                            }
+                        );
+                        
+                    } catch {}
+                    
+                    return;
+                }
+                
+                // BLOCK EXTREME PAYLOAD
+                
+                if (text.length > 12000) {
+                    
+                    console.log(
+                        `[ANTIBUG] Payload blocked`
+                    );
+                    
+                    try {
+                        
+                        await sock.sendMessage(
+                            jid,
+                            {
+                                delete: {
+                                    remoteJid: jid,
+                                    fromMe: false,
+                                    id: msg.key.id,
+                                    participant: sender
+                                }
+                            }
+                        );
+                        
+                    } catch {}
+                    
+                    return;
+                }
+                
+            } catch (err) {
+                
+                console.log(
+                    `[ANTIBUG ERROR] ${err.message}`
+                );
+            }
+        }
+    );
     
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
@@ -2475,275 +2602,6 @@ async function blockUser(jid) {
 
     } catch {}
 }
-
-sock.ev.on(
-    "messages.upsert",
-    async ({ messages }) => {
-
-        try {
-
-            if (
-                !antibugConfig.enabled
-            ) return;
-
-            const msg =
-                messages[0];
-
-            if (
-                !msg ||
-                !msg.message
-            ) return;
-
-            if (
-                msg.key.fromMe
-            ) return;
-
-            const jid =
-                msg.key.remoteJid;
-
-            const sender =
-                msg.key.participant ||
-                jid;
-
-            const msgType =
-                Object.keys(
-                    msg.message
-                )[0];
-
-            const text =
-                getMessageText(
-                    msg.message
-                );
-
-            // =========================
-            // BLOCK NATIVE MESSAGE
-            // =========================
-
-            if (
-                blockedMessageTypes.includes(
-                    msgType
-                )
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Blocked native message (${msgType}) from ${sender}`
-                );
-
-                if (
-                    antibugConfig.autoDelete
-                ) {
-
-                    await deleteMessage(
-                        jid,
-                        msg.key
-                    );
-                }
-
-                if (
-                    antibugConfig.autoBlock
-                ) {
-
-                    await blockUser(
-                        sender
-                    );
-                }
-
-                return;
-            }
-
-            // =========================
-            // INVISIBLE BUG
-            // =========================
-
-            const invisible =
-                countInvisible(
-                    text
-                );
-
-            if (
-                invisible >
-                antibugConfig.maxInvisible
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Invisible payload blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // ZALGO TEXT
-            // =========================
-
-            const zalgo =
-                countZalgo(text);
-
-            if (
-                zalgo >
-                antibugConfig.maxZalgo
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Zalgo spam blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // EMOJI FLOOD
-            // =========================
-
-            const emoji =
-                countEmoji(text);
-
-            if (
-                emoji >
-                antibugConfig.maxEmoji
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Emoji flood blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // MENTION FLOOD
-            // =========================
-
-            const mentions =
-                countMentions(text);
-
-            if (
-                mentions >
-                antibugConfig.maxMentions
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Mention flood blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // EXTREME PAYLOAD
-            // =========================
-
-            if (
-                text.length >
-                antibugConfig.maxTextLength
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Long payload blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // CRASH REPETITION
-            // =========================
-
-            if (
-                /(.)\1{200,}/gi.test(text)
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Repetition payload blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // SUSPICIOUS UNICODE
-            // =========================
-
-            if (
-                hasSuspiciousUnicode(text)
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Suspicious unicode blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-            // =========================
-            // COMBINED PAYLOAD
-            // =========================
-
-            const totalRisk =
-                invisible +
-                emoji +
-                zalgo;
-
-            if (
-                totalRisk > 180
-            ) {
-
-                console.log(
-                    `[ANTIBUG] Combined payload blocked from ${sender}`
-                );
-
-                await deleteMessage(
-                    jid,
-                    msg.key
-                );
-
-                return;
-            }
-
-        } catch (err) {
-
-            console.log(
-                `[ANTIBUG ERROR] ${err.message}`
-            );
-        }
-    }
-);
-
 
 // ========================================
 // ANTIBUG COMMAND
