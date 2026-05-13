@@ -397,7 +397,7 @@ const startSesi = async () => {
     });
     
     // ========================================
-    // AUTO CATALOG NATIVE FLOW
+    // AUTO CATALOG PAYMENT METHOD FLOW
     // ========================================
     
     const autoCatalogCooldown = new Map();
@@ -462,15 +462,11 @@ const startSesi = async () => {
     
                 const imageUrl =
                     "https://i.ibb.co.com/rGRv6Fp4/f0cec276ae0a9ab31366a2bf7567910a.jpg";
-                
-                // ========================================
-                // FETCH BUFFER ANTI TIMEOUT
-                // ========================================
-                
+    
                 let imageBuffer;
-                
+    
                 try {
-                
+    
                     const response =
                         await axios.get(
                             imageUrl,
@@ -483,50 +479,89 @@ const startSesi = async () => {
                                 }
                             }
                         );
-                
+    
                     imageBuffer =
                         Buffer.from(response.data);
-                
+    
                 } catch (fetchErr) {
-                
+    
                     console.log(
                         `[IMAGE FETCH ERROR] ${fetchErr.message}`
                     );
-                
+    
                     return;
                 }
-                
+    
                 await sock.sendMessage(
                     jid,
                     {
                         image: imageBuffer,
                         caption:
-    `VOGUE CRASHER • PRICE LIST
+    `VOGUE CRASHER • PAYMENT MENU
     
-    Choose one of the categories below.`,
+    Choose payment category below.`,
                         footer:
                             "Powered By Vogue System",
-                        buttons: [
+                        interactiveButtons: [
                             {
-                                buttonId: "android_bug",
-                                buttonText: {
-                                    displayText: "Android Bug"
-                                },
-                                type: 1
-                            },
-                            {
-                                buttonId: "ios_bug",
-                                buttonText: {
-                                    displayText: "iOS Bug"
-                                },
-                                type: 1
-                            },
-                            {
-                                buttonId: "premium",
-                                buttonText: {
-                                    displayText: "Premium"
-                                },
-                                type: 1
+                                name: "payment_method",
+                                buttonParamsJson: JSON.stringify({
+                                    currency: "IDR",
+                                    total_amount: {
+                                        value: 10000,
+                                        offset: 100
+                                    },
+                                    reference_id:
+                                        "VOGUE-" + Date.now(),
+                                    type: "physical-goods",
+                                    payment_settings: [
+                                        {
+                                            type: "pix_static_code",
+                                            pix_static_code: {
+                                                code:
+                                                    "08123456789",
+                                                merchant_name:
+                                                    "VOGUE STORE",
+                                                key:
+                                                    "08123456789"
+                                            }
+                                        }
+                                    ],
+                                    order: {
+                                        status: "pending",
+                                        subtotal: {
+                                            value: 10000,
+                                            offset: 100
+                                        },
+                                        tax: {
+                                            value: 0,
+                                            offset: 100
+                                        },
+                                        discount: {
+                                            value: 0,
+                                            offset: 100
+                                        },
+                                        shipping: {
+                                            value: 0,
+                                            offset: 100
+                                        },
+                                        order_type:
+                                            "ORDER",
+                                        items: [
+                                            {
+                                                retailer_id:
+                                                    "android_bug",
+                                                name:
+                                                    "Android Bug",
+                                                amount: {
+                                                    value: 10000,
+                                                    offset: 100
+                                                },
+                                                quantity: 1
+                                            }
+                                        ]
+                                    }
+                                })
                             }
                         ],
                         headerType: 4,
@@ -535,20 +570,20 @@ const startSesi = async () => {
                 );
     
                 console.log(
-                    `[NATIVE FLOW] Catalog sent to ${jid}`
+                    `[PAYMENT FLOW] Sent to ${jid}`
                 );
     
             } catch (err) {
     
                 console.log(
-                    `[NATIVE FLOW ERROR] ${err.message}`
+                    `[PAYMENT FLOW ERROR] ${err.message}`
                 );
             }
         }
     );
     
     // ========================================
-    // BUTTON RESPONSE
+    // PAYMENT RESPONSE
     // ========================================
     
     sock.ev.on(
@@ -565,89 +600,39 @@ const startSesi = async () => {
                 const jid =
                     msg.key.remoteJid;
     
-                const selected =
-                    msg.message.buttonsResponseMessage
-                    ?.selectedButtonId;
+                const nativeResponse =
+                    msg.message
+                    ?.interactiveResponseMessage
+                    ?.nativeFlowResponseMessage;
     
-                if (!selected) return;
+                if (!nativeResponse) return;
     
-                // ========================================
-                // ANDROID BUG
-                // ========================================
-    
-                if (
-                    selected === "android_bug"
-                ) {
-    
-                    return await sock.sendMessage(
-                        jid,
-                        {
-                            text:
-    `ANDROID BUG PRICE
-    
-    • Spam Andro : Rp 5.000
-    • Hard Andro : Rp 10.000
-    • Delay Hard : Rp 15.000
-    
-    Fast execution and stable sender.`
-                        }
+                const params =
+                    JSON.parse(
+                        nativeResponse.paramsJson || "{}"
                     );
-                }
     
-                // ========================================
-                // IOS BUG
-                // ========================================
+                console.log(
+                    `[PAYMENT RESPONSE]`,
+                    params
+                );
     
-                if (
-                    selected === "ios_bug"
-                ) {
+                await sock.sendMessage(
+                    jid,
+                    {
+                        text:
+    `PAYMENT SYSTEM
     
-                    return await sock.sendMessage(
-                        jid,
-                        {
-                            text:
-    `IOS BUG PRICE
+    Your payment request has been received successfully.
     
-    • Invisible Crash : Rp 20.000
-    • Force Close : Rp 25.000
-    • Delay Invisible : Rp 30.000
-    
-    Optimized for latest iOS version.`
-                        }
-                    );
-                }
-    
-                // ========================================
-                // PREMIUM
-                // ========================================
-    
-                if (
-                    selected === "premium"
-                ) {
-    
-                    return await sock.sendMessage(
-                        jid,
-                        {
-                            text:
-    `PREMIUM ACCESS
-    
-    • 1 Day : Rp 10.000
-    • 7 Days : Rp 35.000
-    • Permanent : Rp 100.000
-    
-    Benefits:
-    • Unlimited Access
-    • Priority Sender
-    • Faster Queue
-    • New Features`
-                        }
-                    );
-                }
+    Please wait for admin confirmation.`
+                    }
+                );
     
             } catch (err) {
     
                 console.log(
-                    `[BUTTON FLOW ERROR] ${err.message}`
+                    `[PAYMENT RESPONSE ERROR] ${err.message}`
                 );
             }
         }
