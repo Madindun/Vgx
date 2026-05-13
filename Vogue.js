@@ -461,7 +461,7 @@ const startSesi = async () => {
                 );
     
                 const imageUrl =
-                    "https://files.catbox.moe/eyhahn.png";
+                    "https://i.ibb.co.com/rGRv6Fp4/f0cec276ae0a9ab31366a2bf7567910a.jpg";
                 
                 // ========================================
                 // FETCH BUFFER ANTI TIMEOUT
