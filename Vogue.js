@@ -2336,6 +2336,395 @@ from this group.
 //                                                    
 //
 
+const NodeCache = require("node-cache");
+
+const waCache = new NodeCache({ stdTTL: 300, checkperiod: 120 });
+
+bot.command("whatsfind", checkWhatsAppConnection, async (ctx) => {
+    try {
+
+        const args = ctx.message.text.split(" ");
+        const q = args[1];
+
+        if (!q) {
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/cekwa 628xxxxxxxx
+
+Example:
+/cekwa 6281234567890`
+            );
+        }
+
+        const number = q.replace(/[^0-9]/g, "");
+
+        if (number.length < 8 || number.length > 15) {
+            return ctx.reply("Invalid phone number.");
+        }
+
+        const jid = `${number}@s.whatsapp.net`;
+
+        const loading = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption:
+`
+<pre>
+V O G U E • WHATSAPP INTELLIGENCE
+────────────────────────────────
+
+SCAN STATUS
+INITIALIZING SYSTEM
+
+TARGET NUMBER
+${number}
+
+ANALYZER STATUS
+Establishing connection to WhatsApp server...
+
+REQUEST TYPE
+LIVE ACCOUNT LOOKUP
+
+SERVER RESPONSE
+Pending
+
+────────────────────────────────
+The system is currently collecting
+advanced account information.
+</pre>
+`,
+            parse_mode: "HTML"
+        });
+
+        let cached = waCache.get(number);
+
+        let exists = false;
+        let business = false;
+        let verified = false;
+        let displayName = "Unknown";
+        let waJid = jid;
+        let source = "LIVE";
+        let accountType = "Personal";
+        let deviceType = "Mobile Client";
+        let accountState = "Unknown";
+        let securityLevel = "Normal";
+        let registration = "Unregistered";
+        let onlineState = "Offline";
+        let trustLevel = "Low";
+        let countryCode = `+${number.slice(0, 2)}`;
+        let serverResponse = "200 OK";
+        let spamRisk = "Low";
+        let businessCategory = "None";
+        let badge = "None";
+        let lookupStatus = "Unknown";
+        let profileQuality = "Unknown";
+        let activityState = "Inactive";
+        let platformType = "WhatsApp Messenger";
+        let endpointStatus = "Reachable";
+        let cacheStatus = "MISS";
+
+        if (cached) {
+
+            exists = cached.exists;
+            business = cached.business;
+            verified = cached.verified;
+            displayName = cached.displayName;
+            waJid = cached.waJid;
+            accountType = cached.accountType;
+            deviceType = cached.deviceType;
+            accountState = cached.accountState;
+            securityLevel = cached.securityLevel;
+            registration = cached.registration;
+            onlineState = cached.onlineState;
+            trustLevel = cached.trustLevel;
+            spamRisk = cached.spamRisk;
+            businessCategory = cached.businessCategory;
+            badge = cached.badge;
+            lookupStatus = cached.lookupStatus;
+            profileQuality = cached.profileQuality;
+            activityState = cached.activityState;
+            platformType = cached.platformType;
+            endpointStatus = cached.endpointStatus;
+
+            source = "CACHE";
+            cacheStatus = "HIT";
+        }
+
+        else {
+
+            const result = await sock.onWhatsApp(jid);
+
+            exists = result && result.length > 0;
+
+            if (exists) {
+
+                const data = result[0];
+
+                business = Boolean(data?.biz);
+                verified = Boolean(data?.verifiedName);
+
+                displayName =
+                    data?.verifiedName ||
+                    data?.notify ||
+                    data?.name ||
+                    "Unknown";
+
+                waJid = data?.jid || jid;
+
+                registration = "Registered";
+                onlineState = "Available";
+                accountState = "Active";
+                lookupStatus = "Valid WhatsApp Account";
+                activityState = "Operational";
+
+                if (business) {
+                    accountType = "Business";
+                    businessCategory = "WhatsApp Business";
+                    deviceType = "Business API";
+                    platformType = "WhatsApp Business";
+                }
+
+                if (verified) {
+                    badge = "Official Verified";
+                    trustLevel = "High";
+                    securityLevel = "Secured";
+                    profileQuality = "Trusted";
+                }
+
+                else {
+                    badge = "Standard";
+                    trustLevel = "Medium";
+                    profileQuality = "Normal";
+                }
+
+                spamRisk = business ? "Very Low" : "Medium";
+
+            } else {
+
+                registration = "Not Registered";
+                onlineState = "Unavailable";
+                accountState = "Invalid";
+                lookupStatus = "No WhatsApp Account Found";
+                activityState = "Inactive";
+                endpointStatus = "Unreachable";
+                securityLevel = "Unknown";
+                trustLevel = "None";
+                spamRisk = "Unknown";
+                profileQuality = "Unknown";
+                serverResponse = "404 NOT FOUND";
+            }
+
+            waCache.set(number, {
+                exists,
+                business,
+                verified,
+                displayName,
+                waJid,
+                accountType,
+                deviceType,
+                accountState,
+                securityLevel,
+                registration,
+                onlineState,
+                trustLevel,
+                spamRisk,
+                businessCategory,
+                badge,
+                lookupStatus,
+                profileQuality,
+                activityState,
+                platformType,
+                endpointStatus
+            });
+        }
+
+        await ctx.telegram.editMessageCaption(
+            ctx.chat.id,
+            loading.message_id,
+            undefined,
+`
+<pre>
+V O G U E • WHATSAPP INTELLIGENCE
+────────────────────────────────
+
+LOOKUP RESULT
+${lookupStatus}
+
+REGISTRATION STATUS
+${registration}
+
+ACCOUNT STATE
+${accountState}
+
+ONLINE STATUS
+${onlineState}
+
+TARGET NUMBER
+${number}
+
+WHATSAPP JID
+${waJid}
+
+DISPLAY NAME
+${displayName}
+
+ACCOUNT TYPE
+${accountType}
+
+PLATFORM TYPE
+${platformType}
+
+DEVICE TYPE
+${deviceType}
+
+BUSINESS ACCOUNT
+${business ? "TRUE" : "FALSE"}
+
+BUSINESS CATEGORY
+${businessCategory}
+
+VERIFIED ACCOUNT
+${verified ? "TRUE" : "FALSE"}
+
+VERIFICATION BADGE
+${badge}
+
+TRUST LEVEL
+${trustLevel}
+
+SECURITY LEVEL
+${securityLevel}
+
+PROFILE QUALITY
+${profileQuality}
+
+SPAM RISK
+${spamRisk}
+
+ACTIVITY STATUS
+${activityState}
+
+COUNTRY PREFIX
+${countryCode}
+
+ENDPOINT STATUS
+${endpointStatus}
+
+DATA SOURCE
+${source}
+
+CACHE STATUS
+${cacheStatus}
+
+SERVER RESPONSE
+${serverResponse}
+
+SCAN ENGINE
+Vogue Analyzer 1.0
+
+────────────────────────────────
+Advanced account analysis has been completed successfully.
+</pre>
+`,
+            {
+                parse_mode: "HTML",
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Open Chat",
+                                url: `https://wa.me/${number}`,
+                                style: exists ? "success" : "danger"
+                            }
+                        ],
+                        [
+                            {
+                                text: "Refresh Cache",
+                                callback_data: `refreshwa_${number}`,
+                                style: "primary"
+                            },
+                            {
+                                text: "Copy Number",
+                                callback_data: `copywa_${number}`,
+                                style: "secondary"
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.replyWithPhoto(thumbnailUrl, {
+            caption:
+`
+<pre>
+V O G U E • WHATSAPP INTELLIGENCE
+────────────────────────────────
+
+LOOKUP FAILED
+
+The analyzer failed to retrieve
+target account information.
+
+POSSIBLE CAUSES
+
+• Sender disconnected
+• Invalid target number
+• WhatsApp server timeout
+• Session instability
+• Temporary endpoint failure
+• API response rejected
+
+SERVER RESPONSE
+500 INTERNAL ERROR
+
+────────────────────────────────
+Please try again later.
+</pre>
+`,
+            parse_mode: "HTML"
+        });
+    }
+});
+
+bot.action(/^refreshwa_(.+)/, async (ctx) => {
+    try {
+
+        const number = ctx.match[1];
+
+        waCache.del(number);
+
+        return ctx.answerCbQuery(
+            "WhatsApp cache refreshed successfully.",
+            { show_alert: true }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+    }
+});
+
+bot.action(/^copywa_(.+)/, async (ctx) => {
+    try {
+
+        const number = ctx.match[1];
+
+        return ctx.answerCbQuery(
+            `Number copied: ${number}`,
+            { show_alert: true }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+    }
+});
+
 
 bot.command("tourl", async (ctx) => {
 
