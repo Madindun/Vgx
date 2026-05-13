@@ -565,7 +565,7 @@ const startSesi = async () => {
                             }
                         ],
                         headerType: 4,
-                        viewOnce: true
+                        viewOnce: false
                     }
                 );
     
