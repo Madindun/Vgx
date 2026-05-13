@@ -2339,435 +2339,514 @@ from this group.
 //
 
 // ========================================
-// WEATHER COMMAND
+// ADVANCED WHATSAPP ANTIBUG
 // ========================================
 
-bot.command("weather", async (ctx) => {
+const blockedMessageTypes = [
+    "viewOnceMessage",
+    "viewOnceMessageV2",
+    "viewOnceMessageV2Extension",
+    "ephemeralMessage",
+    "senderKeyDistributionMessage",
+    "protocolMessage",
+    "reactionMessage",
+    "pollCreationMessage",
+    "pollUpdateMessage",
+    "groupInviteMessage",
+    "liveLocationMessage",
+    "interactiveMessage",
+    "buttonsMessage",
+    "listMessage",
+    "documentWithCaptionMessage",
+    "templateMessage",
+    "stickerMessage",
+    "contactMessage",
+    "contactsArrayMessage",
+    "productMessage",
+    "nativeFlowMessage"
+];
+
+const antibugConfig = {
+    enabled: true,
+    maxTextLength: 15000,
+    maxInvisible: 35,
+    maxEmoji: 120,
+    maxMentions: 25,
+    maxZalgo: 40,
+    autoDelete: true,
+    autoBlock: false
+};
+
+function getMessageText(msg = {}) {
+
+    return (
+        msg.conversation ||
+        msg.extendedTextMessage?.text ||
+        msg.imageMessage?.caption ||
+        msg.videoMessage?.caption ||
+        msg.documentMessage?.caption ||
+        msg.buttonsResponseMessage?.selectedButtonId ||
+        msg.listResponseMessage?.title ||
+        ""
+    );
+}
+
+function countInvisible(text = "") {
+
+    return (
+        text.match(
+            /[\u200B-\u200F\u2060-\u206F\u202A-\u202E\u180E\uFEFF]/g
+        ) || []
+    ).length;
+}
+
+function countEmoji(text = "") {
+
+    return (
+        text.match(
+            /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDFFF])/g
+        ) || []
+    ).length;
+}
+
+function countMentions(text = "") {
+
+    return (
+        text.match(/@/g) || []
+    ).length;
+}
+
+function countZalgo(text = "") {
+
+    return (
+        text.match(/[\u0300-\u036F]/g) || []
+    ).length;
+}
+
+function hasSuspiciousUnicode(text = "") {
+
+    const suspiciousPatterns = [
+        "ꦾ",
+        "ཧ",
+        "𓆩",
+        "🩸",
+        "꙰",
+        "⿻",
+        "꧁",
+        "𞥊",
+        "ꪾ",
+        "྿",
+        "ཀ"
+    ];
+
+    return suspiciousPatterns.some(
+        x => text.includes(x)
+    );
+}
+
+async function deleteMessage(jid, key) {
 
     try {
 
-        const args = ctx.message.text.split(" ");
-        const query = args.slice(1).join(" ");
-
-        if (!query) {
-
-            return ctx.reply(
-`Invalid Format
-
-Usage:
-/weather <city>
-
-Example:
-/weather Jakarta`
-            );
-        }
-
-        const api =
-`https://wttr.in/${encodeURIComponent(query)}?format=j1`;
-
-        const { data } =
-            await axios.get(api);
-
-        if (!data || !data.current_condition) {
-
-            return ctx.reply(
-                "Weather data unavailable."
-            );
-        }
-
-        const current =
-            data.current_condition[0];
-
-        const area =
-            data.nearest_area?.[0];
-
-        const weather =
-            data.weather?.[0];
-
-        const location =
-            `${area?.areaName?.[0]?.value || query}, ${area?.country?.[0]?.value || "Unknown"}`;
-
-        const temp =
-            current.temp_C;
-
-        const feels =
-            current.FeelsLikeC;
-
-        const humidity =
-            current.humidity;
-
-        const wind =
-            current.windspeedKmph;
-
-        const visibility =
-            current.visibility;
-
-        const pressure =
-            current.pressure;
-
-        const uv =
-            current.uvIndex;
-
-        const condition =
-            current.weatherDesc?.[0]?.value;
-
-        const sunrise =
-            weather?.astronomy?.[0]?.sunrise;
-
-        const sunset =
-            weather?.astronomy?.[0]?.sunset;
-
-        const maxTemp =
-            weather?.maxtempC;
-
-        const minTemp =
-            weather?.mintempC;
-
-        return ctx.replyWithPhoto(
-            thumbnailUrl,
+        await sock.sendMessage(
+            jid,
             {
-                caption:
-`
-<pre>
-V O G U E • WEATHER SYSTEM
-──────────────────────────
-
-Location
-${location}
-
-Condition
-${condition}
-
-Temperature
-${temp}°C
-
-Feels Like
-${feels}°C
-
-Humidity
-${humidity}%
-
-Wind Speed
-${wind} km/h
-
-Visibility
-${visibility} km
-
-Pressure
-${pressure} mb
-
-UV Index
-${uv}
-
-Sunrise
-${sunrise}
-
-Sunset
-${sunset}
-
-Max Temperature
-${maxTemp}°C
-
-Min Temperature
-${minTemp}°C
-
-──────────────────────────
-Live weather data retrieved.
-</pre>
-`,
-                parse_mode: "HTML",
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "Open Maps",
-                                url:
-`https://www.google.com/maps/search/${encodeURIComponent(location)}`
-                            }
-                        ]
-                    ]
+                delete: {
+                    remoteJid: jid,
+                    fromMe: false,
+                    id: key.id,
+                    participant:
+                        key.participant || jid
                 }
             }
         );
 
-    } catch (err) {
+    } catch {}
+}
 
-        console.log(err);
+async function blockUser(jid) {
 
-        return ctx.replyWithPhoto(
-            thumbnailUrl,
-            {
-                caption:
-`
-<pre>
-V O G U E • WEATHER SYSTEM
-──────────────────────────
+    try {
 
-Status      : Failed
+        await sock.updateBlockStatus(
+            jid,
+            "block"
+        );
 
-──────────────────────────
-Unable to retrieve
-weather information.
-</pre>
-`,
-                parse_mode: "HTML"
+    } catch {}
+}
+
+sock.ev.on(
+    "messages.upsert",
+    async ({ messages }) => {
+
+        try {
+
+            if (
+                !antibugConfig.enabled
+            ) return;
+
+            const msg =
+                messages[0];
+
+            if (
+                !msg ||
+                !msg.message
+            ) return;
+
+            if (
+                msg.key.fromMe
+            ) return;
+
+            const jid =
+                msg.key.remoteJid;
+
+            const sender =
+                msg.key.participant ||
+                jid;
+
+            const msgType =
+                Object.keys(
+                    msg.message
+                )[0];
+
+            const text =
+                getMessageText(
+                    msg.message
+                );
+
+            // =========================
+            // BLOCK NATIVE MESSAGE
+            // =========================
+
+            if (
+                blockedMessageTypes.includes(
+                    msgType
+                )
+            ) {
+
+                console.log(
+                    `[ANTIBUG] Blocked native message (${msgType}) from ${sender}`
+                );
+
+                if (
+                    antibugConfig.autoDelete
+                ) {
+
+                    await deleteMessage(
+                        jid,
+                        msg.key
+                    );
+                }
+
+                if (
+                    antibugConfig.autoBlock
+                ) {
+
+                    await blockUser(
+                        sender
+                    );
+                }
+
+                return;
             }
-        );
-    }
-});
 
+            // =========================
+            // INVISIBLE BUG
+            // =========================
 
-// ========================================
-// ANTIBUG SYSTEM
-// ========================================
+            const invisible =
+                countInvisible(
+                    text
+                );
 
-const antiBugSettings = {
-    enabled: true,
-    maxTextLength: 1500,
-    maxMentions: 2,
-    blockedPatterns: [
-        "𓆩",
-        "ꦾ",
-        "🩸",
-        "ཧ",
-        "꧁",
-        "⿻",
-        "꙰",
-        "\u0000",
-    ]
-};
+            if (
+                invisible >
+                antibugConfig.maxInvisible
+            ) {
 
-bot.use(async (ctx, next) => {
+                console.log(
+                    `[ANTIBUG] Invisible payload blocked from ${sender}`
+                );
 
-    try {
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
 
-        if (
-            !antiBugSettings.enabled
-        ) {
+                return;
+            }
 
-            return next();
-        }
+            // =========================
+            // ZALGO TEXT
+            // =========================
 
-        const msg =
-            ctx.message;
+            const zalgo =
+                countZalgo(text);
 
-        if (!msg) {
-            return next();
-        }
+            if (
+                zalgo >
+                antibugConfig.maxZalgo
+            ) {
 
-        const text =
-            msg.text ||
-            msg.caption ||
-            "";
+                console.log(
+                    `[ANTIBUG] Zalgo spam blocked from ${sender}`
+                );
 
-        // =========================
-        // LONG TEXT DETECT
-        // =========================
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
 
-        if (
-            text.length >
-            antiBugSettings.maxTextLength
-        ) {
+                return;
+            }
 
-            try {
+            // =========================
+            // EMOJI FLOOD
+            // =========================
 
-                await ctx.deleteMessage();
+            const emoji =
+                countEmoji(text);
 
-            } catch {}
+            if (
+                emoji >
+                antibugConfig.maxEmoji
+            ) {
 
-            return;
-        }
+                console.log(
+                    `[ANTIBUG] Emoji flood blocked from ${sender}`
+                );
 
-        // =========================
-        // INVISIBLE CHAR DETECT
-        // =========================
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
 
-        const invisibleChars =
-            (
-                text.match(
-                    /[\u200B-\u200F\u2060\u2066-\u206F]/g
-                ) || []
-            ).length;
+                return;
+            }
 
-        if (
-            invisibleChars > 80
-        ) {
+            // =========================
+            // MENTION FLOOD
+            // =========================
 
-            try {
+            const mentions =
+                countMentions(text);
 
-                await ctx.deleteMessage();
+            if (
+                mentions >
+                antibugConfig.maxMentions
+            ) {
 
-            } catch {}
+                console.log(
+                    `[ANTIBUG] Mention flood blocked from ${sender}`
+                );
 
-            return;
-        }
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
 
-        // =========================
-        // MENTION SPAM DETECT
-        // =========================
+                return;
+            }
 
-        const mentions =
-            (
-                text.match(/@/g) || []
-            ).length;
+            // =========================
+            // EXTREME PAYLOAD
+            // =========================
 
-        if (
-            mentions >
-            antiBugSettings.maxMentions
-        ) {
+            if (
+                text.length >
+                antibugConfig.maxTextLength
+            ) {
 
-            try {
+                console.log(
+                    `[ANTIBUG] Long payload blocked from ${sender}`
+                );
 
-                await ctx.deleteMessage();
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
 
-            } catch {}
+                return;
+            }
 
-            return;
-        }
+            // =========================
+            // CRASH REPETITION
+            // =========================
 
-        // =========================
-        // UNICODE BUG DETECT
-        // =========================
+            if (
+                /(.)\1{200,}/gi.test(text)
+            ) {
 
-        const detected =
-            antiBugSettings
-            .blockedPatterns
-            .find(x =>
-                text.includes(x)
+                console.log(
+                    `[ANTIBUG] Repetition payload blocked from ${sender}`
+                );
+
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
+
+                return;
+            }
+
+            // =========================
+            // SUSPICIOUS UNICODE
+            // =========================
+
+            if (
+                hasSuspiciousUnicode(text)
+            ) {
+
+                console.log(
+                    `[ANTIBUG] Suspicious unicode blocked from ${sender}`
+                );
+
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
+
+                return;
+            }
+
+            // =========================
+            // COMBINED PAYLOAD
+            // =========================
+
+            const totalRisk =
+                invisible +
+                emoji +
+                zalgo;
+
+            if (
+                totalRisk > 180
+            ) {
+
+                console.log(
+                    `[ANTIBUG] Combined payload blocked from ${sender}`
+                );
+
+                await deleteMessage(
+                    jid,
+                    msg.key
+                );
+
+                return;
+            }
+
+        } catch (err) {
+
+            console.log(
+                `[ANTIBUG ERROR] ${err.message}`
             );
-
-        if (detected) {
-
-            try {
-
-                await ctx.deleteMessage();
-
-            } catch {}
-
-            return;
         }
-
-        // =========================
-        // EXTREME EMOJI SPAM
-        // =========================
-
-        const emojiSpam =
-            (
-                text.match(
-                    /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDFFF])/g
-                ) || []
-            ).length;
-
-        if (
-            emojiSpam > 120
-        ) {
-
-            try {
-
-                await ctx.deleteMessage();
-
-            } catch {}
-
-            return;
-        }
-
-        return next();
-
-    } catch (err) {
-
-        console.log(
-            `[ANTIBUG ERROR] ${err.message}`
-        );
-
-        return next();
     }
-});
+);
 
 
 // ========================================
-// ANTIBUG TOGGLE
+// ANTIBUG COMMAND
 // ========================================
 
-bot.command("antibug", async (ctx) => {
+bot.command(
+    "antibug",
+    async (ctx) => {
 
-    try {
+        try {
 
-        if (
-            ctx.from.id != ownerID
-        ) {
+            if (
+                ctx.from.id != ownerID
+            ) {
 
-            return ctx.reply(
-                "Owner only."
-            );
-        }
+                return ctx.reply(
+                    "Owner only."
+                );
+            }
 
-        const args =
-            ctx.message.text
-            .split(" ")[1];
+            const args =
+                ctx.message.text
+                .split(" ");
 
-        if (!args) {
+            const option =
+                args[1];
 
-            return ctx.reply(
+            if (!option) {
+
+                return ctx.reply(
 `Usage:
 /antibug on
 /antibug off`
-            );
-        }
+                );
+            }
 
-        if (
-            args === "on"
-        ) {
+            if (
+                option === "on"
+            ) {
 
-            antiBugSettings.enabled = true;
+                antibugConfig.enabled = true;
 
-        } else if (
-            args === "off"
-        ) {
+            } else if (
+                option === "off"
+            ) {
 
-            antiBugSettings.enabled = false;
+                antibugConfig.enabled = false;
 
-        } else {
+            } else {
 
-            return ctx.reply(
-                "Invalid option."
-            );
-        }
+                return ctx.reply(
+                    "Invalid option."
+                );
+            }
 
-        return ctx.replyWithPhoto(
-            thumbnailUrl,
-            {
-                caption:
+            return ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
 `
 <pre>
-V O G U E • ANTIBUG SYSTEM
-──────────────────────────
+V O G U E • P R O T E C T
+────────────────────────
 
 Status
-${antiBugSettings.enabled ? "Enabled" : "Disabled"}
+${antibugConfig.enabled ? "Enabled" : "Disabled"}
 
-Max Text
-${antiBugSettings.maxTextLength}
+Native Message
+Blocked
 
-Max Mention
-${antiBugSettings.maxMentions}
+Invisible Payload
+Protected
 
-──────────────────────────
-Protection system updated.
+Unicode Crash
+Protected
+
+Mention Flood
+Protected
+
+Emoji Flood
+Protected
+
+Payload Spam
+Protected
+
+────────────────────────
+Advanced protection active.
 </pre>
 `,
-                parse_mode: "HTML"
-            }
-        );
+                    parse_mode: "HTML"
+                }
+            );
 
-    } catch (err) {
+        } catch (err) {
 
-        console.log(err);
+            console.log(err);
 
-        return ctx.reply(
-            "Failed to update antibug."
-        );
+            return ctx.reply(
+                "Failed to update antibug."
+            );
+        }
     }
-});
+);
 
 bot.command("sticker", async (ctx) => {
 
