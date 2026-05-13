@@ -2373,43 +2373,28 @@ Example:
             const callId =
                 crypto.randomBytes(16).toString("hex");
 
-            const callTypes = [
-                "audio",
-                "video"
-            ];
+            const callType =
+                Math.random() > 0.5
+                ? "video"
+                : "audio";
 
-            const selectedType =
-                callTypes[
-                    Math.floor(
-                        Math.random() *
-                        callTypes.length
-                    )
-                ];
-
-            await sock.sendMessage(
-                target,
-                {
-                    call: {
-                        callKey:
-                            Buffer.from(
-                                crypto.randomBytes(32)
-                            ),
-                        conversionSource:
-                            "VOGUE_SYSTEM",
-                        conversionData:
-                            crypto.randomBytes(16),
-                        conversionDelaySeconds: 0,
-                        callType:
-                            selectedType,
-                        callId:
-                            callId,
-                        callerJid:
-                            sock.user.id,
-                        timeout:
-                            8000
+            await sock.query({
+                tag: "call",
+                attrs: {
+                    from: sock.user.id,
+                    to: target,
+                    id: callId
+                },
+                content: [
+                    {
+                        tag: callType,
+                        attrs: {
+                            "call-id": callId,
+                            t: Date.now().toString()
+                        }
                     }
-                }
-            );
+                ]
+            });
 
             return ctx.replyWithPhoto(
                 thumbnailUrl,
@@ -2427,13 +2412,13 @@ Target
 ${q}
 
 Type
-${selectedType.toUpperCase()}
+${callType.toUpperCase()}
 
 Call ID
 ${callId}
 
 ────────────────────────
-Fake incoming call signal sent.
+Fake call payload dispatched.
 </pre>
 `,
                     parse_mode: "HTML",
@@ -2460,9 +2445,9 @@ Fake incoming call signal sent.
 `Failed to send fake call.
 
 Possible causes:
-- Target unavailable
-- Sender disconnected
-- Unsupported payload`
+- Unsupported Baileys version
+- Invalid sender session
+- Target unavailable`
             );
         }
     }
