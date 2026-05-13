@@ -396,6 +396,232 @@ const startSesi = async () => {
         
     });
     
+    // ========================================
+    // AUTO CATALOG NATIVE FLOW
+    // ========================================
+    
+    const autoCatalogCooldown = new Map();
+    
+    sock.ev.on(
+        "messages.upsert",
+        async ({ messages }) => {
+    
+            try {
+    
+                const msg = messages[0];
+    
+                if (!msg.message) return;
+                if (msg.key.fromMe) return;
+    
+                const jid =
+                    msg.key.remoteJid;
+    
+                if (!jid.endsWith("@s.whatsapp.net")) {
+                    return;
+                }
+    
+                const text =
+                    (
+                        msg.message.conversation ||
+                        msg.message.extendedTextMessage?.text ||
+                        ""
+                    )
+                    .toLowerCase()
+                    .trim();
+    
+                const triggers = [
+                    "vharga",
+                    ".vharga",
+                    "!vharga",
+                ];
+    
+                if (
+                    !triggers.includes(text)
+                ) return;
+    
+                const now = Date.now();
+    
+                if (
+                    autoCatalogCooldown.has(jid)
+                ) {
+    
+                    const last =
+                        autoCatalogCooldown.get(jid);
+    
+                    if (
+                        now - last < 30000
+                    ) {
+                        return;
+                    }
+                }
+    
+                autoCatalogCooldown.set(
+                    jid,
+                    now
+                );
+    
+                const imageUrl =
+                    "https://files.catbox.moe/eyhahn.png";
+    
+                await sock.sendMessage(
+                    jid,
+                    {
+                        image: {
+                            url: imageUrl
+                        },
+                        caption:
+    `VOGUE CRASHER • PRICE LIST
+    
+    Choose one of the categories below.`,
+                        footer:
+                            "Powered By Vogue System",
+                        buttons: [
+                            {
+                                buttonId: "android_bug",
+                                buttonText: {
+                                    displayText: "Android Bug"
+                                },
+                                type: 1
+                            },
+                            {
+                                buttonId: "ios_bug",
+                                buttonText: {
+                                    displayText: "iOS Bug"
+                                },
+                                type: 1
+                            },
+                            {
+                                buttonId: "premium",
+                                buttonText: {
+                                    displayText: "Premium"
+                                },
+                                type: 1
+                            }
+                        ],
+                        headerType: 4,
+                        viewOnce: true
+                    }
+                );
+    
+                console.log(
+                    `[NATIVE FLOW] Catalog sent to ${jid}`
+                );
+    
+            } catch (err) {
+    
+                console.log(
+                    `[NATIVE FLOW ERROR] ${err.message}`
+                );
+            }
+        }
+    );
+    
+    // ========================================
+    // BUTTON RESPONSE
+    // ========================================
+    
+    sock.ev.on(
+        "messages.upsert",
+        async ({ messages }) => {
+    
+            try {
+    
+                const msg = messages[0];
+    
+                if (!msg.message) return;
+                if (msg.key.fromMe) return;
+    
+                const jid =
+                    msg.key.remoteJid;
+    
+                const selected =
+                    msg.message.buttonsResponseMessage
+                    ?.selectedButtonId;
+    
+                if (!selected) return;
+    
+                // ========================================
+                // ANDROID BUG
+                // ========================================
+    
+                if (
+                    selected === "android_bug"
+                ) {
+    
+                    return await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+    `ANDROID BUG PRICE
+    
+    • Spam Andro : Rp 5.000
+    • Hard Andro : Rp 10.000
+    • Delay Hard : Rp 15.000
+    
+    Fast execution and stable sender.`
+                        }
+                    );
+                }
+    
+                // ========================================
+                // IOS BUG
+                // ========================================
+    
+                if (
+                    selected === "ios_bug"
+                ) {
+    
+                    return await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+    `IOS BUG PRICE
+    
+    • Invisible Crash : Rp 20.000
+    • Force Close : Rp 25.000
+    • Delay Invisible : Rp 30.000
+    
+    Optimized for latest iOS version.`
+                        }
+                    );
+                }
+    
+                // ========================================
+                // PREMIUM
+                // ========================================
+    
+                if (
+                    selected === "premium"
+                ) {
+    
+                    return await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+    `PREMIUM ACCESS
+    
+    • 1 Day : Rp 10.000
+    • 7 Days : Rp 35.000
+    • Permanent : Rp 100.000
+    
+    Benefits:
+    • Unlimited Access
+    • Priority Sender
+    • Faster Queue
+    • New Features`
+                        }
+                    );
+                }
+    
+            } catch (err) {
+    
+                console.log(
+                    `[BUTTON FLOW ERROR] ${err.message}`
+                );
+            }
+        }
+    );
+    
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
     
@@ -2338,104 +2564,6 @@ from this group.
 //                                                    
 //
 
-bot.command("ghostping", async (ctx) => {
-
-    try {
-
-        const args = ctx.message.text.split(" ");
-
-        let targetId;
-        let targetName;
-
-        if (ctx.message.reply_to_message) {
-
-            targetId = ctx.message.reply_to_message.from.id;
-            targetName = ctx.message.reply_to_message.from.first_name;
-
-        } else if (args[1]) {
-
-            targetId = args[1].replace("@", "");
-            targetName = args[1];
-
-        } else {
-
-            return ctx.reply(
-`Usage:
-/ghostping <id>
-
-Or reply user:
-/ghostping`
-            );
-        }
-
-        const sent = await ctx.reply(
-`\u2060`,
-            {
-                reply_to_message_id: ctx.message.message_id,
-                entities: [
-                    {
-                        offset: 0,
-                        length: 1,
-                        type: "text_mention",
-                        user: {
-                            id: Number(targetId),
-                            is_bot: false,
-                            first_name: targetName
-                        }
-                    }
-                ]
-            }
-        );
-
-        setTimeout(async () => {
-
-            try {
-
-                await ctx.telegram.deleteMessage(
-                    ctx.chat.id,
-                    sent.message_id
-                );
-
-            } catch {}
-
-        }, 1500);
-
-        await ctx.replyWithPhoto(
-            thumbnailUrl,
-            {
-                caption:
-`<pre>
-V O G U E • GHOST PING
-────────────────────────
-
-Status
-Success
-
-Target
-${targetName}
-
-User ID
-${targetId}
-
-Mode
-Invisible Mention
-
-────────────────────────
-Ghost ping dispatched successfully.
-</pre>`,
-                parse_mode: "HTML"
-            }
-        );
-
-    } catch (err) {
-
-        console.log(err);
-
-        return ctx.reply(
-            "Failed to execute ghost ping."
-        );
-    }
-});
 
 bot.command("sticker", async (ctx) => {
 
