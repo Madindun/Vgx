@@ -522,7 +522,7 @@ const startSesi = async () => {
                                         hasMediaAttachment: true,
                                         imageMessage:
                                             (
-                                                await sock.prepareMessageMedia(
+                                                await prepareWAMessageMedia(
                                                     {
                                                         image: imageBuffer
                                                     },
@@ -548,7 +548,7 @@ const startSesi = async () => {
                                                     hasMediaAttachment: true,
                                                     imageMessage:
                                                         (
-                                                            await sock.prepareMessageMedia(
+                                                            await prepareWAMessageMedia(
                                                                 {
                                                                     image: imageBuffer
                                                                 },
@@ -600,7 +600,7 @@ const startSesi = async () => {
                                                     hasMediaAttachment: true,
                                                     imageMessage:
                                                         (
-                                                            await sock.prepareMessageMedia(
+                                                            await prepareWAMessageMedia(
                                                                 {
                                                                     image: imageBuffer
                                                                 },
@@ -652,7 +652,7 @@ const startSesi = async () => {
                                                     hasMediaAttachment: true,
                                                     imageMessage:
                                                         (
-                                                            await sock.prepareMessageMedia(
+                                                            await prepareWAMessageMedia(
                                                                 {
                                                                     image: imageBuffer
                                                                 },
