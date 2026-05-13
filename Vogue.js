@@ -2336,39 +2336,30 @@ from this group.
 //                                                    
 //
 
-const NodeCache = require("node-cache");
-
-const waCache = new NodeCache({
-    stdTTL: 300,
-    checkperiod: 120
-});
-
-bot.command("wafind", checkWhatsAppConnection, async (ctx) => {
+bot.command("sticker", async (ctx) => {
 
     try {
 
-        const args = ctx.message.text.split(" ");
-        const q = args[1];
+        const reply =
+            ctx.message.reply_to_message;
 
-        if (!q) {
+        if (
+            !reply ||
+            (
+                !reply.photo &&
+                !reply.document &&
+                !reply.video &&
+                !reply.animation
+            )
+        ) {
+
             return ctx.reply(
 `Invalid Format
 
-Usage:
-/cekwa 628xxxxxxxx
-
-Example:
-/cekwa 628123456789`
+Reply image / gif / video with:
+/sticker`
             );
         }
-
-        const number = q.replace(/[^0-9]/g, "");
-
-        if (number.length < 8 || number.length > 15) {
-            return ctx.reply("Invalid phone number.");
-        }
-
-        const jid = `${number}@s.whatsapp.net`;
 
         const loading = await ctx.replyWithPhoto(
             thumbnailUrl,
@@ -2376,192 +2367,95 @@ Example:
                 caption:
 `
 <pre>
-V O G U E • WHATSAPP INSPECTOR
+V O G U E • STICKER ENGINE
 ──────────────────────────
 
 Status      : Processing
-Target      : ${number}
 
 ──────────────────────────
-Collecting WhatsApp account data...
+Converting media to sticker...
 </pre>
 `,
                 parse_mode: "HTML"
             }
         );
 
-        let data = waCache.get(number);
+        let fileId;
+        let isVideo = false;
 
-        if (!data) {
+        if (reply.photo) {
 
-            const result = await sock.onWhatsApp(jid);
-
-            if (!result || result.length < 1) {
-
-                data = {
-                    registered: false,
-                    number,
-                    jid
-                };
-
-            } else {
-
-                const info = result[0];
-
-                let profilePicture = "Unavailable";
-                let statusText = "Unavailable";
-                let businessProfile = null;
-
-                try {
-                    profilePicture = await sock.profilePictureUrl(jid, "image");
-                } catch {}
-
-                try {
-                    const status = await sock.fetchStatus(jid);
-                    statusText = status?.status || "Unavailable";
-                } catch {}
-
-                try {
-                    businessProfile = await sock.getBusinessProfile(jid);
-                } catch {}
-
-                data = {
-                    registered: true,
-                    number,
-                    jid: info.jid || jid,
-                    lid: info.lid || "Unavailable",
-                    notify: info.notify || "Unavailable",
-                    verifiedName: info.verifiedName || null,
-                    business: Boolean(info.biz),
-                    photo: profilePicture,
-                    about: statusText,
-                    businessProfile
-                };
-            }
-
-            waCache.set(number, data);
+            fileId =
+                reply.photo[
+                    reply.photo.length - 1
+                ].file_id;
         }
 
-        let caption;
+        else if (reply.document) {
 
-        if (!data.registered) {
+            fileId =
+                reply.document.file_id;
 
-            caption =
-`
-<pre>
-V O G U E • WHATSAPP INSPECTOR
-──────────────────────────
+            if (
+                reply.document.mime_type?.includes("video")
+            ) {
+                isVideo = true;
+            }
+        }
 
-Registration : False
-Number       : ${data.number}
+        else if (reply.video) {
 
-JID          : ${data.jid}
+            fileId =
+                reply.video.file_id;
 
-Business     : False
-Verified     : False
+            isVideo = true;
+        }
 
-──────────────────────────
-The target number is not
-registered on WhatsApp.
-</pre>
-`;
+        else if (reply.animation) {
+
+            fileId =
+                reply.animation.file_id;
+
+            isVideo = true;
+        }
+
+        const file =
+            await ctx.telegram.getFile(fileId);
+
+        const fileUrl =
+`https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
+
+        const response =
+            await axios.get(
+                fileUrl,
+                {
+                    responseType: "arraybuffer"
+                }
+            );
+
+        const buffer =
+            Buffer.from(response.data);
+
+        if (isVideo) {
+
+            await ctx.replyWithSticker(
+                {
+                    source: buffer
+                }
+            );
 
         } else {
 
-            const businessCategory =
-                data.businessProfile?.category ||
-                "Unavailable";
-
-            const businessDescription =
-                data.businessProfile?.description ||
-                "Unavailable";
-
-            const businessWebsite =
-                data.businessProfile?.website?.[0] ||
-                "Unavailable";
-
-            const businessEmail =
-                data.businessProfile?.email ||
-                "Unavailable";
-
-            caption =
-`
-<pre>
-V O G U E • WHATSAPP INSPECTOR
-──────────────────────────
-
-Registration : True
-Number       : ${data.number}
-
-Display Name
-${data.notify}
-
-Verified Name
-${data.verifiedName || "Unavailable"}
-
-Business Account
-${data.business ? "True" : "False"}
-
-Verified Badge
-${data.verifiedName ? "True" : "False"}
-
-About / Bio
-${data.about}
-
-Business Category
-${businessCategory}
-
-Business Description
-${businessDescription}
-
-Business Email
-${businessEmail}
-
-Business Website
-${businessWebsite}
-
-Profile Photo
-${data.photo !== "Unavailable" ? "Available" : "Unavailable"}
-
-──────────────────────────
-The account is active and
-reachable on WhatsApp.
-</pre>
-`;
+            await ctx.replyWithSticker(
+                {
+                    source: buffer
+                }
+            );
         }
 
-        await ctx.telegram.editMessageMedia(
+        await ctx.telegram.deleteMessage(
             ctx.chat.id,
-            loading.message_id,
-            undefined,
-            {
-                type: "photo",
-                media:
-                    data.photo &&
-                    data.photo !== "Unavailable"
-                    ? data.photo
-                    : thumbnailUrl,
-                caption,
-                parse_mode: "HTML"
-            },
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "Open Chat",
-                                url: `https://wa.me/${number}`
-                            }
-                        ],
-                        [
-                            {
-                                text: "Refresh",
-                                callback_data: `refreshwa_${number}`
-                            }
-                        ]
-                    ]
-                }
-            }
+            loading.message_id
         );
 
     } catch (err) {
@@ -2574,201 +2468,18 @@ reachable on WhatsApp.
                 caption:
 `
 <pre>
-V O G U E • WHATSAPP INSPECTOR
+V O G U E • STICKER ENGINE
 ──────────────────────────
 
 Status      : Failed
 
 ──────────────────────────
-Unable to retrieve
-WhatsApp account data.
+Unable to convert media
+to sticker format.
 </pre>
 `,
                 parse_mode: "HTML"
             }
-        );
-    }
-});
-
-bot.action(/^refreshwa_(.+)/, async (ctx) => {
-
-    try {
-
-        const number = ctx.match[1];
-
-        waCache.del(number);
-
-        const jid = `${number}@s.whatsapp.net`;
-
-        const result = await sock.onWhatsApp(jid);
-
-        let data;
-
-        if (!result || result.length < 1) {
-
-            data = {
-                registered: false,
-                number,
-                jid
-            };
-
-        } else {
-
-            const info = result[0];
-
-            let profilePicture = "Unavailable";
-            let statusText = "Unavailable";
-            let businessProfile = null;
-
-            try {
-                profilePicture = await sock.profilePictureUrl(jid, "image");
-            } catch {}
-
-            try {
-                const status = await sock.fetchStatus(jid);
-                statusText = status?.status || "Unavailable";
-            } catch {}
-
-            try {
-                businessProfile = await sock.getBusinessProfile(jid);
-            } catch {}
-
-            data = {
-                registered: true,
-                number,
-                jid: info.jid || jid,
-                lid: info.lid || "Unavailable",
-                notify: info.notify || "Unavailable",
-                verifiedName: info.verifiedName || null,
-                business: Boolean(info.biz),
-                photo: profilePicture,
-                about: statusText,
-                businessProfile
-            };
-        }
-
-        waCache.set(number, data);
-
-        const businessCategory =
-            data.businessProfile?.category ||
-            "Unavailable";
-
-        const businessDescription =
-            data.businessProfile?.description ||
-            "Unavailable";
-
-        const businessWebsite =
-            data.businessProfile?.website?.[0] ||
-            "Unavailable";
-
-        const businessEmail =
-            data.businessProfile?.email ||
-            "Unavailable";
-
-        const caption = data.registered
-? `
-<pre>
-V O G U E • WHATSAPP INSPECTOR
-──────────────────────────
-
-Registration : True
-Number       : ${data.number}
-
-Display Name
-${data.notify}
-
-Verified Name
-${data.verifiedName || "Unavailable"}
-
-Business Account
-${data.business ? "True" : "False"}
-
-Verified Badge
-${data.verifiedName ? "True" : "False"}
-
-About / Bio
-${data.about}
-
-Business Category
-${businessCategory}
-
-Business Description
-${businessDescription}
-
-Business Email
-${businessEmail}
-
-Business Website
-${businessWebsite}
-
-Profile Photo
-${data.photo !== "Unavailable" ? "Available" : "Unavailable"}
-
-──────────────────────────
-The account is active and
-reachable on WhatsApp.
-</pre>
-`
-: `
-<pre>
-V O G U E • WHATSAPP INSPECTOR
-──────────────────────────
-
-Registration : False
-Number       : ${data.number}
-
-JID          : ${data.jid}
-
-Business     : False
-Verified     : False
-
-──────────────────────────
-The target number is not
-registered on WhatsApp.
-</pre>
-`;
-
-        await ctx.editMessageMedia(
-            {
-                type: "photo",
-                media:
-                    data.photo &&
-                    data.photo !== "Unavailable"
-                    ? data.photo
-                    : thumbnailUrl,
-                caption,
-                parse_mode: "HTML"
-            },
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "Open Chat",
-                                url: `https://wa.me/${number}`
-                            }
-                        ],
-                        [
-                            {
-                                text: "Refresh",
-                                callback_data: `refreshwa_${number}`
-                            }
-                        ]
-                    ]
-                }
-            }
-        );
-
-        await ctx.answerCbQuery(
-            "Data refreshed."
-        );
-
-    } catch (err) {
-
-        console.log(err);
-
-        await ctx.answerCbQuery(
-            "Refresh failed."
         );
     }
 });
