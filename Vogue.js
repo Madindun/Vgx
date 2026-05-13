@@ -2646,7 +2646,7 @@ Advanced account analysis has been completed successfully.
                             {
                                 text: "Copy Number",
                                 callback_data: `copywa_${number}`,
-                                style: "secondary"
+                                style: "primary"
                             }
                         ]
                     ]
