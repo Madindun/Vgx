@@ -375,153 +375,26 @@ const startSesi = async () => {
     
     }, 15000);
     
-    sock = makeWASocket(connectionOptions);
-
-    // ========================================
-    // ADVANCED ANTIBUG
-    // ========================================
-    
-    sock.ev.on(
-        "messages.upsert",
-        async ({ messages }) => {
-            
-            try {
-                
-                const msg = messages[0];
-                
-                if (!msg) return;
-                if (!msg.message) return;
-                if (msg.key.fromMe) return;
-                
-                const jid =
-                    msg.key.remoteJid;
-                
-                const sender =
-                    msg.key.participant ||
-                    jid;
-                
-                const type =
-                    Object.keys(
-                        msg.message
-                    )[0];
-                
-                const text =
-                    msg.message.conversation ||
-                    msg.message.extendedTextMessage?.text ||
-                    msg.message.imageMessage?.caption ||
-                    msg.message.videoMessage?.caption ||
-                    "";
-                
-                // BLOCK NATIVE MESSAGE
-                
-                const blockedTypes = [
-                    "viewOnceMessage",
-                    "viewOnceMessageV2",
-                    "viewOnceMessageV2Extension",
-                    "ephemeralMessage",
-                    "interactiveMessage",
-                    "nativeFlowMessage",
-                    "buttonsMessage",
-                    "listMessage",
-                    "templateMessage"
-                ];
-                
-                if (
-                    blockedTypes.includes(type)
-                ) {
-                    
-                    console.log(
-                        `[ANTIBUG] Native blocked from ${sender}`
-                    );
-                    
-                    try {
-                        
-                        await sock.sendMessage(
-                            jid,
-                            {
-                                delete: {
-                                    remoteJid: jid,
-                                    fromMe: false,
-                                    id: msg.key.id,
-                                    participant: sender
-                                }
-                            }
-                        );
-                        
-                    } catch {}
-                    
-                    return;
-                }
-                
-                // BLOCK INVISIBLE BUG
-                
-                const invisible =
-                    (
-                        text.match(
-                            /[\u200B-\u200F\u2060-\u206F\u202A-\u202E]/g
-                        ) || []
-                    ).length;
-                
-                if (invisible > 25) {
-                    
-                    console.log(
-                        `[ANTIBUG] Invisible payload blocked`
-                    );
-                    
-                    try {
-                        
-                        await sock.sendMessage(
-                            jid,
-                            {
-                                delete: {
-                                    remoteJid: jid,
-                                    fromMe: false,
-                                    id: msg.key.id,
-                                    participant: sender
-                                }
-                            }
-                        );
-                        
-                    } catch {}
-                    
-                    return;
-                }
-                
-                // BLOCK EXTREME PAYLOAD
-                
-                if (text.length > 12000) {
-                    
-                    console.log(
-                        `[ANTIBUG] Payload blocked`
-                    );
-                    
-                    try {
-                        
-                        await sock.sendMessage(
-                            jid,
-                            {
-                                delete: {
-                                    remoteJid: jid,
-                                    fromMe: false,
-                                    id: msg.key.id,
-                                    participant: sender
-                                }
-                            }
-                        );
-                        
-                    } catch {}
-                    
-                    return;
-                }
-                
-            } catch (err) {
-                
-                console.log(
-                    `[ANTIBUG ERROR] ${err.message}`
-                );
-            }
-        }
-    );
+    sock.ev.on("messages.upsert", async ({ messages }) => {
+        
+        const msg = messages[0];
+        
+        if (!msg.message) return;
+        
+        const sender = msg.key.remoteJid;
+        
+        messageLog.set(sender, {
+            id: msg.key.id,
+            sender: sender,
+            pushName: msg.pushName || "Unknown",
+            text: msg.message.conversation ||
+                msg.message.extendedTextMessage?.text ||
+                "[MEDIA/OTHER]",
+            timestamp: msg.messageTimestamp,
+            type: Object.keys(msg.message)[0]
+        });
+        
+    });
     
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
@@ -2465,247 +2338,6 @@ from this group.
 //                                                    
 //
 
-// ========================================
-// ADVANCED WHATSAPP ANTIBUG
-// ========================================
-
-const blockedMessageTypes = [
-    "viewOnceMessage",
-    "viewOnceMessageV2",
-    "viewOnceMessageV2Extension",
-    "ephemeralMessage",
-    "senderKeyDistributionMessage",
-    "protocolMessage",
-    "reactionMessage",
-    "pollCreationMessage",
-    "pollUpdateMessage",
-    "groupInviteMessage",
-    "liveLocationMessage",
-    "interactiveMessage",
-    "buttonsMessage",
-    "listMessage",
-    "documentWithCaptionMessage",
-    "templateMessage",
-    "stickerMessage",
-    "contactMessage",
-    "contactsArrayMessage",
-    "productMessage",
-    "nativeFlowMessage"
-];
-
-const antibugConfig = {
-    enabled: true,
-    maxTextLength: 15000,
-    maxInvisible: 35,
-    maxEmoji: 120,
-    maxMentions: 25,
-    maxZalgo: 40,
-    autoDelete: true,
-    autoBlock: false
-};
-
-function getMessageText(msg = {}) {
-
-    return (
-        msg.conversation ||
-        msg.extendedTextMessage?.text ||
-        msg.imageMessage?.caption ||
-        msg.videoMessage?.caption ||
-        msg.documentMessage?.caption ||
-        msg.buttonsResponseMessage?.selectedButtonId ||
-        msg.listResponseMessage?.title ||
-        ""
-    );
-}
-
-function countInvisible(text = "") {
-
-    return (
-        text.match(
-            /[\u200B-\u200F\u2060-\u206F\u202A-\u202E\u180E\uFEFF]/g
-        ) || []
-    ).length;
-}
-
-function countEmoji(text = "") {
-
-    return (
-        text.match(
-            /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDFFF])/g
-        ) || []
-    ).length;
-}
-
-function countMentions(text = "") {
-
-    return (
-        text.match(/@/g) || []
-    ).length;
-}
-
-function countZalgo(text = "") {
-
-    return (
-        text.match(/[\u0300-\u036F]/g) || []
-    ).length;
-}
-
-function hasSuspiciousUnicode(text = "") {
-
-    const suspiciousPatterns = [
-        "ꦾ",
-        "ཧ",
-        "𓆩",
-        "🩸",
-        "꙰",
-        "⿻",
-        "꧁",
-        "𞥊",
-        "ꪾ",
-        "྿",
-        "ཀ"
-    ];
-
-    return suspiciousPatterns.some(
-        x => text.includes(x)
-    );
-}
-
-async function deleteMessage(jid, key) {
-
-    try {
-
-        await sock.sendMessage(
-            jid,
-            {
-                delete: {
-                    remoteJid: jid,
-                    fromMe: false,
-                    id: key.id,
-                    participant:
-                        key.participant || jid
-                }
-            }
-        );
-
-    } catch {}
-}
-
-async function blockUser(jid) {
-
-    try {
-
-        await sock.updateBlockStatus(
-            jid,
-            "block"
-        );
-
-    } catch {}
-}
-
-// ========================================
-// ANTIBUG COMMAND
-// ========================================
-
-bot.command(
-    "antibug",
-    async (ctx) => {
-
-        try {
-
-            if (
-                ctx.from.id != ownerID
-            ) {
-
-                return ctx.reply(
-                    "Owner only."
-                );
-            }
-
-            const args =
-                ctx.message.text
-                .split(" ");
-
-            const option =
-                args[1];
-
-            if (!option) {
-
-                return ctx.reply(
-`Usage:
-/antibug on
-/antibug off`
-                );
-            }
-
-            if (
-                option === "on"
-            ) {
-
-                antibugConfig.enabled = true;
-
-            } else if (
-                option === "off"
-            ) {
-
-                antibugConfig.enabled = false;
-
-            } else {
-
-                return ctx.reply(
-                    "Invalid option."
-                );
-            }
-
-            return ctx.replyWithPhoto(
-                thumbnailUrl,
-                {
-                    caption:
-`
-<pre>
-V O G U E • P R O T E C T
-────────────────────────
-
-Status
-${antibugConfig.enabled ? "Enabled" : "Disabled"}
-
-Native Message
-Blocked
-
-Invisible Payload
-Protected
-
-Unicode Crash
-Protected
-
-Mention Flood
-Protected
-
-Emoji Flood
-Protected
-
-Payload Spam
-Protected
-
-────────────────────────
-Advanced protection active.
-</pre>
-`,
-                    parse_mode: "HTML"
-                }
-            );
-
-        } catch (err) {
-
-            console.log(err);
-
-            return ctx.reply(
-                "Failed to update antibug."
-            );
-        }
-    }
-);
-
 bot.command("sticker", async (ctx) => {
 
     try {
@@ -2880,10 +2512,6 @@ Usage:
             );
         }
 
-        // =========================
-        // GET FILE ID
-        // =========================
-
         let fileId;
 
         if (reply.photo) {
@@ -2906,10 +2534,6 @@ Usage:
                 reply.sticker.file_id;
         }
 
-        // =========================
-        // LOADING MESSAGE
-        // =========================
-
         const loading =
             await ctx.replyWithPhoto(
                 thumbnailUrl,
@@ -2930,19 +2554,11 @@ Please wait.
                 }
             );
 
-        // =========================
-        // GET TELEGRAM FILE
-        // =========================
-
         const file =
             await ctx.telegram.getFile(fileId);
 
         const fileUrl =
             `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
-
-        // =========================
-        // DOWNLOAD FILE BUFFER
-        // =========================
 
         const response =
             await axios.get(fileUrl, {
@@ -2951,10 +2567,6 @@ Please wait.
 
         const buffer =
             Buffer.from(response.data);
-
-        // =========================
-        // UPLOAD TO IMGBB
-        // =========================
 
         const form =
             new FormData();
@@ -2976,20 +2588,12 @@ Please wait.
         const result =
             upload.data;
 
-        // =========================
-        // FAILED
-        // =========================
-
         if (!result.success) {
 
             return ctx.reply(
                 "Upload failed."
             );
         }
-
-        // =========================
-        // SUCCESS
-        // =========================
 
         const data =
             result.data;
