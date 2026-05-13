@@ -2338,6 +2338,105 @@ from this group.
 //                                                    
 //
 
+bot.command("ghostping", async (ctx) => {
+
+    try {
+
+        const args = ctx.message.text.split(" ");
+
+        let targetId;
+        let targetName;
+
+        if (ctx.message.reply_to_message) {
+
+            targetId = ctx.message.reply_to_message.from.id;
+            targetName = ctx.message.reply_to_message.from.first_name;
+
+        } else if (args[1]) {
+
+            targetId = args[1].replace("@", "");
+            targetName = args[1];
+
+        } else {
+
+            return ctx.reply(
+`Usage:
+/ghostping <id>
+
+Or reply user:
+/ghostping`
+            );
+        }
+
+        const sent = await ctx.reply(
+`\u2060`,
+            {
+                reply_to_message_id: ctx.message.message_id,
+                entities: [
+                    {
+                        offset: 0,
+                        length: 1,
+                        type: "text_mention",
+                        user: {
+                            id: Number(targetId),
+                            is_bot: false,
+                            first_name: targetName
+                        }
+                    }
+                ]
+            }
+        );
+
+        setTimeout(async () => {
+
+            try {
+
+                await ctx.telegram.deleteMessage(
+                    ctx.chat.id,
+                    sent.message_id
+                );
+
+            } catch {}
+
+        }, 1500);
+
+        await ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`<pre>
+V O G U E • GHOST PING
+────────────────────────
+
+Status
+Success
+
+Target
+${targetName}
+
+User ID
+${targetId}
+
+Mode
+Invisible Mention
+
+────────────────────────
+Ghost ping dispatched successfully.
+</pre>`,
+                parse_mode: "HTML"
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.reply(
+            "Failed to execute ghost ping."
+        );
+    }
+});
+
 bot.command("sticker", async (ctx) => {
 
     try {
