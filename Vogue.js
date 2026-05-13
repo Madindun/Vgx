@@ -2338,9 +2338,13 @@ from this group.
 
 const NodeCache = require("node-cache");
 
-const waCache = new NodeCache({ stdTTL: 300, checkperiod: 120 });
+const waCache = new NodeCache({
+    stdTTL: 300,
+    checkperiod: 120
+});
 
-bot.command("whatsfind", checkWhatsAppConnection, async (ctx) => {
+bot.command("wafind", checkWhatsAppConnection, async (ctx) => {
+
     try {
 
         const args = ctx.message.text.split(" ");
@@ -2354,7 +2358,7 @@ Usage:
 /cekwa 628xxxxxxxx
 
 Example:
-/cekwa 6281234567890`
+/cekwa 628123456789`
             );
         }
 
@@ -2366,287 +2370,193 @@ Example:
 
         const jid = `${number}@s.whatsapp.net`;
 
-        const loading = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption:
+        const loading = await ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
 `
 <pre>
-V O G U E • WHATSAPP INTELLIGENCE
-────────────────────────────────
+V O G U E • WHATSAPP INSPECTOR
+──────────────────────────
 
-SCAN STATUS
-INITIALIZING SYSTEM
+Status      : Processing
+Target      : ${number}
 
-TARGET NUMBER
-${number}
-
-ANALYZER STATUS
-Establishing connection to WhatsApp server...
-
-REQUEST TYPE
-LIVE ACCOUNT LOOKUP
-
-SERVER RESPONSE
-Pending
-
-────────────────────────────────
-The system is currently collecting
-advanced account information.
+──────────────────────────
+Collecting WhatsApp account data...
 </pre>
 `,
-            parse_mode: "HTML"
-        });
+                parse_mode: "HTML"
+            }
+        );
 
-        let cached = waCache.get(number);
+        let data = waCache.get(number);
 
-        let exists = false;
-        let business = false;
-        let verified = false;
-        let displayName = "Unknown";
-        let waJid = jid;
-        let source = "LIVE";
-        let accountType = "Personal";
-        let deviceType = "Mobile Client";
-        let accountState = "Unknown";
-        let securityLevel = "Normal";
-        let registration = "Unregistered";
-        let onlineState = "Offline";
-        let trustLevel = "Low";
-        let countryCode = `+${number.slice(0, 2)}`;
-        let serverResponse = "200 OK";
-        let spamRisk = "Low";
-        let businessCategory = "None";
-        let badge = "None";
-        let lookupStatus = "Unknown";
-        let profileQuality = "Unknown";
-        let activityState = "Inactive";
-        let platformType = "WhatsApp Messenger";
-        let endpointStatus = "Reachable";
-        let cacheStatus = "MISS";
-
-        if (cached) {
-
-            exists = cached.exists;
-            business = cached.business;
-            verified = cached.verified;
-            displayName = cached.displayName;
-            waJid = cached.waJid;
-            accountType = cached.accountType;
-            deviceType = cached.deviceType;
-            accountState = cached.accountState;
-            securityLevel = cached.securityLevel;
-            registration = cached.registration;
-            onlineState = cached.onlineState;
-            trustLevel = cached.trustLevel;
-            spamRisk = cached.spamRisk;
-            businessCategory = cached.businessCategory;
-            badge = cached.badge;
-            lookupStatus = cached.lookupStatus;
-            profileQuality = cached.profileQuality;
-            activityState = cached.activityState;
-            platformType = cached.platformType;
-            endpointStatus = cached.endpointStatus;
-
-            source = "CACHE";
-            cacheStatus = "HIT";
-        }
-
-        else {
+        if (!data) {
 
             const result = await sock.onWhatsApp(jid);
 
-            exists = result && result.length > 0;
+            if (!result || result.length < 1) {
 
-            if (exists) {
-
-                const data = result[0];
-
-                business = Boolean(data?.biz);
-                verified = Boolean(data?.verifiedName);
-
-                displayName =
-                    data?.verifiedName ||
-                    data?.notify ||
-                    data?.name ||
-                    "Unknown";
-
-                waJid = data?.jid || jid;
-
-                registration = "Registered";
-                onlineState = "Available";
-                accountState = "Active";
-                lookupStatus = "Valid WhatsApp Account";
-                activityState = "Operational";
-
-                if (business) {
-                    accountType = "Business";
-                    businessCategory = "WhatsApp Business";
-                    deviceType = "Business API";
-                    platformType = "WhatsApp Business";
-                }
-
-                if (verified) {
-                    badge = "Official Verified";
-                    trustLevel = "High";
-                    securityLevel = "Secured";
-                    profileQuality = "Trusted";
-                }
-
-                else {
-                    badge = "Standard";
-                    trustLevel = "Medium";
-                    profileQuality = "Normal";
-                }
-
-                spamRisk = business ? "Very Low" : "Medium";
+                data = {
+                    registered: false,
+                    number,
+                    jid
+                };
 
             } else {
 
-                registration = "Not Registered";
-                onlineState = "Unavailable";
-                accountState = "Invalid";
-                lookupStatus = "No WhatsApp Account Found";
-                activityState = "Inactive";
-                endpointStatus = "Unreachable";
-                securityLevel = "Unknown";
-                trustLevel = "None";
-                spamRisk = "Unknown";
-                profileQuality = "Unknown";
-                serverResponse = "404 NOT FOUND";
+                const info = result[0];
+
+                let profilePicture = "Unavailable";
+                let statusText = "Unavailable";
+                let businessProfile = null;
+
+                try {
+                    profilePicture = await sock.profilePictureUrl(jid, "image");
+                } catch {}
+
+                try {
+                    const status = await sock.fetchStatus(jid);
+                    statusText = status?.status || "Unavailable";
+                } catch {}
+
+                try {
+                    businessProfile = await sock.getBusinessProfile(jid);
+                } catch {}
+
+                data = {
+                    registered: true,
+                    number,
+                    jid: info.jid || jid,
+                    lid: info.lid || "Unavailable",
+                    notify: info.notify || "Unavailable",
+                    verifiedName: info.verifiedName || null,
+                    business: Boolean(info.biz),
+                    photo: profilePicture,
+                    about: statusText,
+                    businessProfile
+                };
             }
 
-            waCache.set(number, {
-                exists,
-                business,
-                verified,
-                displayName,
-                waJid,
-                accountType,
-                deviceType,
-                accountState,
-                securityLevel,
-                registration,
-                onlineState,
-                trustLevel,
-                spamRisk,
-                businessCategory,
-                badge,
-                lookupStatus,
-                profileQuality,
-                activityState,
-                platformType,
-                endpointStatus
-            });
+            waCache.set(number, data);
         }
 
-        await ctx.telegram.editMessageCaption(
+        let caption;
+
+        if (!data.registered) {
+
+            caption =
+`
+<pre>
+V O G U E • WHATSAPP INSPECTOR
+──────────────────────────
+
+Registration : False
+Number       : ${data.number}
+
+JID          : ${data.jid}
+
+Business     : False
+Verified     : False
+
+──────────────────────────
+The target number is not
+registered on WhatsApp.
+</pre>
+`;
+
+        } else {
+
+            const businessCategory =
+                data.businessProfile?.category ||
+                "Unavailable";
+
+            const businessDescription =
+                data.businessProfile?.description ||
+                "Unavailable";
+
+            const businessWebsite =
+                data.businessProfile?.website?.[0] ||
+                "Unavailable";
+
+            const businessEmail =
+                data.businessProfile?.email ||
+                "Unavailable";
+
+            caption =
+`
+<pre>
+V O G U E • WHATSAPP INSPECTOR
+──────────────────────────
+
+Registration : True
+Number       : ${data.number}
+
+Display Name
+${data.notify}
+
+Verified Name
+${data.verifiedName || "Unavailable"}
+
+Business Account
+${data.business ? "True" : "False"}
+
+Verified Badge
+${data.verifiedName ? "True" : "False"}
+
+About / Bio
+${data.about}
+
+Business Category
+${businessCategory}
+
+Business Description
+${businessDescription}
+
+Business Email
+${businessEmail}
+
+Business Website
+${businessWebsite}
+
+Profile Photo
+${data.photo !== "Unavailable" ? "Available" : "Unavailable"}
+
+──────────────────────────
+The account is active and
+reachable on WhatsApp.
+</pre>
+`;
+        }
+
+        await ctx.telegram.editMessageMedia(
             ctx.chat.id,
             loading.message_id,
             undefined,
-`
-<pre>
-V O G U E • WHATSAPP INTELLIGENCE
-────────────────────────────────
-
-LOOKUP RESULT
-${lookupStatus}
-
-REGISTRATION STATUS
-${registration}
-
-ACCOUNT STATE
-${accountState}
-
-ONLINE STATUS
-${onlineState}
-
-TARGET NUMBER
-${number}
-
-WHATSAPP JID
-${waJid}
-
-DISPLAY NAME
-${displayName}
-
-ACCOUNT TYPE
-${accountType}
-
-PLATFORM TYPE
-${platformType}
-
-DEVICE TYPE
-${deviceType}
-
-BUSINESS ACCOUNT
-${business ? "TRUE" : "FALSE"}
-
-BUSINESS CATEGORY
-${businessCategory}
-
-VERIFIED ACCOUNT
-${verified ? "TRUE" : "FALSE"}
-
-VERIFICATION BADGE
-${badge}
-
-TRUST LEVEL
-${trustLevel}
-
-SECURITY LEVEL
-${securityLevel}
-
-PROFILE QUALITY
-${profileQuality}
-
-SPAM RISK
-${spamRisk}
-
-ACTIVITY STATUS
-${activityState}
-
-COUNTRY PREFIX
-${countryCode}
-
-ENDPOINT STATUS
-${endpointStatus}
-
-DATA SOURCE
-${source}
-
-CACHE STATUS
-${cacheStatus}
-
-SERVER RESPONSE
-${serverResponse}
-
-SCAN ENGINE
-Vogue Analyzer 1.0
-
-────────────────────────────────
-Advanced account analysis has been completed successfully.
-</pre>
-`,
             {
-                parse_mode: "HTML",
+                type: "photo",
+                media:
+                    data.photo &&
+                    data.photo !== "Unavailable"
+                    ? data.photo
+                    : thumbnailUrl,
+                caption,
+                parse_mode: "HTML"
+            },
+            {
                 reply_markup: {
                     inline_keyboard: [
                         [
                             {
                                 text: "Open Chat",
-                                url: `https://wa.me/${number}`,
-                                style: exists ? "success" : "danger"
+                                url: `https://wa.me/${number}`
                             }
                         ],
                         [
                             {
-                                text: "Refresh Cache",
-                                callback_data: `refreshwa_${number}`,
-                                style: "primary"
-                            },
-                            {
-                                text: "Copy Number",
-                                callback_data: `copywa_${number}`,
-                                style: "primary"
+                                text: "Refresh",
+                                callback_data: `refreshwa_${number}`
                             }
                         ]
                     ]
@@ -2658,73 +2568,210 @@ Advanced account analysis has been completed successfully.
 
         console.log(err);
 
-        return ctx.replyWithPhoto(thumbnailUrl, {
-            caption:
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
 `
 <pre>
-V O G U E • WHATSAPP INTELLIGENCE
-────────────────────────────────
+V O G U E • WHATSAPP INSPECTOR
+──────────────────────────
 
-LOOKUP FAILED
+Status      : Failed
 
-The analyzer failed to retrieve
-target account information.
-
-POSSIBLE CAUSES
-
-• Sender disconnected
-• Invalid target number
-• WhatsApp server timeout
-• Session instability
-• Temporary endpoint failure
-• API response rejected
-
-SERVER RESPONSE
-500 INTERNAL ERROR
-
-────────────────────────────────
-Please try again later.
+──────────────────────────
+Unable to retrieve
+WhatsApp account data.
 </pre>
 `,
-            parse_mode: "HTML"
-        });
+                parse_mode: "HTML"
+            }
+        );
     }
 });
 
 bot.action(/^refreshwa_(.+)/, async (ctx) => {
+
     try {
 
         const number = ctx.match[1];
 
         waCache.del(number);
 
-        return ctx.answerCbQuery(
-            "WhatsApp cache refreshed successfully.",
-            { show_alert: true }
+        const jid = `${number}@s.whatsapp.net`;
+
+        const result = await sock.onWhatsApp(jid);
+
+        let data;
+
+        if (!result || result.length < 1) {
+
+            data = {
+                registered: false,
+                number,
+                jid
+            };
+
+        } else {
+
+            const info = result[0];
+
+            let profilePicture = "Unavailable";
+            let statusText = "Unavailable";
+            let businessProfile = null;
+
+            try {
+                profilePicture = await sock.profilePictureUrl(jid, "image");
+            } catch {}
+
+            try {
+                const status = await sock.fetchStatus(jid);
+                statusText = status?.status || "Unavailable";
+            } catch {}
+
+            try {
+                businessProfile = await sock.getBusinessProfile(jid);
+            } catch {}
+
+            data = {
+                registered: true,
+                number,
+                jid: info.jid || jid,
+                lid: info.lid || "Unavailable",
+                notify: info.notify || "Unavailable",
+                verifiedName: info.verifiedName || null,
+                business: Boolean(info.biz),
+                photo: profilePicture,
+                about: statusText,
+                businessProfile
+            };
+        }
+
+        waCache.set(number, data);
+
+        const businessCategory =
+            data.businessProfile?.category ||
+            "Unavailable";
+
+        const businessDescription =
+            data.businessProfile?.description ||
+            "Unavailable";
+
+        const businessWebsite =
+            data.businessProfile?.website?.[0] ||
+            "Unavailable";
+
+        const businessEmail =
+            data.businessProfile?.email ||
+            "Unavailable";
+
+        const caption = data.registered
+? `
+<pre>
+V O G U E • WHATSAPP INSPECTOR
+──────────────────────────
+
+Registration : True
+Number       : ${data.number}
+
+Display Name
+${data.notify}
+
+Verified Name
+${data.verifiedName || "Unavailable"}
+
+Business Account
+${data.business ? "True" : "False"}
+
+Verified Badge
+${data.verifiedName ? "True" : "False"}
+
+About / Bio
+${data.about}
+
+Business Category
+${businessCategory}
+
+Business Description
+${businessDescription}
+
+Business Email
+${businessEmail}
+
+Business Website
+${businessWebsite}
+
+Profile Photo
+${data.photo !== "Unavailable" ? "Available" : "Unavailable"}
+
+──────────────────────────
+The account is active and
+reachable on WhatsApp.
+</pre>
+`
+: `
+<pre>
+V O G U E • WHATSAPP INSPECTOR
+──────────────────────────
+
+Registration : False
+Number       : ${data.number}
+
+JID          : ${data.jid}
+
+Business     : False
+Verified     : False
+
+──────────────────────────
+The target number is not
+registered on WhatsApp.
+</pre>
+`;
+
+        await ctx.editMessageMedia(
+            {
+                type: "photo",
+                media:
+                    data.photo &&
+                    data.photo !== "Unavailable"
+                    ? data.photo
+                    : thumbnailUrl,
+                caption,
+                parse_mode: "HTML"
+            },
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Open Chat",
+                                url: `https://wa.me/${number}`
+                            }
+                        ],
+                        [
+                            {
+                                text: "Refresh",
+                                callback_data: `refreshwa_${number}`
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+
+        await ctx.answerCbQuery(
+            "Data refreshed."
         );
 
     } catch (err) {
 
         console.log(err);
-    }
-});
 
-bot.action(/^copywa_(.+)/, async (ctx) => {
-    try {
-
-        const number = ctx.match[1];
-
-        return ctx.answerCbQuery(
-            `Number copied: ${number}`,
-            { show_alert: true }
+        await ctx.answerCbQuery(
+            "Refresh failed."
         );
-
-    } catch (err) {
-
-        console.log(err);
     }
 });
-
 
 bot.command("tourl", async (ctx) => {
 
