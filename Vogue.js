@@ -395,16 +395,14 @@ const startSesi = async () => {
         });
         
     });
-    
+   
+  
+
     // ========================================
-    // AUTO CATALOG PAYMENT METHOD FLOW
-    // ========================================
-    
-    // ========================================
-    // AUTO CATALOG CAROUSEL FLOW
+    // PRODUCT CATALOG SYSTEM
     // ========================================
     
-    const autoCatalogCooldown = new Map();
+    const catalogCooldown = new Map();
     
     sock.ev.on(
         "messages.upsert",
@@ -420,9 +418,9 @@ const startSesi = async () => {
                 const jid =
                     msg.key.remoteJid;
     
-                if (!jid.endsWith("@s.whatsapp.net")) {
-                    return;
-                }
+                if (
+                    !jid.endsWith("@s.whatsapp.net")
+                ) return;
     
                 const text =
                     (
@@ -437,6 +435,8 @@ const startSesi = async () => {
                     "vharga",
                     ".vharga",
                     "!vharga",
+                    "catalog",
+                    ".catalog"
                 ];
     
                 if (
@@ -446,11 +446,11 @@ const startSesi = async () => {
                 const now = Date.now();
     
                 if (
-                    autoCatalogCooldown.has(jid)
+                    catalogCooldown.has(jid)
                 ) {
     
                     const last =
-                        autoCatalogCooldown.get(jid);
+                        catalogCooldown.get(jid);
     
                     if (
                         now - last < 30000
@@ -459,262 +459,344 @@ const startSesi = async () => {
                     }
                 }
     
-                autoCatalogCooldown.set(
+                catalogCooldown.set(
                     jid,
                     now
                 );
     
-                const imageUrl =
-                    "https://i.ibb.co.com/rGRv6Fp4/f0cec276ae0a9ab31366a2bf7567910a.jpg";
+                // ========================================
+                // PRODUCT IMAGES
+                // ========================================
     
-                let imageBuffer;
-    
-                try {
-    
-                    const response =
-                        await axios.get(
-                            imageUrl,
-                            {
-                                responseType: "arraybuffer",
-                                timeout: 15000,
-                                headers: {
-                                    "User-Agent":
-                                        "Mozilla/5.0"
-                                }
-                            }
-                        );
-    
-                    imageBuffer =
-                        Buffer.from(response.data);
-    
-                } catch (fetchErr) {
-    
-                    console.log(
-                        `[IMAGE FETCH ERROR] ${fetchErr.message}`
+                const androidImage =
+                    await axios.get(
+                        "https://i.ibb.co.com/rGRv6Fp4/f0cec276ae0a9ab31366a2bf7567910a.jpg",
+                        {
+                            responseType: "arraybuffer",
+                            timeout: 15000
+                        }
                     );
     
-                    return;
-                }
+                const iosImage =
+                    await axios.get(
+                        "https://i.ibb.co.com/rGRv6Fp4/f0cec276ae0a9ab31366a2bf7567910a.jpg",
+                        {
+                            responseType: "arraybuffer",
+                            timeout: 15000
+                        }
+                    );
     
-                await sock.sendMessage(
-                    jid,
-                    {
-                        viewOnceMessage: {
-                            message: {
-                                interactiveMessage: {
-                                    body: {
-                                        text:
-    `VOGUE CRASHER • PRICE LIST
+                const premiumImage =
+                    await axios.get(
+                        "https://i.ibb.co.com/rGRv6Fp4/f0cec276ae0a9ab31366a2bf7567910a.jpg",
+                        {
+                            responseType: "arraybuffer",
+                            timeout: 15000
+                        }
+                    );
     
-    Choose one of the categories below.`
-                                    },
+                // ========================================
+                // PREPARE MEDIA
+                // ========================================
     
-                                    footer: {
-                                        text:
-                                            "Powered By Vogue System"
-                                    },
+                const androidMedia =
+                    await prepareWAMessageMedia(
+                        {
+                            image:
+                                Buffer.from(
+                                    androidImage.data
+                                )
+                        },
+                        {
+                            upload:
+                                sock.waUploadToServer
+                        }
+                    );
     
-                                    header: {
-                                        title:
-                                            "VOGUE STORE",
-                                        subtitle:
-                                            "Carousel Catalog",
-                                        hasMediaAttachment: true,
-                                        imageMessage:
-                                            (
-                                                await prepareWAMessageMedia(
-                                                    {
-                                                        image: imageBuffer
-                                                    },
-                                                    {
-                                                        upload:
-                                                            sock.waUploadToServer
-                                                    }
-                                                )
-                                            ).imageMessage
-                                    },
+                const iosMedia =
+                    await prepareWAMessageMedia(
+                        {
+                            image:
+                                Buffer.from(
+                                    iosImage.data
+                                )
+                        },
+                        {
+                            upload:
+                                sock.waUploadToServer
+                        }
+                    );
     
-                                    carouselMessage: {
-                                        cards: [
+                const premiumMedia =
+                    await prepareWAMessageMedia(
+                        {
+                            image:
+                                Buffer.from(
+                                    premiumImage.data
+                                )
+                        },
+                        {
+                            upload:
+                                sock.waUploadToServer
+                        }
+                    );
     
-                                            // ========================================
-                                            // CARD 1
-                                            // ========================================
+                // ========================================
+                // GENERATE PRODUCT CATALOG
+                // ========================================
     
-                                            {
-                                                header: {
-                                                    title:
-                                                        "ANDROID BUG",
-                                                    hasMediaAttachment: true,
-                                                    imageMessage:
-                                                        (
-                                                            await prepareWAMessageMedia(
-                                                                {
-                                                                    image: imageBuffer
-                                                                },
-                                                                {
-                                                                    upload:
-                                                                        sock.waUploadToServer
-                                                                }
-                                                            )
-                                                        ).imageMessage
-                                                },
+                const message =
+                    generateWAMessageFromContent(
+                        jid,
+                        {
+                            viewOnceMessage: {
+                                message: {
+                                    interactiveMessage: proto.Message.InteractiveMessage.create({
     
-                                                body: {
-                                                    text:
-    `• Spam Andro : Rp 5.000
-    • Hard Andro : Rp 10.000
-    • Delay Hard : Rp 15.000`
-                                                },
+                                        body: proto.Message.InteractiveMessage.Body.create({
+                                            text:
+    `VOGUE CRASHER • PRODUCT CATALOG
     
-                                                footer: {
-                                                    text:
-                                                        "Fast & Stable"
-                                                },
+    Choose your preferred service below.`
+                                        }),
     
-                                                nativeFlowMessage: {
-                                                    buttons: [
-                                                        {
-                                                            name:
-                                                                "quick_reply",
-                                                            buttonParamsJson:
-                                                                JSON.stringify({
-                                                                    display_text:
-                                                                        "Select Android",
-                                                                    id:
-                                                                        "android_bug"
-                                                                })
-                                                        }
-                                                    ]
-                                                }
-                                            },
+                                        footer: proto.Message.InteractiveMessage.Footer.create({
+                                            text:
+                                                "Powered By Vogue System"
+                                        }),
     
-                                            // ========================================
-                                            // CARD 2
-                                            // ========================================
+                                        header: proto.Message.InteractiveMessage.Header.create({
+                                            title:
+                                                "VOGUE STORE",
+                                            subtitle:
+                                                "Official Product Catalog",
+                                            hasMediaAttachment: false
+                                        }),
     
-                                            {
-                                                header: {
-                                                    title:
-                                                        "IOS BUG",
-                                                    hasMediaAttachment: true,
-                                                    imageMessage:
-                                                        (
-                                                            await prepareWAMessageMedia(
-                                                                {
-                                                                    image: imageBuffer
-                                                                },
-                                                                {
-                                                                    upload:
-                                                                        sock.waUploadToServer
-                                                                }
-                                                            )
-                                                        ).imageMessage
-                                                },
+                                        carouselMessage:
+                                            proto.Message.InteractiveMessage.CarouselMessage.create({
     
-                                                body: {
-                                                    text:
-    `• Invisible Crash : Rp 20.000
-    • Force Close : Rp 25.000
-    • Delay Invisible : Rp 30.000`
-                                                },
+                                                cards: [
     
-                                                footer: {
-                                                    text:
-                                                        "Optimized iOS"
-                                                },
+                                                    // ========================================
+                                                    // ANDROID PRODUCT
+                                                    // ========================================
     
-                                                nativeFlowMessage: {
-                                                    buttons: [
-                                                        {
-                                                            name:
-                                                                "quick_reply",
-                                                            buttonParamsJson:
-                                                                JSON.stringify({
-                                                                    display_text:
-                                                                        "Select iOS",
-                                                                    id:
-                                                                        "ios_bug"
-                                                                })
-                                                        }
-                                                    ]
-                                                }
-                                            },
+                                                    proto.Message.InteractiveMessage.CarouselMessage.Card.create({
     
-                                            // ========================================
-                                            // CARD 3
-                                            // ========================================
+                                                        header:
+                                                            proto.Message.InteractiveMessage.Header.create({
     
-                                            {
-                                                header: {
-                                                    title:
-                                                        "PREMIUM ACCESS",
-                                                    hasMediaAttachment: true,
-                                                    imageMessage:
-                                                        (
-                                                            await prepareWAMessageMedia(
-                                                                {
-                                                                    image: imageBuffer
-                                                                },
-                                                                {
-                                                                    upload:
-                                                                        sock.waUploadToServer
-                                                                }
-                                                            )
-                                                        ).imageMessage
-                                                },
+                                                                title:
+                                                                    "ANDROID BUG",
     
-                                                body: {
-                                                    text:
-    `• 1 Day : Rp 10.000
-    • 7 Days : Rp 35.000
-    • Permanent : Rp 100.000`
-                                                },
+                                                                subtitle:
+                                                                    "Stable Android Service",
     
-                                                footer: {
-                                                    text:
-                                                        "Unlimited Access"
-                                                },
+                                                                hasMediaAttachment: true,
     
-                                                nativeFlowMessage: {
-                                                    buttons: [
-                                                        {
-                                                            name:
-                                                                "quick_reply",
-                                                            buttonParamsJson:
-                                                                JSON.stringify({
-                                                                    display_text:
-                                                                        "Select Premium",
-                                                                    id:
-                                                                        "premium"
-                                                                })
-                                                        }
-                                                    ]
-                                                }
-                                            }
-                                        ]
-                                    }
+                                                                imageMessage:
+                                                                    androidMedia.imageMessage
+                                                            }),
+    
+                                                        body:
+                                                            proto.Message.InteractiveMessage.Body.create({
+    
+                                                                text:
+    `• Spam Andro
+    • Hard Andro
+    • Delay Hard
+    
+    Price Start:
+    Rp 5.000`
+                                                            }),
+    
+                                                        footer:
+                                                            proto.Message.InteractiveMessage.Footer.create({
+    
+                                                                text:
+                                                                    "Fast & Stable"
+                                                            }),
+    
+                                                        nativeFlowMessage:
+                                                            proto.Message.InteractiveMessage.NativeFlowMessage.create({
+    
+                                                                buttons: [
+                                                                    {
+                                                                        name:
+                                                                            "quick_reply",
+    
+                                                                        buttonParamsJson:
+                                                                            JSON.stringify({
+    
+                                                                                display_text:
+                                                                                    "Select Android",
+    
+                                                                                id:
+                                                                                    "android_bug"
+                                                                            })
+                                                                    }
+                                                                ]
+                                                            })
+                                                    }),
+    
+                                                    // ========================================
+                                                    // IOS PRODUCT
+                                                    // ========================================
+    
+                                                    proto.Message.InteractiveMessage.CarouselMessage.Card.create({
+    
+                                                        header:
+                                                            proto.Message.InteractiveMessage.Header.create({
+    
+                                                                title:
+                                                                    "IOS BUG",
+    
+                                                                subtitle:
+                                                                    "Latest iOS Support",
+    
+                                                                hasMediaAttachment: true,
+    
+                                                                imageMessage:
+                                                                    iosMedia.imageMessage
+                                                            }),
+    
+                                                        body:
+                                                            proto.Message.InteractiveMessage.Body.create({
+    
+                                                                text:
+    `• Invisible Crash
+    • Force Close
+    • Delay Invisible
+    
+    Price Start:
+    Rp 20.000`
+                                                            }),
+    
+                                                        footer:
+                                                            proto.Message.InteractiveMessage.Footer.create({
+    
+                                                                text:
+                                                                    "Premium iOS"
+                                                            }),
+    
+                                                        nativeFlowMessage:
+                                                            proto.Message.InteractiveMessage.NativeFlowMessage.create({
+    
+                                                                buttons: [
+                                                                    {
+                                                                        name:
+                                                                            "quick_reply",
+    
+                                                                        buttonParamsJson:
+                                                                            JSON.stringify({
+    
+                                                                                display_text:
+                                                                                    "Select iOS",
+    
+                                                                                id:
+                                                                                    "ios_bug"
+                                                                            })
+                                                                    }
+                                                                ]
+                                                            })
+                                                    }),
+    
+                                                    // ========================================
+                                                    // PREMIUM PRODUCT
+                                                    // ========================================
+    
+                                                    proto.Message.InteractiveMessage.CarouselMessage.Card.create({
+    
+                                                        header:
+                                                            proto.Message.InteractiveMessage.Header.create({
+    
+                                                                title:
+                                                                    "PREMIUM ACCESS",
+    
+                                                                subtitle:
+                                                                    "Unlimited Access",
+    
+                                                                hasMediaAttachment: true,
+    
+                                                                imageMessage:
+                                                                    premiumMedia.imageMessage
+                                                            }),
+    
+                                                        body:
+                                                            proto.Message.InteractiveMessage.Body.create({
+    
+                                                                text:
+    `• 1 Day
+    • 7 Days
+    • Permanent
+    
+    Benefits:
+    Priority Sender
+    Unlimited Access`
+                                                            }),
+    
+                                                        footer:
+                                                            proto.Message.InteractiveMessage.Footer.create({
+    
+                                                                text:
+                                                                    "Most Popular"
+                                                            }),
+    
+                                                        nativeFlowMessage:
+                                                            proto.Message.InteractiveMessage.NativeFlowMessage.create({
+    
+                                                                buttons: [
+                                                                    {
+                                                                        name:
+                                                                            "quick_reply",
+    
+                                                                        buttonParamsJson:
+                                                                            JSON.stringify({
+    
+                                                                                display_text:
+                                                                                    "Select Premium",
+    
+                                                                                id:
+                                                                                    "premium"
+                                                                            })
+                                                                    }
+                                                                ]
+                                                            })
+                                                    })
+                                                ]
+                                            })
+                                    })
                                 }
                             }
-                        }
+                        },
+                        {}
+                    );
+    
+                await sock.relayMessage(
+                    jid,
+                    message.message,
+                    {
+                        messageId:
+                            message.key.id
                     }
                 );
     
                 console.log(
-                    `[CAROUSEL FLOW] Catalog sent to ${jid}`
+                    `[PRODUCT CATALOG] Sent to ${jid}`
                 );
     
             } catch (err) {
     
                 console.log(
-                    `[CAROUSEL FLOW ERROR] ${err.message}`
+                    `[PRODUCT CATALOG ERROR] ${err.message}`
                 );
             }
         }
     );
     
     // ========================================
-    // CAROUSEL RESPONSE
+    // PRODUCT RESPONSE
     // ========================================
     
     sock.ev.on(
@@ -731,22 +813,26 @@ const startSesi = async () => {
                 const jid =
                     msg.key.remoteJid;
     
-                const nativeResponse =
+                const response =
                     msg.message
                     ?.interactiveResponseMessage
                     ?.nativeFlowResponseMessage;
     
-                if (!nativeResponse) return;
+                if (!response) return;
     
                 const params =
                     JSON.parse(
-                        nativeResponse.paramsJson || "{}"
+                        response.paramsJson || "{}"
                     );
     
                 const selected =
                     params.id;
     
                 if (!selected) return;
+    
+                // ========================================
+                // ANDROID RESPONSE
+                // ========================================
     
                 if (
                     selected === "android_bug"
@@ -756,16 +842,25 @@ const startSesi = async () => {
                         jid,
                         {
                             text:
-    `ANDROID BUG PRICE
+    `ANDROID BUG PACKAGE
     
     • Spam Andro : Rp 5.000
     • Hard Andro : Rp 10.000
     • Delay Hard : Rp 15.000
     
-    Fast execution and stable sender.`
+    Execution:
+    • Stable Sender
+    • Fast Delivery
+    • Optimized Engine
+    
+    Contact admin to continue payment.`
                         }
                     );
                 }
+    
+                // ========================================
+                // IOS RESPONSE
+                // ========================================
     
                 if (
                     selected === "ios_bug"
@@ -775,16 +870,25 @@ const startSesi = async () => {
                         jid,
                         {
                             text:
-    `IOS BUG PRICE
+    `IOS BUG PACKAGE
     
     • Invisible Crash : Rp 20.000
     • Force Close : Rp 25.000
     • Delay Invisible : Rp 30.000
     
-    Optimized for latest iOS version.`
+    Execution:
+    • Latest iOS Support
+    • Premium Method
+    • Optimized Stability
+    
+    Contact admin to continue payment.`
                         }
                     );
                 }
+    
+                // ========================================
+                // PREMIUM RESPONSE
+                // ========================================
     
                 if (
                     selected === "premium"
@@ -804,7 +908,9 @@ const startSesi = async () => {
     • Unlimited Access
     • Priority Sender
     • Faster Queue
-    • New Features`
+    • Exclusive Features
+    
+    Contact admin to activate premium.`
                         }
                     );
                 }
@@ -812,7 +918,7 @@ const startSesi = async () => {
             } catch (err) {
     
                 console.log(
-                    `[CAROUSEL RESPONSE ERROR] ${err.message}`
+                    `[PRODUCT RESPONSE ERROR] ${err.message}`
                 );
             }
         }
