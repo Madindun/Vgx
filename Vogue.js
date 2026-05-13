@@ -128,7 +128,7 @@ let restarting = false;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const requiredChannel = "@VogueXChannel";
+const requiredChannel = "@VogueOfficialx";
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
 const claimFile = './database/premium_claimed.json';
@@ -589,7 +589,7 @@ const checkPremium = (ctx, next) => {
 //                                                    
 
 const REQUIRED_CHANNELS = [
-    "@VogueXChannel"
+    "@VogueOfficialx"
 ];
 
 async function checkChannelMembership(ctx) {
