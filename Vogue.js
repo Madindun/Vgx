@@ -1625,6 +1625,13 @@ GROUP ACCESS MANAGEMENT
 
 ──────────────────────────
 
+TOOLS MENU
+
+/tourl
+› Image, gif, and video convert to url
+
+──────────────────────────
+
 SYSTEM STATUS
 
 › All services are operational
@@ -2319,7 +2326,7 @@ from this group.
 //      | | \ \_/ /\ \_/ / |____/\__/ /               
 //      \_/  \___/  \___/\_____/\____/                
 //                                                    
-//                                                    
+//               TOOLS COMMAND                                     
 //     _____ ________  ______  ___  ___   _   _______ 
 //    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \
 //    | /  \/ | | | .  . || .  . |/ /_\ \|  \| | | | |
