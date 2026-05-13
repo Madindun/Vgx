@@ -1629,6 +1629,8 @@ TOOLS MENU
 
 /tourl
 › Image, gif, and video convert to url
+/sticker
+› Convert image and video to Sticker
 
 ──────────────────────────
 
