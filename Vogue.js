@@ -2338,240 +2338,151 @@ from this group.
 //                                                    
 //
 
-bot.command("cekbanwa", checkWhatsAppConnection, async (ctx) => {
+// ========================================
+// WEATHER COMMAND
+// ========================================
+
+bot.command("weather", async (ctx) => {
 
     try {
 
         const args = ctx.message.text.split(" ");
-        const q = args[1];
+        const query = args.slice(1).join(" ");
 
-        if (!q) {
+        if (!query) {
 
             return ctx.reply(
 `Invalid Format
 
 Usage:
-/cekbanwa 628xxxxxxxx
+/weather <city>
 
 Example:
-/cekbanwa 628123456789`
+/weather Jakarta`
             );
         }
 
-        const number =
-            q.replace(/[^0-9]/g, "");
+        const api =
+`https://wttr.in/${encodeURIComponent(query)}?format=j1`;
 
-        if (
-            number.length < 8 ||
-            number.length > 15
-        ) {
+        const { data } =
+            await axios.get(api);
+
+        if (!data || !data.current_condition) {
 
             return ctx.reply(
-                "Invalid phone number."
+                "Weather data unavailable."
             );
         }
 
-        const jid =
-            `${number}@s.whatsapp.net`;
+        const current =
+            data.current_condition[0];
 
-        const loading =
-            await ctx.replyWithPhoto(
-                thumbnailUrl,
-                {
-                    caption:
+        const area =
+            data.nearest_area?.[0];
+
+        const weather =
+            data.weather?.[0];
+
+        const location =
+            `${area?.areaName?.[0]?.value || query}, ${area?.country?.[0]?.value || "Unknown"}`;
+
+        const temp =
+            current.temp_C;
+
+        const feels =
+            current.FeelsLikeC;
+
+        const humidity =
+            current.humidity;
+
+        const wind =
+            current.windspeedKmph;
+
+        const visibility =
+            current.visibility;
+
+        const pressure =
+            current.pressure;
+
+        const uv =
+            current.uvIndex;
+
+        const condition =
+            current.weatherDesc?.[0]?.value;
+
+        const sunrise =
+            weather?.astronomy?.[0]?.sunrise;
+
+        const sunset =
+            weather?.astronomy?.[0]?.sunset;
+
+        const maxTemp =
+            weather?.maxtempC;
+
+        const minTemp =
+            weather?.mintempC;
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
 `
 <pre>
-V O G U E • WA STATUS CHECKER
+V O G U E • WEATHER SYSTEM
 ──────────────────────────
 
-Status      : Processing
-Target      : ${number}
+Location
+${location}
+
+Condition
+${condition}
+
+Temperature
+${temp}°C
+
+Feels Like
+${feels}°C
+
+Humidity
+${humidity}%
+
+Wind Speed
+${wind} km/h
+
+Visibility
+${visibility} km
+
+Pressure
+${pressure} mb
+
+UV Index
+${uv}
+
+Sunrise
+${sunrise}
+
+Sunset
+${sunset}
+
+Max Temperature
+${maxTemp}°C
+
+Min Temperature
+${minTemp}°C
 
 ──────────────────────────
-Analyzing WhatsApp account...
+Live weather data retrieved.
 </pre>
 `,
-                    parse_mode: "HTML"
-                }
-            );
-
-        const result =
-            await sock.onWhatsApp(jid);
-
-        if (
-            !result ||
-            result.length < 1
-        ) {
-
-            return ctx.telegram.editMessageCaption(
-                ctx.chat.id,
-                loading.message_id,
-                undefined,
-`
-<pre>
-V O G U E • WA STATUS CHECKER
-──────────────────────────
-
-Number      : ${number}
-Registered  : False
-Status      : Invalid
-
-──────────────────────────
-The number is not registered
-on WhatsApp.
-</pre>
-`,
-                {
-                    parse_mode: "HTML"
-                }
-            );
-        }
-
-        const info = result[0];
-
-        let profilePhoto = "Unavailable";
-        let about = "Unavailable";
-        let business = false;
-        let verified = false;
-        let lastSeen = "Hidden";
-        let statusLevel = "Normal";
-
-        try {
-
-            profilePhoto =
-                await sock.profilePictureUrl(
-                    jid,
-                    "image"
-                );
-
-        } catch {}
-
-        try {
-
-            const fetchStatus =
-                await sock.fetchStatus(jid);
-
-            about =
-                fetchStatus?.status ||
-                "Unavailable";
-
-        } catch {}
-
-        if (info?.biz) {
-            business = true;
-        }
-
-        if (info?.verifiedName) {
-            verified = true;
-        }
-
-        // =========================
-        // ANALISIS STATUS
-        // =========================
-
-        if (
-            !profilePhoto ||
-            profilePhoto === "Unavailable"
-        ) {
-
-            statusLevel =
-                "Possible Limited";
-        }
-
-        if (
-            about === "Unavailable"
-        ) {
-
-            statusLevel =
-                "Possible Restricted";
-        }
-
-        if (
-            verified &&
-            business
-        ) {
-
-            statusLevel =
-                "Verified Business";
-        }
-
-        if (
-            profilePhoto !== "Unavailable" &&
-            about !== "Unavailable"
-        ) {
-
-            statusLevel =
-                "Normal Active";
-        }
-
-        const caption =
-`
-<pre>
-V O G U E • WA STATUS CHECKER
-──────────────────────────
-
-Number
-${number}
-
-JID
-${info.jid || jid}
-
-Display Name
-${info.notify || "Unavailable"}
-
-Verified Name
-${info.verifiedName || "Unavailable"}
-
-Business Account
-${business ? "True" : "False"}
-
-Verified Badge
-${verified ? "True" : "False"}
-
-Profile Photo
-${profilePhoto !== "Unavailable" ? "Available" : "Unavailable"}
-
-About / Bio
-${about}
-
-Last Seen
-${lastSeen}
-
-Account Status
-${statusLevel}
-
-──────────────────────────
-Analysis completed successfully.
-</pre>
-`;
-
-        await ctx.telegram.editMessageMedia(
-            ctx.chat.id,
-            loading.message_id,
-            undefined,
-            {
-                type: "photo",
-                media:
-                    profilePhoto !== "Unavailable"
-                    ? profilePhoto
-                    : thumbnailUrl,
-                caption,
-                parse_mode: "HTML"
-            },
-            {
+                parse_mode: "HTML",
                 reply_markup: {
                     inline_keyboard: [
                         [
                             {
-                                text: "Open Chat",
-                                url: `https://wa.me/${number}`
-                            }
-                        ],
-                        [
-                            {
-                                text: "Refresh",
-                                callback_data:
-                                    `recheckban_${number}`
+                                text: "Open Maps",
+                                url:
+`https://www.google.com/maps/search/${encodeURIComponent(location)}`
                             }
                         ]
                     ]
@@ -2589,14 +2500,14 @@ Analysis completed successfully.
                 caption:
 `
 <pre>
-V O G U E • WA STATUS CHECKER
+V O G U E • WEATHER SYSTEM
 ──────────────────────────
 
 Status      : Failed
 
 ──────────────────────────
-Unable to analyze
-WhatsApp account.
+Unable to retrieve
+weather information.
 </pre>
 `,
                 parse_mode: "HTML"
@@ -2605,200 +2516,255 @@ WhatsApp account.
     }
 });
 
-bot.action(/^recheckban_(.+)/, async (ctx) => {
+
+// ========================================
+// ANTIBUG SYSTEM
+// ========================================
+
+const antiBugSettings = {
+    enabled: true,
+    maxTextLength: 1500,
+    maxMentions: 2,
+    blockedPatterns: [
+        "𓆩",
+        "ꦾ",
+        "🩸",
+        "ཧ",
+        "꧁",
+        "⿻",
+        "꙰",
+        "\u0000",
+    ]
+};
+
+bot.use(async (ctx, next) => {
 
     try {
 
-        const number =
-            ctx.match[1];
-
-        const jid =
-            `${number}@s.whatsapp.net`;
-
-        const result =
-            await sock.onWhatsApp(jid);
-
         if (
-            !result ||
-            result.length < 1
+            !antiBugSettings.enabled
         ) {
 
-            return ctx.editMessageCaption(
-`
-<pre>
-V O G U E • WA STATUS CHECKER
-──────────────────────────
+            return next();
+        }
 
-Number      : ${number}
-Registered  : False
-Status      : Invalid
+        const msg =
+            ctx.message;
 
-──────────────────────────
-The number is not registered
-on WhatsApp.
-</pre>
-`,
-                {
-                    parse_mode: "HTML"
-                }
+        if (!msg) {
+            return next();
+        }
+
+        const text =
+            msg.text ||
+            msg.caption ||
+            "";
+
+        // =========================
+        // LONG TEXT DETECT
+        // =========================
+
+        if (
+            text.length >
+            antiBugSettings.maxTextLength
+        ) {
+
+            try {
+
+                await ctx.deleteMessage();
+
+            } catch {}
+
+            return;
+        }
+
+        // =========================
+        // INVISIBLE CHAR DETECT
+        // =========================
+
+        const invisibleChars =
+            (
+                text.match(
+                    /[\u200B-\u200F\u2060\u2066-\u206F]/g
+                ) || []
+            ).length;
+
+        if (
+            invisibleChars > 80
+        ) {
+
+            try {
+
+                await ctx.deleteMessage();
+
+            } catch {}
+
+            return;
+        }
+
+        // =========================
+        // MENTION SPAM DETECT
+        // =========================
+
+        const mentions =
+            (
+                text.match(/@/g) || []
+            ).length;
+
+        if (
+            mentions >
+            antiBugSettings.maxMentions
+        ) {
+
+            try {
+
+                await ctx.deleteMessage();
+
+            } catch {}
+
+            return;
+        }
+
+        // =========================
+        // UNICODE BUG DETECT
+        // =========================
+
+        const detected =
+            antiBugSettings
+            .blockedPatterns
+            .find(x =>
+                text.includes(x)
+            );
+
+        if (detected) {
+
+            try {
+
+                await ctx.deleteMessage();
+
+            } catch {}
+
+            return;
+        }
+
+        // =========================
+        // EXTREME EMOJI SPAM
+        // =========================
+
+        const emojiSpam =
+            (
+                text.match(
+                    /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDFFF])/g
+                ) || []
+            ).length;
+
+        if (
+            emojiSpam > 120
+        ) {
+
+            try {
+
+                await ctx.deleteMessage();
+
+            } catch {}
+
+            return;
+        }
+
+        return next();
+
+    } catch (err) {
+
+        console.log(
+            `[ANTIBUG ERROR] ${err.message}`
+        );
+
+        return next();
+    }
+});
+
+
+// ========================================
+// ANTIBUG TOGGLE
+// ========================================
+
+bot.command("antibug", async (ctx) => {
+
+    try {
+
+        if (
+            ctx.from.id != ownerID
+        ) {
+
+            return ctx.reply(
+                "Owner only."
             );
         }
 
-        const info = result[0];
+        const args =
+            ctx.message.text
+            .split(" ")[1];
 
-        let profilePhoto = "Unavailable";
-        let about = "Unavailable";
-        let business = false;
-        let verified = false;
-        let lastSeen = "Hidden";
-        let statusLevel = "Normal";
+        if (!args) {
 
-        try {
-
-            profilePhoto =
-                await sock.profilePictureUrl(
-                    jid,
-                    "image"
-                );
-
-        } catch {}
-
-        try {
-
-            const fetchStatus =
-                await sock.fetchStatus(jid);
-
-            about =
-                fetchStatus?.status ||
-                "Unavailable";
-
-        } catch {}
-
-        if (info?.biz) {
-            business = true;
-        }
-
-        if (info?.verifiedName) {
-            verified = true;
+            return ctx.reply(
+`Usage:
+/antibug on
+/antibug off`
+            );
         }
 
         if (
-            !profilePhoto ||
-            profilePhoto === "Unavailable"
+            args === "on"
         ) {
 
-            statusLevel =
-                "Possible Limited";
-        }
+            antiBugSettings.enabled = true;
 
-        if (
-            about === "Unavailable"
+        } else if (
+            args === "off"
         ) {
 
-            statusLevel =
-                "Possible Restricted";
+            antiBugSettings.enabled = false;
+
+        } else {
+
+            return ctx.reply(
+                "Invalid option."
+            );
         }
 
-        if (
-            verified &&
-            business
-        ) {
-
-            statusLevel =
-                "Verified Business";
-        }
-
-        if (
-            profilePhoto !== "Unavailable" &&
-            about !== "Unavailable"
-        ) {
-
-            statusLevel =
-                "Normal Active";
-        }
-
-        const caption =
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
 `
 <pre>
-V O G U E • WA STATUS CHECKER
+V O G U E • ANTIBUG SYSTEM
 ──────────────────────────
 
-Number
-${number}
+Status
+${antiBugSettings.enabled ? "Enabled" : "Disabled"}
 
-JID
-${info.jid || jid}
+Max Text
+${antiBugSettings.maxTextLength}
 
-Display Name
-${info.notify || "Unavailable"}
-
-Verified Name
-${info.verifiedName || "Unavailable"}
-
-Business Account
-${business ? "True" : "False"}
-
-Verified Badge
-${verified ? "True" : "False"}
-
-Profile Photo
-${profilePhoto !== "Unavailable" ? "Available" : "Unavailable"}
-
-About / Bio
-${about}
-
-Last Seen
-${lastSeen}
-
-Account Status
-${statusLevel}
+Max Mention
+${antiBugSettings.maxMentions}
 
 ──────────────────────────
-Analysis completed successfully.
+Protection system updated.
 </pre>
-`;
-
-        await ctx.editMessageMedia(
-            {
-                type: "photo",
-                media:
-                    profilePhoto !== "Unavailable"
-                    ? profilePhoto
-                    : thumbnailUrl,
-                caption,
+`,
                 parse_mode: "HTML"
-            },
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {
-                                text: "Open Chat",
-                                url: `https://wa.me/${number}`
-                            }
-                        ],
-                        [
-                            {
-                                text: "Refresh",
-                                callback_data:
-                                    `recheckban_${number}`
-                            }
-                        ]
-                    ]
-                }
             }
-        );
-
-        await ctx.answerCbQuery(
-            "Analysis refreshed."
         );
 
     } catch (err) {
 
         console.log(err);
 
-        await ctx.answerCbQuery(
-            "Refresh failed."
+        return ctx.reply(
+            "Failed to update antibug."
         );
     }
 });
