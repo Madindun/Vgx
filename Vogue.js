@@ -400,6 +400,10 @@ const startSesi = async () => {
     // AUTO CATALOG PAYMENT METHOD FLOW
     // ========================================
     
+    // ========================================
+    // AUTO CATALOG CAROUSEL FLOW
+    // ========================================
+    
     const autoCatalogCooldown = new Map();
     
     sock.ev.on(
@@ -495,95 +499,222 @@ const startSesi = async () => {
                 await sock.sendMessage(
                     jid,
                     {
-                        image: imageBuffer,
-                        caption:
-    `VOGUE CRASHER • PAYMENT MENU
+                        viewOnceMessage: {
+                            message: {
+                                interactiveMessage: {
+                                    body: {
+                                        text:
+    `VOGUE CRASHER • PRICE LIST
     
-    Choose payment category below.`,
-                        footer:
-                            "Powered By Vogue System",
-                        interactiveButtons: [
-                            {
-                                name: "payment_method",
-                                buttonParamsJson: JSON.stringify({
-                                    currency: "IDR",
-                                    total_amount: {
-                                        value: 10000,
-                                        offset: 100
+    Choose one of the categories below.`
                                     },
-                                    reference_id:
-                                        "VOGUE-" + Date.now(),
-                                    type: "physical-goods",
-                                    payment_settings: [
-                                        {
-                                            type: "pix_static_code",
-                                            pix_static_code: {
-                                                code:
-                                                    "08123456789",
-                                                merchant_name:
-                                                    "VOGUE STORE",
-                                                key:
-                                                    "08123456789"
-                                            }
-                                        }
-                                    ],
-                                    order: {
-                                        status: "pending",
-                                        subtotal: {
-                                            value: 10000,
-                                            offset: 100
-                                        },
-                                        tax: {
-                                            value: 0,
-                                            offset: 100
-                                        },
-                                        discount: {
-                                            value: 0,
-                                            offset: 100
-                                        },
-                                        shipping: {
-                                            value: 0,
-                                            offset: 100
-                                        },
-                                        order_type:
-                                            "ORDER",
-                                        items: [
+    
+                                    footer: {
+                                        text:
+                                            "Powered By Vogue System"
+                                    },
+    
+                                    header: {
+                                        title:
+                                            "VOGUE STORE",
+                                        subtitle:
+                                            "Carousel Catalog",
+                                        hasMediaAttachment: true,
+                                        imageMessage:
+                                            (
+                                                await sock.prepareMessageMedia(
+                                                    {
+                                                        image: imageBuffer
+                                                    },
+                                                    {
+                                                        upload:
+                                                            sock.waUploadToServer
+                                                    }
+                                                )
+                                            ).imageMessage
+                                    },
+    
+                                    carouselMessage: {
+                                        cards: [
+    
+                                            // ========================================
+                                            // CARD 1
+                                            // ========================================
+    
                                             {
-                                                retailer_id:
-                                                    "android_bug",
-                                                name:
-                                                    "Android Bug",
-                                                amount: {
-                                                    value: 10000,
-                                                    offset: 100
+                                                header: {
+                                                    title:
+                                                        "ANDROID BUG",
+                                                    hasMediaAttachment: true,
+                                                    imageMessage:
+                                                        (
+                                                            await sock.prepareMessageMedia(
+                                                                {
+                                                                    image: imageBuffer
+                                                                },
+                                                                {
+                                                                    upload:
+                                                                        sock.waUploadToServer
+                                                                }
+                                                            )
+                                                        ).imageMessage
                                                 },
-                                                quantity: 1
+    
+                                                body: {
+                                                    text:
+    `• Spam Andro : Rp 5.000
+    • Hard Andro : Rp 10.000
+    • Delay Hard : Rp 15.000`
+                                                },
+    
+                                                footer: {
+                                                    text:
+                                                        "Fast & Stable"
+                                                },
+    
+                                                nativeFlowMessage: {
+                                                    buttons: [
+                                                        {
+                                                            name:
+                                                                "quick_reply",
+                                                            buttonParamsJson:
+                                                                JSON.stringify({
+                                                                    display_text:
+                                                                        "Select Android",
+                                                                    id:
+                                                                        "android_bug"
+                                                                })
+                                                        }
+                                                    ]
+                                                }
+                                            },
+    
+                                            // ========================================
+                                            // CARD 2
+                                            // ========================================
+    
+                                            {
+                                                header: {
+                                                    title:
+                                                        "IOS BUG",
+                                                    hasMediaAttachment: true,
+                                                    imageMessage:
+                                                        (
+                                                            await sock.prepareMessageMedia(
+                                                                {
+                                                                    image: imageBuffer
+                                                                },
+                                                                {
+                                                                    upload:
+                                                                        sock.waUploadToServer
+                                                                }
+                                                            )
+                                                        ).imageMessage
+                                                },
+    
+                                                body: {
+                                                    text:
+    `• Invisible Crash : Rp 20.000
+    • Force Close : Rp 25.000
+    • Delay Invisible : Rp 30.000`
+                                                },
+    
+                                                footer: {
+                                                    text:
+                                                        "Optimized iOS"
+                                                },
+    
+                                                nativeFlowMessage: {
+                                                    buttons: [
+                                                        {
+                                                            name:
+                                                                "quick_reply",
+                                                            buttonParamsJson:
+                                                                JSON.stringify({
+                                                                    display_text:
+                                                                        "Select iOS",
+                                                                    id:
+                                                                        "ios_bug"
+                                                                })
+                                                        }
+                                                    ]
+                                                }
+                                            },
+    
+                                            // ========================================
+                                            // CARD 3
+                                            // ========================================
+    
+                                            {
+                                                header: {
+                                                    title:
+                                                        "PREMIUM ACCESS",
+                                                    hasMediaAttachment: true,
+                                                    imageMessage:
+                                                        (
+                                                            await sock.prepareMessageMedia(
+                                                                {
+                                                                    image: imageBuffer
+                                                                },
+                                                                {
+                                                                    upload:
+                                                                        sock.waUploadToServer
+                                                                }
+                                                            )
+                                                        ).imageMessage
+                                                },
+    
+                                                body: {
+                                                    text:
+    `• 1 Day : Rp 10.000
+    • 7 Days : Rp 35.000
+    • Permanent : Rp 100.000`
+                                                },
+    
+                                                footer: {
+                                                    text:
+                                                        "Unlimited Access"
+                                                },
+    
+                                                nativeFlowMessage: {
+                                                    buttons: [
+                                                        {
+                                                            name:
+                                                                "quick_reply",
+                                                            buttonParamsJson:
+                                                                JSON.stringify({
+                                                                    display_text:
+                                                                        "Select Premium",
+                                                                    id:
+                                                                        "premium"
+                                                                })
+                                                        }
+                                                    ]
+                                                }
                                             }
                                         ]
                                     }
-                                })
+                                }
                             }
-                        ],
-                        headerType: 4,
-                        viewOnce: false
+                        }
                     }
                 );
     
                 console.log(
-                    `[PAYMENT FLOW] Sent to ${jid}`
+                    `[CAROUSEL FLOW] Catalog sent to ${jid}`
                 );
     
             } catch (err) {
     
                 console.log(
-                    `[PAYMENT FLOW ERROR] ${err.message}`
+                    `[CAROUSEL FLOW ERROR] ${err.message}`
                 );
             }
         }
     );
     
     // ========================================
-    // PAYMENT RESPONSE
+    // CAROUSEL RESPONSE
     // ========================================
     
     sock.ev.on(
@@ -612,27 +743,76 @@ const startSesi = async () => {
                         nativeResponse.paramsJson || "{}"
                     );
     
-                console.log(
-                    `[PAYMENT RESPONSE]`,
-                    params
-                );
+                const selected =
+                    params.id;
     
-                await sock.sendMessage(
-                    jid,
-                    {
-                        text:
-    `PAYMENT SYSTEM
+                if (!selected) return;
     
-    Your payment request has been received successfully.
+                if (
+                    selected === "android_bug"
+                ) {
     
-    Please wait for admin confirmation.`
-                    }
-                );
+                    return await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+    `ANDROID BUG PRICE
+    
+    • Spam Andro : Rp 5.000
+    • Hard Andro : Rp 10.000
+    • Delay Hard : Rp 15.000
+    
+    Fast execution and stable sender.`
+                        }
+                    );
+                }
+    
+                if (
+                    selected === "ios_bug"
+                ) {
+    
+                    return await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+    `IOS BUG PRICE
+    
+    • Invisible Crash : Rp 20.000
+    • Force Close : Rp 25.000
+    • Delay Invisible : Rp 30.000
+    
+    Optimized for latest iOS version.`
+                        }
+                    );
+                }
+    
+                if (
+                    selected === "premium"
+                ) {
+    
+                    return await sock.sendMessage(
+                        jid,
+                        {
+                            text:
+    `PREMIUM ACCESS
+    
+    • 1 Day : Rp 10.000
+    • 7 Days : Rp 35.000
+    • Permanent : Rp 100.000
+    
+    Benefits:
+    • Unlimited Access
+    • Priority Sender
+    • Faster Queue
+    • New Features`
+                        }
+                    );
+                }
     
             } catch (err) {
     
                 console.log(
-                    `[PAYMENT RESPONSE ERROR] ${err.message}`
+                    `[CAROUSEL RESPONSE ERROR] ${err.message}`
                 );
             }
         }
