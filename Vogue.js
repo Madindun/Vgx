@@ -2338,6 +2338,471 @@ from this group.
 //                                                    
 //
 
+bot.command("cekbanwa", checkWhatsAppConnection, async (ctx) => {
+
+    try {
+
+        const args = ctx.message.text.split(" ");
+        const q = args[1];
+
+        if (!q) {
+
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/cekbanwa 628xxxxxxxx
+
+Example:
+/cekbanwa 628123456789`
+            );
+        }
+
+        const number =
+            q.replace(/[^0-9]/g, "");
+
+        if (
+            number.length < 8 ||
+            number.length > 15
+        ) {
+
+            return ctx.reply(
+                "Invalid phone number."
+            );
+        }
+
+        const jid =
+            `${number}@s.whatsapp.net`;
+
+        const loading =
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+`
+<pre>
+V O G U E • WA STATUS CHECKER
+──────────────────────────
+
+Status      : Processing
+Target      : ${number}
+
+──────────────────────────
+Analyzing WhatsApp account...
+</pre>
+`,
+                    parse_mode: "HTML"
+                }
+            );
+
+        const result =
+            await sock.onWhatsApp(jid);
+
+        if (
+            !result ||
+            result.length < 1
+        ) {
+
+            return ctx.telegram.editMessageCaption(
+                ctx.chat.id,
+                loading.message_id,
+                undefined,
+`
+<pre>
+V O G U E • WA STATUS CHECKER
+──────────────────────────
+
+Number      : ${number}
+Registered  : False
+Status      : Invalid
+
+──────────────────────────
+The number is not registered
+on WhatsApp.
+</pre>
+`,
+                {
+                    parse_mode: "HTML"
+                }
+            );
+        }
+
+        const info = result[0];
+
+        let profilePhoto = "Unavailable";
+        let about = "Unavailable";
+        let business = false;
+        let verified = false;
+        let lastSeen = "Hidden";
+        let statusLevel = "Normal";
+
+        try {
+
+            profilePhoto =
+                await sock.profilePictureUrl(
+                    jid,
+                    "image"
+                );
+
+        } catch {}
+
+        try {
+
+            const fetchStatus =
+                await sock.fetchStatus(jid);
+
+            about =
+                fetchStatus?.status ||
+                "Unavailable";
+
+        } catch {}
+
+        if (info?.biz) {
+            business = true;
+        }
+
+        if (info?.verifiedName) {
+            verified = true;
+        }
+
+        // =========================
+        // ANALISIS STATUS
+        // =========================
+
+        if (
+            !profilePhoto ||
+            profilePhoto === "Unavailable"
+        ) {
+
+            statusLevel =
+                "Possible Limited";
+        }
+
+        if (
+            about === "Unavailable"
+        ) {
+
+            statusLevel =
+                "Possible Restricted";
+        }
+
+        if (
+            verified &&
+            business
+        ) {
+
+            statusLevel =
+                "Verified Business";
+        }
+
+        if (
+            profilePhoto !== "Unavailable" &&
+            about !== "Unavailable"
+        ) {
+
+            statusLevel =
+                "Normal Active";
+        }
+
+        const caption =
+`
+<pre>
+V O G U E • WA STATUS CHECKER
+──────────────────────────
+
+Number
+${number}
+
+JID
+${info.jid || jid}
+
+Display Name
+${info.notify || "Unavailable"}
+
+Verified Name
+${info.verifiedName || "Unavailable"}
+
+Business Account
+${business ? "True" : "False"}
+
+Verified Badge
+${verified ? "True" : "False"}
+
+Profile Photo
+${profilePhoto !== "Unavailable" ? "Available" : "Unavailable"}
+
+About / Bio
+${about}
+
+Last Seen
+${lastSeen}
+
+Account Status
+${statusLevel}
+
+──────────────────────────
+Analysis completed successfully.
+</pre>
+`;
+
+        await ctx.telegram.editMessageMedia(
+            ctx.chat.id,
+            loading.message_id,
+            undefined,
+            {
+                type: "photo",
+                media:
+                    profilePhoto !== "Unavailable"
+                    ? profilePhoto
+                    : thumbnailUrl,
+                caption,
+                parse_mode: "HTML"
+            },
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Open Chat",
+                                url: `https://wa.me/${number}`
+                            }
+                        ],
+                        [
+                            {
+                                text: "Refresh",
+                                callback_data:
+                                    `recheckban_${number}`
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`
+<pre>
+V O G U E • WA STATUS CHECKER
+──────────────────────────
+
+Status      : Failed
+
+──────────────────────────
+Unable to analyze
+WhatsApp account.
+</pre>
+`,
+                parse_mode: "HTML"
+            }
+        );
+    }
+});
+
+bot.action(/^recheckban_(.+)/, async (ctx) => {
+
+    try {
+
+        const number =
+            ctx.match[1];
+
+        const jid =
+            `${number}@s.whatsapp.net`;
+
+        const result =
+            await sock.onWhatsApp(jid);
+
+        if (
+            !result ||
+            result.length < 1
+        ) {
+
+            return ctx.editMessageCaption(
+`
+<pre>
+V O G U E • WA STATUS CHECKER
+──────────────────────────
+
+Number      : ${number}
+Registered  : False
+Status      : Invalid
+
+──────────────────────────
+The number is not registered
+on WhatsApp.
+</pre>
+`,
+                {
+                    parse_mode: "HTML"
+                }
+            );
+        }
+
+        const info = result[0];
+
+        let profilePhoto = "Unavailable";
+        let about = "Unavailable";
+        let business = false;
+        let verified = false;
+        let lastSeen = "Hidden";
+        let statusLevel = "Normal";
+
+        try {
+
+            profilePhoto =
+                await sock.profilePictureUrl(
+                    jid,
+                    "image"
+                );
+
+        } catch {}
+
+        try {
+
+            const fetchStatus =
+                await sock.fetchStatus(jid);
+
+            about =
+                fetchStatus?.status ||
+                "Unavailable";
+
+        } catch {}
+
+        if (info?.biz) {
+            business = true;
+        }
+
+        if (info?.verifiedName) {
+            verified = true;
+        }
+
+        if (
+            !profilePhoto ||
+            profilePhoto === "Unavailable"
+        ) {
+
+            statusLevel =
+                "Possible Limited";
+        }
+
+        if (
+            about === "Unavailable"
+        ) {
+
+            statusLevel =
+                "Possible Restricted";
+        }
+
+        if (
+            verified &&
+            business
+        ) {
+
+            statusLevel =
+                "Verified Business";
+        }
+
+        if (
+            profilePhoto !== "Unavailable" &&
+            about !== "Unavailable"
+        ) {
+
+            statusLevel =
+                "Normal Active";
+        }
+
+        const caption =
+`
+<pre>
+V O G U E • WA STATUS CHECKER
+──────────────────────────
+
+Number
+${number}
+
+JID
+${info.jid || jid}
+
+Display Name
+${info.notify || "Unavailable"}
+
+Verified Name
+${info.verifiedName || "Unavailable"}
+
+Business Account
+${business ? "True" : "False"}
+
+Verified Badge
+${verified ? "True" : "False"}
+
+Profile Photo
+${profilePhoto !== "Unavailable" ? "Available" : "Unavailable"}
+
+About / Bio
+${about}
+
+Last Seen
+${lastSeen}
+
+Account Status
+${statusLevel}
+
+──────────────────────────
+Analysis completed successfully.
+</pre>
+`;
+
+        await ctx.editMessageMedia(
+            {
+                type: "photo",
+                media:
+                    profilePhoto !== "Unavailable"
+                    ? profilePhoto
+                    : thumbnailUrl,
+                caption,
+                parse_mode: "HTML"
+            },
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "Open Chat",
+                                url: `https://wa.me/${number}`
+                            }
+                        ],
+                        [
+                            {
+                                text: "Refresh",
+                                callback_data:
+                                    `recheckban_${number}`
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+
+        await ctx.answerCbQuery(
+            "Analysis refreshed."
+        );
+
+    } catch (err) {
+
+        console.log(err);
+
+        await ctx.answerCbQuery(
+            "Refresh failed."
+        );
+    }
+});
+
 bot.command("sticker", async (ctx) => {
 
     try {
