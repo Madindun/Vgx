@@ -2347,22 +2347,14 @@ bot.command(
 
         try {
 
-            const args =
-                ctx.message.text.split(" ");
-
             const q =
-                args[1];
+                ctx.message.text.split(" ")[1];
 
             if (!q) {
 
                 return ctx.reply(
-`Invalid Format
-
-Usage:
-/fakecall <target_number>
-
-Example:
-/fakecall 628xxxxxxxx`
+`Usage:
+/fakecall 628xxxx`
                 );
             }
 
@@ -2371,49 +2363,27 @@ Example:
                 "@s.whatsapp.net";
 
             const callId =
-                crypto.randomBytes(16).toString("hex");
+                crypto.randomBytes(32).toString("hex");
 
-            const callType =
-                Math.random() > 0.5
-                ? "video"
-                : "audio";
+            const isVideo =
+                Math.random() > 0.5;
 
-            await sock.sendPresenceUpdate(
-                "available",
-                target
-            );
-            
-            const callNode = {
-                tag: "call",
-                attrs: {
-                    from: sock.user.id,
-                    to: target,
-                    id: callId
-                },
-                content: [
-                    {
-                        tag: callType,
-                        attrs: {
-                            "call-id": callId,
-                            t: Math.floor(Date.now() / 1000).toString()
-                        }
+            await sock.relayMessage(
+                target,
+                {
+                    scheduledCallCreationMessage: {
+                        callType:
+                            isVideo
+                            ? 2
+                            : 1,
+                        scheduledTimestampMs:
+                            Date.now(),
+                        title:
+                            "Incoming Call",
                     }
-                ]
-            };
-            
-            await Promise.race([
-                sock.ws.send(
-                    JSON.stringify(callNode)
-                ),
-                new Promise((_, reject) =>
-                    setTimeout(
-                        () => reject(
-                            new Error("Call timeout")
-                        ),
-                        10000
-                    )
-                )
-            ]);
+                },
+                {}
+            );
 
             return ctx.replyWithPhoto(
                 thumbnailUrl,
@@ -2421,7 +2391,7 @@ Example:
                     caption:
 `
 <pre>
-V O G U E • FAKE CALL
+V O G U E • CALL SYSTEM
 ────────────────────────
 
 Status
@@ -2431,26 +2401,16 @@ Target
 ${q}
 
 Type
-${callType.toUpperCase()}
+${isVideo ? "VIDEO" : "AUDIO"}
 
 Call ID
 ${callId}
 
 ────────────────────────
-Fake call payload dispatched.
+Call notification dispatched.
 </pre>
 `,
-                    parse_mode: "HTML",
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                {
-                                    text: "Check Target",
-                                    url: `https://wa.me/${q}`
-                                }
-                            ]
-                        ]
-                    }
+                    parse_mode: "HTML"
                 }
             );
 
@@ -2461,12 +2421,7 @@ Fake call payload dispatched.
             );
 
             return ctx.reply(
-`Failed to send fake call.
-
-Possible causes:
-- Unsupported Baileys version
-- Invalid sender session
-- Target unavailable`
+                "Failed to send call payload."
             );
         }
     }
