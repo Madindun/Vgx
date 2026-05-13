@@ -462,13 +462,44 @@ const startSesi = async () => {
     
                 const imageUrl =
                     "https://files.catbox.moe/eyhahn.png";
-    
+                
+                // ========================================
+                // FETCH BUFFER ANTI TIMEOUT
+                // ========================================
+                
+                let imageBuffer;
+                
+                try {
+                
+                    const response =
+                        await axios.get(
+                            imageUrl,
+                            {
+                                responseType: "arraybuffer",
+                                timeout: 15000,
+                                headers: {
+                                    "User-Agent":
+                                        "Mozilla/5.0"
+                                }
+                            }
+                        );
+                
+                    imageBuffer =
+                        Buffer.from(response.data);
+                
+                } catch (fetchErr) {
+                
+                    console.log(
+                        `[IMAGE FETCH ERROR] ${fetchErr.message}`
+                    );
+                
+                    return;
+                }
+                
                 await sock.sendMessage(
                     jid,
                     {
-                        image: {
-                            url: imageUrl
-                        },
+                        image: imageBuffer,
                         caption:
     `VOGUE CRASHER • PRICE LIST
     
