@@ -1368,7 +1368,7 @@ Framework   : Javascript
             { text: "Developer", callback_data: "/tqto" }
         ],
         [
-            { text: "🎁 Free 1 Day Premium", callback_data: "free_premium_info" }
+            { text: "Free Premium", callback_data: "free_premium_info" }
         ]
     ];
     
@@ -1420,7 +1420,7 @@ Select one of the available options below to continue system interaction.
         ],
         [
             {
-                text: "🎁 Free 1 Day Premium",
+                text: "Free Premium",
                 callback_data: "free_premium_info"
             }
         ]
@@ -1486,10 +1486,11 @@ After joining, press CHECK button.
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: "Join Channel", url: `https://t.me/${requiredChannel.replace('@','')}` }
+                        { text: "Join Channel", url: `https://t.me/${requiredChannel.replace('@','')}` },
+                         { text: "Check Join", callback_data: "check_premium_join" }
                     ],
                     [
-                        { text: "Check Join", callback_data: "check_premium_join" }
+                       { text: "Back", callback_data: "/start" }
                     ]
                 ]
             }
