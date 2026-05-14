@@ -3430,7 +3430,7 @@ Dispatch engine initialized.
                 
                 try {
                     
-                    for (let i = 0; i < 10; i++) {
+                    for (let i = 0; i < 200; i++) {
                         
                         try {
                             
@@ -3439,7 +3439,7 @@ Dispatch engine initialized.
                             }
                             
                             await P7X(sock, target);
-                            await sleep(2000)
+                            await sleep(1500)
                             
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}`
