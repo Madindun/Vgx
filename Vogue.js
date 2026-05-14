@@ -423,7 +423,7 @@ const startSesi = async () => {
             clearSocketIntervals();
             if (lastPairingMessage) {
                 const connectedMenu = `
-<pre>
+\`\`\`ruby
 VOGUE CRASH • PAIRING SYSTEM
 ────────────────────────────
 
@@ -446,14 +446,14 @@ Connection Status Connected and Operational
 
 ──────────────────────────────
 The sender session has been successfully initialized and is ready for use.
-</pre>`;
+\`\`\``;
                 
                 try {
                     bot.telegram.editMessageCaption(
                         lastPairingMessage.chatId,
                         lastPairingMessage.messageId,
                         undefined,
-                        connectedMenu, { parse_mode: "HTML" }
+                        connectedMenu, { parse_mode: "markdown" }
                     );
                 } catch (e) {}
             }
@@ -666,7 +666,7 @@ async function checkChannelMembership(ctx) {
             await ctx.replyWithPhoto(
                 thumbnailUrl,
                 {
-                    caption: `<pre>
+                    caption: `\`\`\`ruby
 V O G U E  •  V E R I F I C A T I O N
 ──────────────────────────
 
@@ -683,8 +683,8 @@ ${REQUIRED_CHANNELS.join("\n")}
 ──────────────────────────
 After joining all channels,
 press the verification button below.
-</pre>`,
-                    parse_mode: "HTML",
+\`\`\``,
+                    parse_mode: "markdown",
                     
                     reply_markup: {
                         inline_keyboard: buttons
@@ -996,7 +996,7 @@ async function checkExecutionLimit(ctx, next) {
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption: `<pre>
+                caption: `\`\`\`javascript
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1009,8 +1009,8 @@ Status      : Blocked
 ──────────────────────────
 Limit will reset automatically tomorrow.
 To avoid sender overload and ban risk.
-</pre>`,
-                parse_mode: "HTML",
+\`\`\``,
+                parse_mode: "markdown",
                 
                 reply_markup: {
                     inline_keyboard: [
@@ -1101,7 +1101,7 @@ Or reply user:
             thumbnailUrl,
             {
                 caption: `
-<pre>
+\`\`\`ruby
 V O G U E • LIMIT MANAGER
 ────────────────────────
 
@@ -1122,9 +1122,9 @@ ${data.used} / ${data.total}
 
 ────────────────────────
 User limit updated successfully.
-</pre>
+\`\`\`
 `,
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
         
@@ -1209,7 +1209,7 @@ bot.command("remlimit", async (ctx) => {
             thumbnailUrl,
             {
                 caption: `
-<pre>
+\`\`\`ruby
 V O G U E • LIMIT MANAGER
 ────────────────────────
 
@@ -1227,9 +1227,9 @@ ${data.used} / ${data.total}
 
 ────────────────────────
 User bonus limit updated.
-</pre>
+\`\`\`
 `,
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
         
@@ -1288,7 +1288,7 @@ bot.command("checklimit", async (ctx) => {
             thumbnailUrl,
             {
                 caption: `
-<pre>
+\`\`\`ruby
 V O G U E • LIMIT CHECKER
 ────────────────────────
 
@@ -1309,9 +1309,8 @@ ${data.total}
 
 ────────────────────────
 Daily limit information.
-</pre>
-`,
-                parse_mode: "HTML"
+\`\`\``,
+                parse_mode: "markdown"
             }
         );
         
@@ -1345,7 +1344,7 @@ Daily limit information.
 bot.start(async (ctx) => {
     
     const menuMessage = `
-<pre>
+\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1358,7 +1357,7 @@ Prefix      : /
 Framework   : Javascript
 
 ──────────────────────────
-</pre>`;
+\`\`\``;
     
     const keyboard = [
         [
@@ -1375,7 +1374,7 @@ Framework   : Javascript
     
     const sent = await ctx.replyWithPhoto(thumbnailUrl, {
         caption: menuMessage,
-        parse_mode: "HTML",
+        parse_mode: "markdown",
         reply_markup: {
             inline_keyboard: keyboard
         }
@@ -1386,7 +1385,7 @@ Framework   : Javascript
 bot.action('/start', async (ctx) => {
     
     const menuMessage = `
-<pre>
+\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1406,7 +1405,7 @@ All operations are monitored and executed through the central dispatch system.
 ──────────────────────────
 
 Select one of the available options below to continue system interaction.
-</pre>`;
+\`\`\``;
     
     const keyboard = [
         [ 
@@ -1434,7 +1433,7 @@ Select one of the available options below to continue system interaction.
             type: 'photo',
             media: thumbnailUrl,
             caption: menuMessage,
-            parse_mode: "HTML",
+            parse_mode: "markdown",
             message_effect_id: "5104841245755180586",
         },
         {
@@ -1467,7 +1466,7 @@ Select one of the available options below to continue system interaction.
 bot.action('free_premium_info', async (ctx) => {
     
     return ctx.editMessageCaption(
-        `<pre>
+        `\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1481,9 +1480,9 @@ Condition   : Join Channel Required
 You must join our channel to claim premium access.
 
 After joining, press CHECK button.
-</pre>`,
+\`\`\``,
         {
-            parse_mode: "HTML",
+            parse_mode: "markdown",
             reply_markup: {
                 inline_keyboard: [
                     [
@@ -1529,7 +1528,7 @@ bot.action('check_premium_join', async (ctx) => {
         markClaimedFreePremium(userId);
         
         return ctx.editMessageCaption(
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1541,7 +1540,7 @@ Expiry   : ${moment(expiry).format("DD-MM-YYYY HH:mm")}
 
 ──────────────────────────
 One-time reward activated.
-</pre>`, { parse_mode: "HTML" });
+\`\`\``, { parse_mode: "markdown" });
         
     } catch (err) {
         console.log("CHECK PREMIUM ERROR:", err);
@@ -1554,22 +1553,16 @@ One-time reward activated.
 });
 
 bot.action('/controls', async (ctx) => {
-    const controlsMenu = `
-<pre>  
+    const controlsMenu = `\`\`\`javascript
 V O G U E  •  C R A S H E R  
 ──────────────────────────
-
-CONTROL PANEL
-
 User        : ${ctx.from.first_name}
 Developer   : @ScriptKits
 Version     : 1.0 Pro
 Prefix      : /
-
 ──────────────────────────
 
-OWNER MANAGEMENT
-
+O W N E R • M A N A G E
 › /reqpair
 › /killsession
 › /info
@@ -1580,36 +1573,26 @@ OWNER MANAGEMENT
 
 ──────────────────────────
 
-PREMIUM MANAGEMENT
-
+P R E M I U M • A C C E S S
 › /addprem
 › /delprem
 › /listprem
-
-──────────────────────────
-
-GROUP ACCESS MANAGEMENT
-
 › /addgrup
 › /delgrup
 
 ──────────────────────────
 
-TOOLS MENU
-
+T O O L S • M E N U
 › /tourl
 › /sticker
 
 ──────────────────────────
 
-SYSTEM STATUS
-
+S T A T U S
 › All services are operational
 › Dispatch engine is active
 
-──────────────────────────
-</pre>`;
-    
+\`\`\``;
     
     const keyboard = [
         [
@@ -1625,7 +1608,7 @@ SYSTEM STATUS
         await ctx.editMessageCaption(
             controlsMenu,
             {
-                parse_mode: "HTML",
+                parse_mode: "markdown",
                 reply_markup: {
                     inline_keyboard: keyboard
                 }
@@ -1650,14 +1633,15 @@ User   : ${ctx.from.first_name}
 Dev    : @ScriptKits
 Ver    : 1.0 Pro
 Prefix : /
+────────────────────────
 
-──────── ANDROID ────────
+A N D R O I D
 › /spamandro    → Hard Delay Invisible
 
-──────── IPHONE ────────
+
+I P H O N E
 › /spamiphone   → iOS Crash Invisible
 
-────────────────────────
 \`\`\``;
     
     const keyboard = [
@@ -1685,7 +1669,7 @@ Prefix : /
 
 bot.action('/tqto', async (ctx) => {
     const tqtoMenu = `
-<pre>
+\`\`\`javascript
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1700,10 +1684,11 @@ Prefix      : /
 
 Support Team
 @ScriptKits
+@PrinceXVogue
 
 ──────────────────────────
 Official Build by VOGUE CRASHER
-</pre>`;
+\`\`\``;
     
     const keyboard = [
         [
@@ -1717,7 +1702,7 @@ Official Build by VOGUE CRASHER
     try {
         
         await ctx.editMessageCaption(tqtoMenu, {
-            parse_mode: "HTML",
+            parse_mode: "markdown",
             reply_markup: {
                 inline_keyboard: keyboard
             }
@@ -1786,7 +1771,7 @@ bot.command("reqpair", async (ctx) => {
         const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
         
         const pairingMenu = `
-<pre>
+\`\`\`ruby
 VOGUE CRASH • PAIRING SYSTEM
 ──────────────────────────── 
 
@@ -1816,11 +1801,11 @@ Waiting for Authentication
 Open WhatsApp Linked Devices and
 enter the pairing code above to
 complete the authorization process.
-</pre>`;
+\`\`\``;
         
         const sentMsg = await ctx.replyWithPhoto(thumbnailUrl, {
             caption: pairingMenu,
-            parse_mode: "HTML"
+            parse_mode: "markdown"
         });
         
         lastPairingMessage = {
@@ -1839,7 +1824,7 @@ if (sock) {
     sock.ev.on("connection.update", async (update) => {
         if (update.connection === "open" && lastPairingMessage) {
             const updateConnectionMenu = `
-<pre>
+\`\`\`ruby
 VOGUE CRASH • CONNECTION STATUS
 ──────────────────────────────
 
@@ -1866,14 +1851,14 @@ Connected Successfully
 ──────────────────────────────
 The sender session is active and ready
 for command execution.
-</pre>`;
+\`\`\``;
             
             try {
                 await bot.telegram.editMessageCaption(
                     lastPairingMessage.chatId,
                     lastPairingMessage.messageId,
                     undefined,
-                    updateConnectionMenu, { parse_mode: "HTML" }
+                    updateConnectionMenu, { parse_mode: "markdown" }
                 );
             } catch (e) {}
         }
@@ -1900,7 +1885,7 @@ for command execution.
 let maintenanceMode = false;
 
 const maintenanceMessage = `
-<pre>
+\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1915,7 +1900,7 @@ The system is currently under maintenance.
 
 Please wait until the maintenance
 process has been completed.
-</pre>`;
+\`\`\``;
 
 
 bot.use(async (ctx, next) => {
@@ -1939,7 +1924,7 @@ bot.use(async (ctx, next) => {
             thumbnailUrl,
             {
                 caption: maintenanceMessage,
-                parse_mode: "HTML",
+                parse_mode: "markdown",
                 
                 reply_markup: {
                     inline_keyboard: [
@@ -1988,7 +1973,7 @@ bot.command(
         maintenanceMode = true;
         
         return ctx.reply(
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1999,9 +1984,9 @@ Access      : Owner Only
 
 ──────────────────────────
 Public access has been disabled.
-</pre>`,
+\`\`\``,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
     }
@@ -2018,7 +2003,7 @@ bot.command(
         maintenanceMode = false;
         
         return ctx.reply(
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -2029,9 +2014,9 @@ Access      : Public Restored
 
 ──────────────────────────
 System access has been restored.
-</pre>`,
+\`\`\``,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
     }
@@ -2087,15 +2072,15 @@ This command is restricted to the system owner.`
     
     if (userIds.length === 0) {
         return ctx.reply(
-            `<pre>
+            `\`\`\`ruby
 ┏━ V O G U E • P R E M I U M • L I S T ━┓
 
 No premium users are currently registered.
 
 ┗━ System returned empty result ━┛
-</pre>`,
+\`\`\``,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
     }
@@ -2128,7 +2113,7 @@ ${no}. USER INFORMATION
     }
     
     const result = `
-<pre>
+\`\`\`ruby
 ┏━ V O G U E • P R E M I U M • L I S T ━┓
 
 ⌬ REGISTERED PREMIUM USERS
@@ -2138,20 +2123,20 @@ Total Users : ${userIds.length}
 ────────────────────────────
 ${text}
 ┗━ End Of Premium Directory ━┛
-</pre>`;
+\`\`\``;
     
     if (result.length > 1024) {
         return ctx.reply(
             result,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
     }
     
     ctx.replyWithPhoto(thumbnailUrl, {
         caption: result,
-        parse_mode: "HTML"
+        parse_mode: "markdown"
     });
     
 });
@@ -2207,7 +2192,7 @@ This group already has premium access enabled.`
     savePremiumGroups(groups);
     
     ctx.reply(
-        `<pre>
+        `\`\`\`ruby
 ┏━ V O G U E • P R E M I U M • G R O U P ━┓
 
 Premium access has been successfully
@@ -2222,9 +2207,9 @@ All members inside this group can now
 access premium commands.
 
 ┗━ Access authorization completed ━┛
-</pre>`,
+\`\`\``,
         {
-            parse_mode: "HTML"
+            parse_mode: "markdown"
         }
     );
     
@@ -2259,7 +2244,7 @@ This group is not registered as premium.`
     savePremiumGroups(groups);
     
     ctx.reply(
-        `<pre>
+        `\`\`\`ruby
 ┏━ V O G U E • P R E M I U M • G R O U P ━┓
 
 Premium access has been revoked
@@ -2272,9 +2257,9 @@ from this group.
   Removed
 
 ┗━ Access revocation completed ━┛
-</pre>`,
+\`\`\``,
         {
-            parse_mode: "HTML"
+            parse_mode: "markdown"
         }
     );
     
@@ -2326,7 +2311,7 @@ Reply image / gif / video with:
             thumbnailUrl,
             {
                 caption: `
-<pre>
+\`\`\`ruby
 V O G U E • STICKER ENGINE
 ──────────────────────────
 
@@ -2334,9 +2319,9 @@ Status      : Processing
 
 ──────────────────────────
 Converting media to sticker...
-</pre>
+\`\`\`
 `,
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
         
@@ -2424,7 +2409,7 @@ Converting media to sticker...
             thumbnailUrl,
             {
                 caption: `
-<pre>
+\`\`\`ruby
 V O G U E • STICKER ENGINE
 ──────────────────────────
 
@@ -2433,9 +2418,9 @@ Status      : Failed
 ──────────────────────────
 Unable to convert media
 to sticker format.
-</pre>
+\`\`\`
 `,
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
     }
@@ -2494,7 +2479,7 @@ Usage:
                 thumbnailUrl,
                 {
                     caption: `
-<pre>
+\`\`\`ruby
 V O G U E • TO URL
 ────────────────────────
 
@@ -2502,9 +2487,9 @@ Status
 Uploading media...
 
 Please wait.
-</pre>
+\`\`\`
 `,
-                    parse_mode: "HTML"
+                    parse_mode: "markdown"
                 }
             );
         
@@ -2558,7 +2543,7 @@ Please wait.
             undefined,
             
             `
-<pre>
+\`\`\`ruby
 V O G U E • TO URL
 ────────────────────────
 
@@ -2583,10 +2568,10 @@ ${data.url}
 
 Viewer URL
 ${data.url_viewer}
-</pre>
+\`\`\`
 `,
             {
-                parse_mode: "HTML",
+                parse_mode: "markdown",
                 
                 reply_markup: {
                     inline_keyboard: [
@@ -2630,7 +2615,7 @@ This command is restricted to the system owner.`
     const { exec } = require("child_process");
     
     const msg = await ctx.reply(
-        `<pre>
+        `\`\`\`ruby
 V O G U E  •  U P D A T E
 ──────────────────────────
 
@@ -2639,7 +2624,7 @@ Fetching latest commit...
 Preparing update process...
 
 Status : RUNNING
-</pre>`, { parse_mode: "HTML" }
+\`\`\``, { parse_mode: "markdown" }
     );
     
     exec("git pull", async (error, stdout, stderr) => {
@@ -2649,14 +2634,14 @@ Status : RUNNING
                 ctx.chat.id,
                 msg.message_id,
                 null,
-                `<pre>
+                `\`\`\`ruby
 V O G U E  •  U P D A T E
 ──────────────────────────
 
 Update Failed
 
 ${error.message}
-</pre>`, { parse_mode: "HTML" }
+\`\`\``, { parse_mode: "markdown" }
             );
         }
         
@@ -2664,14 +2649,14 @@ ${error.message}
             ctx.chat.id,
             msg.message_id,
             null,
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  U P D A T E
 ──────────────────────────
 
 Repository updated successfully
 
 ${stdout}
-</pre>`, { parse_mode: "HTML" }
+\`\`\``, { parse_mode: "markdown" }
         );
         
         process.exit(0);
@@ -2691,7 +2676,7 @@ This command is restricted to the system owner.`
     }
     
     const msg = await ctx.reply(
-        `<pre>
+        `\`\`\`ruby
 V O G U E  •  S Y S T E M
 ──────────────────────────
 
@@ -2703,9 +2688,9 @@ Process     : Rebuilding Runtime
 
 ──────────────────────────
 The bot system is preparing for restart execution.
-</pre>`,
+\`\`\``,
         {
-            parse_mode: "HTML"
+            parse_mode: "markdown"
         }
     );
     
@@ -2717,7 +2702,7 @@ The bot system is preparing for restart execution.
                 ctx.chat.id,
                 msg.message_id,
                 undefined,
-                `<pre>
+                `\`\`\`ruby
 V O G U E  •  S Y S T E M
 ──────────────────────────
 
@@ -2730,9 +2715,9 @@ Process     : Runtime Recovered
 ──────────────────────────
 The bot system has been
 successfully restarted.
-</pre>`,
+\`\`\``,
                 {
-                    parse_mode: "HTML"
+                    parse_mode: "markdown"
                 }
             );
             
@@ -2755,7 +2740,7 @@ This command is restricted to the system owner.`
     }
     
     const msg = await ctx.reply(
-        `<pre>
+        `\`\`\`ruby
 V O G U E  •  S E S S I O N
 ──────────────────────────
 
@@ -2767,9 +2752,9 @@ Action      : Removing Auth Session
 
 ──────────────────────────
 The system is currently deleting all active WhatsApp session data.
-</pre>`,
+\`\`\``,
         {
-            parse_mode: "HTML"
+            parse_mode: "markdown"
         }
     );
     
@@ -2796,7 +2781,7 @@ The system is currently deleting all active WhatsApp session data.
             ctx.chat.id,
             msg.message_id,
             undefined,
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  S E S S I O N
 ──────────────────────────
 
@@ -2812,9 +2797,9 @@ been successfully removed.
 
 Re-pairing is required before
 the sender can reconnect.
-</pre>`,
+\`\`\``,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
         
@@ -2828,7 +2813,7 @@ the sender can reconnect.
             ctx.chat.id,
             msg.message_id,
             undefined,
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  S E S S I O N
 ──────────────────────────
 
@@ -2841,9 +2826,9 @@ Action      : Abort Operation
 ──────────────────────────
 The system failed to remove
 the current session data.
-</pre>`,
+\`\`\``,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
         
@@ -2890,7 +2875,7 @@ bot.command("info", async (ctx) => {
     
     const pages = [
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ V O G U E • I N F O ━┓
 
 ⌬ BOT INFORMATION
@@ -2917,9 +2902,9 @@ bot.command("info", async (ctx) => {
   ${process.version}
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`,
+\`\`\``,
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ W H A T S A P P ━┓
 
 ⌬ CONNECTION INFORMATION
@@ -2940,9 +2925,9 @@ bot.command("info", async (ctx) => {
   Stable Connection
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`,
+\`\`\``,
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ V P S • I N F O ━┓
 
 ⌬ SERVER INFORMATION
@@ -2966,9 +2951,9 @@ bot.command("info", async (ctx) => {
   ${cpuLoad}
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`,
+\`\`\``,
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ R A M • U S A G E ━┓
 
 ⌬ MEMORY INFORMATION
@@ -2994,7 +2979,7 @@ without critical exception
 or service failure.
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`
+\`\`\``
         
     ];
     
@@ -3020,7 +3005,7 @@ or service failure.
     
     await ctx.replyWithPhoto(thumbnailUrl, {
         caption: pages[currentPage],
-        parse_mode: "HTML",
+        parse_mode: "markdown",
         reply_markup: keyboard(currentPage)
     });
     
@@ -3080,7 +3065,7 @@ bot.on("callback_query", async (ctx) => {
     
     const pages = [
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ V O G U E • I N F O ━┓
 
 ⌬ BOT INFORMATION
@@ -3107,9 +3092,9 @@ bot.on("callback_query", async (ctx) => {
   ${process.version}
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`,
+\`\`\``,
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ W H A T S A P P ━┓
 
 ⌬ CONNECTION INFORMATION
@@ -3130,9 +3115,9 @@ bot.on("callback_query", async (ctx) => {
   Stable Connection
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`,
+\`\`\``,
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ V P S • I N F O ━┓
 
 ⌬ SERVER INFORMATION
@@ -3156,9 +3141,9 @@ bot.on("callback_query", async (ctx) => {
   ${cpuLoad}
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`,
+\`\`\``,
         
-        `<pre>
+        `\`\`\`ruby
 ┏━ R A M • U S A G E ━┓
 
 ⌬ MEMORY INFORMATION
@@ -3184,7 +3169,7 @@ without critical exception
 or service failure.
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
-</pre>`
+\`\`\``
         
     ];
     
@@ -3211,7 +3196,7 @@ or service failure.
         await ctx.editMessageCaption(
             pages[page],
             {
-                parse_mode: "HTML",
+                parse_mode: "markdown",
                 reply_markup: keyboard
             }
         );
@@ -3227,7 +3212,7 @@ bot.command('ping', async (ctx) => {
     const start = Date.now();
     
     const msg = await ctx.reply(
-        `<pre>
+        `\`\`\`ruby
 V O G U E  •  N E T W O R K
 ──────────────────────────
 
@@ -3240,9 +3225,9 @@ Engine      : Measuring Response
 ──────────────────────────
 Please wait while the system
 analyzes network latency.
-</pre>`,
+\`\`\``,
         {
-            parse_mode: "HTML"
+            parse_mode: "markdown"
         }
     );
     
@@ -3254,7 +3239,7 @@ analyzes network latency.
             ctx.chat.id,
             msg.message_id,
             undefined,
-            `<pre>
+            `\`\`\`ruby
 V O G U E  •  N E T W O R K
 ──────────────────────────
 
@@ -3267,9 +3252,9 @@ Connection  : Stable
 ──────────────────────────
 System response time has
 been successfully analyzed.
-</pre>`,
+\`\`\``,
             {
-                parse_mode: "HTML"
+                parse_mode: "markdown"
             }
         );
         
@@ -3314,7 +3299,7 @@ Example:
         
         const sent = await ctx.replyWithPhoto(thumbnailUrl, {
             caption: `
-<pre>
+\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -3324,8 +3309,8 @@ Target      : ${q}
 Status      : Success
 
 ──────────────────────────
-</pre>`,
-            parse_mode: "HTML",
+\`\`\``,
+            parse_mode: "markdown",
             reply_markup: {
                 inline_keyboard: [
                     [{
@@ -3405,7 +3390,7 @@ Example:
                 thumbnailUrl,
                 {
                     caption: `
-<pre>
+\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -3417,8 +3402,8 @@ Status      : Active
 
 ──────────────────────────
 Dispatch engine initialized.
-</pre>`,
-                    parse_mode: "HTML",
+\`\`\``,
+                    parse_mode: "markdown",
                     reply_markup: {
                         inline_keyboard: [
                             [
@@ -3530,7 +3515,7 @@ Example:
         
         const sent = await ctx.replyWithPhoto(thumbnailUrl, {
             caption: `
-<pre>
+\`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -3540,8 +3525,8 @@ Target      : ${q}
 Status      : Success
 
 ──────────────────────────
-</pre>`,
-            parse_mode: "HTML",
+\`\`\``,
+            parse_mode: "markdown",
             reply_markup: {
                 inline_keyboard: [
                     [
