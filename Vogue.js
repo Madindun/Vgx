@@ -1411,7 +1411,7 @@ Select one of the available options below to continue system interaction.
     const keyboard = [
         [ 
             { text: "Tools Menu", callback_data: "/controls" },
-            { text: "Bug Menu", callback_data: "/bugs" }
+            { text: "Bug Menu", callback_data: "/bug" }
         ],
         [
             {
