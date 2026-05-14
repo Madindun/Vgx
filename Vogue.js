@@ -3327,12 +3327,12 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 200; i++) {
                 try {
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await GmXTagSw(sock, target);
+                    await P7X(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
