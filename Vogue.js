@@ -1682,7 +1682,7 @@ I P H O N E
     
     try {
         await ctx.editMessageCaption(bugMenu, {
-            parse_mode: "HTML",
+            parse_mode: "markdown",
             reply_markup: {
                 inline_keyboard: keyboard
             }
