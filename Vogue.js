@@ -3329,7 +3329,7 @@ Status      : Success
             
             for (let i = 0; i < 2; i++) {
                 try {
-                    await offerCall(sock, target);
+                    await OfferCall(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
