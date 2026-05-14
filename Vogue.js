@@ -1656,9 +1656,13 @@ Version     : 1.0 Pro
 Prefix      : /
 
 ──────────────────────────
+</pre>
+<pre>
 
 A N D R O I D
 /spamandro  : Hard Delay Invisible 100%
+
+</pre>
 
 ──────────────────────────
 
