@@ -3394,7 +3394,7 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 2; i++) {
                 try {
                     if (!sock) {
                         throw new Error("Socket unavailable");
