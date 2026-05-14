@@ -1645,6 +1645,7 @@ SYSTEM STATUS
 bot.action('/bug', async (ctx) => {
     const bugMenu = `
 <pre>
+\`\`\`javascript
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1656,19 +1657,19 @@ Version     : 1.0 Pro
 Prefix      : /
 
 ──────────────────────────
-</pre>
-
-<pre>
 
 A N D R O I D
 /spamandro  : Hard Delay Invisible 100%
 
 ──────────────────────────
 
-I P H O N E 
+I P H O N E
 /spamiphone : iOS Crash Invisible
 
-──────────────────────────</pre>`;
+──────────────────────────
+\`\`\`
+</pre>
+`;`;
     
     const keyboard = [
         [
