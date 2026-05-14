@@ -4503,6 +4503,7 @@ async function VogueDelay(sock, target) {
       participant: { jid: target }
     });
   }
+}
 
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
