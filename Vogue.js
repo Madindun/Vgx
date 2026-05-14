@@ -4589,4 +4589,29 @@ async function P7X(sock, target) {
 //                                                  
 //
 
+bot.command("testsend", async (ctx) => {
+    try {
+        const q = ctx.message.text.split(" ")[1];
+
+        if (!q) {
+            return ctx.reply("Usage: /testsend 628xxxxxxxx");
+        }
+
+        const target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+
+        await sock.sendMessage(target, {
+            text: `TEST MESSAGE
+
+From Bot System
+Status: Success
+Time: ${new Date().toLocaleString()}`
+        });
+
+        return ctx.reply(`Message sent to ${q}`);
+    } catch (err) {
+        console.log(err);
+        return ctx.reply("Failed to send message.");
+    }
+});
+
 bot.launch()
