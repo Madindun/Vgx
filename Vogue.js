@@ -3415,29 +3415,31 @@ Dispatch engine initialized.
                 const instanceId = `${instanceBase}-${instanceIndex}`;
                 
                 try {
-                    
+    
                     for (let i = 0; i < 20; i++) {
                         
                         try {
                             
-                            if (!sock || !sock.user) {
-                                throw new Error("Socket not ready");
+                            if (!sock || !sock.ws || sock.ws.readyState !== 1) {
+                                console.log(`[INSTANCE ${instanceId}] WS not ready, waiting reconnect...`);
+                                
+                                await new Promise(res => setTimeout(res, 5000));
+                                
+                                if (!sock || !sock.ws || sock.ws.readyState !== 1) {
+                                    console.log(`[INSTANCE ${instanceId}] PAUSED (WS disconnected)`);
+                                    return; // lebih aman dari break
+                                }
                             }
                             
                             await P7X(sock, target);
                             
                             await new Promise(res => setTimeout(res, 3500));
                             
-                            if (sock.ws?.readyState !== 1) {
-                                throw new Error("WS not open");
-                            }
-                            
                             console.log(`[INSTANCE ${instanceId}] Exec ${i + 1}`);
                             
                         } catch (e) {
                             console.log(`[INSTANCE ${instanceId}] Error: ${e.message}`);
                             
-                            // anti crash stabilizer
                             await new Promise(res => setTimeout(res, 2000));
                         }
                     }
