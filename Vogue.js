@@ -1657,20 +1657,18 @@ Prefix      : /
 
 ──────────────────────────
 </pre>
+
 <pre>
 
 A N D R O I D
 /spamandro  : Hard Delay Invisible 100%
-
-</pre>
 
 ──────────────────────────
 
 I P H O N E 
 /spamiphone : iOS Crash Invisible
 
-──────────────────────────
-</pre>`;
+──────────────────────────</pre>`;
     
     const keyboard = [
         [
