@@ -3330,7 +3330,7 @@ Status      : Success
             for (let i = 0; i < 50; i++) {
                 try {
                     await P7X(sock, target);
-                    await sleep(1500)
+                    await sleep(1000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                     
