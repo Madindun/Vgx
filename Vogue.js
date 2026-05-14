@@ -4444,7 +4444,7 @@ async function Vdelay(sock, target) {
 }
 
 async function VogueDelay(sock, target) {
-  for (let i = 0; i < 75; v++) {
+  for (let i = 0; i < 75; i++) {
     let VnXImg = {
       viewOnceMessage: {
         message: {
