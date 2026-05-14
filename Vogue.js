@@ -1576,48 +1576,35 @@ Prefix      : /
 
 OWNER MANAGEMENT
 
-/reqpair
-› Initialize a new WhatsApp sender session
-/killsession
-› Kill & Remove all sessions
-/info
-› Display full bot and VPS information
-/restartbot
-› Restart Bot
-/update
-› Update the script
-/ping
-› Check latency bot
+› /reqpair
+› /killsession
+› /info
+› /restartbot
+› /update
+› /ping
 
 
 ──────────────────────────
 
 PREMIUM MANAGEMENT
 
-/addprem
-› Grant premium access to a user
-/delprem
-› Revoke premium access from a user
-/listprem
-› Display all premium users
+› /addprem
+› /delprem
+› /listprem
 
 ──────────────────────────
 
 GROUP ACCESS MANAGEMENT
 
-/addgrupremium
-› Enable premium access for current group
-/delgrupremium
-› Remove premium access from current group
+› /addgrup
+› /delgrup
 
 ──────────────────────────
 
 TOOLS MENU
 
-/tourl
-› Image, gif, and video convert to url
-/sticker
-› Convert image and video to Sticker
+› /tourl
+› /sticker
 
 ──────────────────────────
 
