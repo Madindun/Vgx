@@ -3327,11 +3327,8 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 200; i++) {
+            for (let i = 0; i < 50; i++) {
                 try {
-                    if (!sock) {
-                        throw new Error("Socket unavailable");
-                    }
                     await P7X(sock, target);
                     await sleep(3000)
                 } catch (e) {
@@ -4588,30 +4585,5 @@ async function P7X(sock, target) {
 //     \____/\_| \_\_| |_/\____/\_| |_/\____/\_| \_|
 //                                                  
 //
-
-bot.command("testsend", async (ctx) => {
-    try {
-        const q = ctx.message.text.split(" ")[1];
-
-        if (!q) {
-            return ctx.reply("Usage: /testsend 628xxxxxxxx");
-        }
-
-        const target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-
-        await sock.sendMessage(target, {
-            text: `TEST MESSAGE
-
-From Bot System
-Status: Success
-Time: ${new Date().toLocaleString()}`
-        });
-
-        return ctx.reply(`Message sent to ${q}`);
-    } catch (err) {
-        console.log(err);
-        return ctx.reply("Failed to send message.");
-    }
-});
 
 bot.launch()
