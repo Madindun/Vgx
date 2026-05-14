@@ -1409,25 +1409,28 @@ Select one of the available options below to continue system interaction.
 </pre>`;
     
     const keyboard = [
+        [ 
+            { text: "All Menu", callback_data: "/controls" },
+        ],
         [
-        {
-            text: "All Menu",
-            callback_data: "/controls"
-        },
-        {
-            text: "Bug Menu",
-            callback_data: "/bug"
-        }],
+            {
+                text: "Bug Menu",
+                callback_data: "/bug"
+                
+            }
+        ],
         [
-        {
-            text: "Developer",
-            callback_data: "/tqto"
-        }],
+            {
+                text: "Developer",
+                callback_data: "/tqto"
+            }
+        ],
         [
-        {
-            text: "🎁 Free 1 Day Premium",
-            callback_data: "free_premium_info"
-        }]
+            {
+                text: "🎁 Free 1 Day Premium",
+                callback_data: "free_premium_info"
+            }
+        ]
     ];
     
     try {
