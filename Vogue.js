@@ -1643,32 +1643,22 @@ SYSTEM STATUS
 });
 
 bot.action('/bug', async (ctx) => {
-    const bugMenu = `
-<pre>
-\`\`\`javascript
-V O G U E  •  C R A S H E R
-──────────────────────────
+    const bugMenu = `\`\`\`javascript
+V O G U E • C R A S H E R
+────────────────────────
+User   : ${ctx.from.first_name}
+Dev    : @ScriptKits
+Ver    : 1.0 Pro
+Prefix : /
 
-BUG EXECUTION PANEL
+──────── ANDROID ────────
+› /spamandro    → Hard Delay Invisible
 
-User        : ${ctx.from.first_name}
-Developer   : @ScriptKits
-Version     : 1.0 Pro
-Prefix      : /
+──────── IPHONE ────────
+› /spamiphone   → iOS Crash Invisible
 
-──────────────────────────
-
-A N D R O I D
-/spamandro  : Hard Delay Invisible 100%
-
-──────────────────────────
-
-I P H O N E
-/spamiphone : iOS Crash Invisible
-
-──────────────────────────
-\`\`\`
-</pre>
+────────────────────────
+\`\`\``;
 `;
     
     const keyboard = [
