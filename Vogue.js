@@ -1410,14 +1410,8 @@ Select one of the available options below to continue system interaction.
     
     const keyboard = [
         [ 
-            { text: "All Menu", callback_data: "/controls" },
-        ],
-        [
-            {
-                text: "Bug Menu",
-                callback_data: "/bug"
-                
-            }
+            { text: "Tools Menu", callback_data: "/controls" },
+            { text: "Bug Menu", callback_data: "/bugs" }
         ],
         [
             {
@@ -1619,10 +1613,11 @@ SYSTEM STATUS
     
     const keyboard = [
         [
-        {
-            text: "Back To Menu",
-            callback_data: "/start"
-        }]
+            {
+                text: "Back To Menu",
+                callback_data: "/start"
+            }
+        ]
     ];
     
     try {
@@ -1675,10 +1670,11 @@ I P H O N E
     
     const keyboard = [
         [
-        {
-            text: "Back",
-            callback_data: "/start"
-        }]
+            {
+                text: "Back",
+                callback_data: "/start"
+            }
+        ]
     ];
     
     try {
@@ -1719,10 +1715,11 @@ Official Build by VOGUE CRASHER
     
     const keyboard = [
         [
-        {
-            text: "Return to Main Menu",
-            callback_data: "/start"
-        }]
+            {
+                text: "Return to Main Menu",
+                callback_data: "/start"
+            }
+        ]
     ];
     
     try {
