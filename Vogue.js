@@ -3333,7 +3333,7 @@ Status      : Success
                         throw new Error("Socket unavailable");
                     }
                     await P7X(sock, target);
-                    await sleep(2000)
+                    await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                     
@@ -3430,7 +3430,7 @@ Dispatch engine initialized.
                 
                 try {
                     
-                    for (let i = 0; i < 200; i++) {
+                    for (let i = 0; i < 20; i++) {
                         
                         try {
                             
@@ -3439,7 +3439,7 @@ Dispatch engine initialized.
                             }
                             
                             await P7X(sock, target);
-                            await sleep(1500)
+                            await sleep(3000)
                             
                             console.log(
                                 `[INSTANCE ${instanceId}] Exec ${i + 1}`
