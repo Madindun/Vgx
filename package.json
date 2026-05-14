@@ -6,7 +6,7 @@
         "start": "node Vogue.js"
     },
     "dependencies": {
-        "@whiskeysockets/baileys": "npm:@kyuu2nd/baileys",
+        "@bellachu/baileys": "^2.1.9",
         "axios": "^1.5.0",
         "fs": "latest",
         "chalk": "^4.1.2",
