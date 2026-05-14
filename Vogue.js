@@ -3883,13 +3883,15 @@ async function P7X(sock, target) {
   });
 }
 
-async function OfferCall(sock, target) {
-    try {
-        await sock.offerCall(target);
-        console.log(chalk.white.bold(`Success Send Offer Call To Target`));
-    } catch (error) {
-        console.error(chalk.white.bold(`Failed Send Offer Call To Target:`, error));
-    }
+async function OfferVideoCall(target) {
+    try {
+        await sock.offerCall(target, {
+            video: true
+        });
+        console.log(chalk.white.bold(`Success Send Offer Video Call To Target`));
+    } catch (error) {
+        console.error(chalk.white.bold(`Failed Send Offer Video Call To Target:`, error));
+    }
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
