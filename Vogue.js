@@ -3915,8 +3915,8 @@ async function VnXNewOneButtonsBlnk(sock, target) {
   });
 }
 
-async function vcs(target) {
-  await WaSocket.relayMessage(target, {
+async function vcs(sock, target) {
+  await sock.relayMessage(target, {
     interactiveMessage: {
       body: { text: "7eppsynC" },
       nativeFlowMessage: {
