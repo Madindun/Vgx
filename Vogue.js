@@ -3263,160 +3263,100 @@ been successfully analyzed.
     
 });
 
-bot.command(
-    "upstatus",
-    checkWhatsAppConnection,
-    async (ctx) => {
+bot.command("upstatus", checkWhatsAppConnection, async (ctx) => {
+    try {
 
-        try {
+        const args = ctx.message.text.split(" ").slice(1);
+        const mention = args.find(v => v.startsWith("@"));
+        const text = args.filter(v => !v.startsWith("@")).join(" ");
+        const reply = ctx.message.reply_to_message;
 
-            const args =
-                ctx.message.text
-                .split(" ")
-                .slice(1);
+        let statusJidList = [];
+        let mentionedJid = null;
 
-            const mention =
-                args.find(v =>
-                    v.startsWith("@")
-                );
+        if (mention) {
 
-            const text =
-                args
-                .filter(v => !v.startsWith("@"))
-                .join(" ");
+            const number = mention
+                .replace("@", "")
+                .replace(/[^0-9]/g, "");
 
-            const reply =
-                ctx.message.reply_to_message;
-
-            let statusJidList = [];
-            let mentionedJid = null;
-
-            // ========================================
-            // TARGET MENTION
-            // ========================================
-
-            if (mention) {
-
-                const number =
-                    mention
-                    .replace("@", "")
-                    .replace(/[^0-9]/g, "");
-
-                if (number) {
-
-                    mentionedJid =
-                        number +
-                        "@s.whatsapp.net";
-
-                    statusJidList.push(
-                        mentionedJid
-                    );
-                }
+            if (number) {
+                mentionedJid = number + "@s.whatsapp.net";
+                statusJidList.push(mentionedJid);
             }
+        }
 
-            if (
-                !text &&
-                !reply
-            ) {
-
-                return ctx.reply(
+        if (!text && !reply) {
+            return ctx.reply(
 `❖ INVALID FORMAT
 
 \`\`\`ruby
 /upstatus Hello World
-
-/upstatus @628xxx Hello
+/upstatus 628xxx Hello
 
 Reply image/video:
- /upstatus @628xxx Caption
+ /upstatus 628xxx Caption
 \`\`\``,
 {
     parse_mode: "Markdown"
 }
-                );
-            }
+            );
+        }
 
-            // ========================================
-            // SEND STATUS
-            // ========================================
+        let statusMessage;
+        let mediaType = "TEXT";
 
-            let statusMessage;
+        if (!reply) {
 
-            if (!reply) {
+            statusMessage = await sock.sendMessage(
+                "status@broadcast",
+                { text },
+                { statusJidList }
+            );
 
-                statusMessage =
-                    await sock.sendMessage(
-                        "status@broadcast",
-                        {
-                            text: text
-                        },
-                        {
-                            statusJidList
-                        }
-                    );
-            }
+        } else if (reply.photo) {
 
-            // ========================================
-            // IMAGE STATUS
-            // ========================================
+            mediaType = "IMAGE";
 
-            else if (reply.photo) {
+            const fileId = reply.photo[reply.photo.length - 1].file_id;
+            const file = await ctx.telegram.getFileLink(fileId);
 
-                const fileId =
-                    reply.photo[
-                        reply.photo.length - 1
-                    ].file_id;
+            statusMessage = await sock.sendMessage(
+                "status@broadcast",
+                {
+                    image: {
+                        url: file.href
+                    },
+                    caption: text || ""
+                },
+                {
+                    statusJidList
+                }
+            );
 
-                const file =
-                    await ctx.telegram.getFileLink(fileId);
+        } else if (reply.video) {
 
-                statusMessage =
-                    await sock.sendMessage(
-                        "status@broadcast",
-                        {
-                            image: {
-                                url: file.href
-                            },
-                            caption:
-                                text || ""
-                        },
-                        {
-                            statusJidList
-                        }
-                    );
-            }
+            mediaType = "VIDEO";
 
-            // ========================================
-            // VIDEO STATUS
-            // ========================================
+            const fileId = reply.video.file_id;
+            const file = await ctx.telegram.getFileLink(fileId);
 
-            else if (reply.video) {
+            statusMessage = await sock.sendMessage(
+                "status@broadcast",
+                {
+                    video: {
+                        url: file.href
+                    },
+                    caption: text || ""
+                },
+                {
+                    statusJidList
+                }
+            );
 
-                const fileId =
-                    reply.video.file_id;
+        } else {
 
-                const file =
-                    await ctx.telegram.getFileLink(fileId);
-
-                statusMessage =
-                    await sock.sendMessage(
-                        "status@broadcast",
-                        {
-                            video: {
-                                url: file.href
-                            },
-                            caption:
-                                text || ""
-                        },
-                        {
-                            statusJidList
-                        }
-                    );
-            }
-
-            else {
-
-                return ctx.reply(
+            return ctx.reply(
 `❖ UNSUPPORTED MEDIA
 
 \`\`\`ruby
@@ -3428,62 +3368,47 @@ Supported:
 {
     parse_mode: "Markdown"
 }
-                );
-            }
+            );
+        }
 
-            // ========================================
-            // SEND REAL MENTION NOTIFICATION
-            // ========================================
+        if (mentionedJid) {
 
-            if (mentionedJid) {
+            const mentionNumber =
+                mentionedJid.split("@")[0];
 
-                await sock.sendMessage(
-                    mentionedJid,
-                    {
-                        text:
-`@${mentionedJid.split("@")[0]} mentioned you in a WhatsApp status update.`,
-                        mentions: [
-                            mentionedJid
-                        ]
-                    },
-                    {
-                        quoted:
-                            statusMessage
-                    }
-                );
-            }
+            await sock.sendMessage(
+                mentionedJid,
+                {
+                    mentions: [
+                        mentionedJid
+                    ]
+                },
+                {
+                    quoted: statusMessage
+                }
+            );
+        }
 
-            // ========================================
-            // SUCCESS OUTPUT
-            // ========================================
-
-            const mediaType =
-                !reply
-                ? "TEXT"
-                : reply.photo
-                ? "IMAGE"
-                : "VIDEO";
-
-            return ctx.reply(
+        return ctx.reply(
 `\`\`\`ruby
 STATUS DISPATCHER
 
-Type       : ${mediaType}
-Audience   : ${mentionedJid ? "Private Mention" : "Public"}
-Mention    : ${mention || "None"}
-State      : Successfully Published
+Type      : ${mediaType}
+Audience  : ${mentionedJid ? "Mentioned User" : "Public"}
+Target    : ${mention || "Global"}
+State     : Published
 
-Engine     : WhatsApp Broadcast
-Delivery   : Live Status Active
+Engine    : WhatsApp Broadcast
+Delivery  : Active
 \`\`\``,
 {
     parse_mode: "Markdown"
 }
-            );
+        );
 
-        } catch (err) {
+    } catch (err) {
 
-            return ctx.reply(
+        return ctx.reply(
 `\`\`\`ruby
 STATUS DISPATCH FAILURE
 
@@ -3492,10 +3417,9 @@ ${err.message}
 {
     parse_mode: "Markdown"
 }
-            );
-        }
+        );
     }
-);
+});
 
 //                                                    
 //     _____ ________  ______  ___  ___   _   _______ 
