@@ -3323,7 +3323,7 @@ Status      : Success
             
             for (let i = 0; i < 2; i++) {
                 try {
-                    await vcs(target);
+                    await vcs(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
