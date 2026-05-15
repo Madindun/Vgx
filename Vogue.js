@@ -137,6 +137,7 @@ let reconnectTimeout = null;
 let socketStarted = false;
 const cooldown = new Map();
 let globalCooldown = 0;
+let lastViewOnce = null;
 
 const loadClaimed = () => {
     try {
@@ -412,8 +413,7 @@ const startSesi = async () => {
         });
         
     });
-    
-    let lastViewOnce = null;
+   
 
     // ========================================
     // DETECT VIEW ONCE
