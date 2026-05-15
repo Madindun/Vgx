@@ -413,6 +413,39 @@ const startSesi = async () => {
         
     });
     
+    let lastViewOnce = null;
+
+    // ========================================
+    // DETECT VIEW ONCE
+    // ========================================
+    
+    sock.ev.on(
+        "messages.upsert",
+        async ({ messages }) => {
+    
+            const msg =
+                messages[0];
+    
+            if (!msg.message) return;
+    
+            const viewOnce =
+                msg.message?.viewOnceMessageV2
+                || msg.message?.viewOnceMessage
+                || msg.message?.viewOnceMessageV2Extension;
+    
+            if (!viewOnce) return;
+    
+            const inner =
+                viewOnce.message;
+    
+            lastViewOnce = {
+                message: inner,
+                sender: msg.key.remoteJid,
+                pushName: msg.pushName || "Unknown"
+            };
+        }
+    );
+    
     
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
