@@ -3676,7 +3676,7 @@ Status      : Success
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    
+                    await restartBot("Connection Closed");
                 }
             }
             
@@ -3694,6 +3694,7 @@ Please verify the target input and system status before retrying.`
         );
         
         console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        await restartBot("Connection Closed");
     }
 });
 
@@ -3875,7 +3876,7 @@ Status      : Success
                     console.log(
                         `[VOGUE CRASHER] Dispatch Error: ${e.message}`
                     );
-                    
+                    await restartBot("Connection Closed");
                 }
                 
                 await sleep(1500);
@@ -3899,6 +3900,7 @@ Please verify the target input and system status before retrying.`
         console.log(
             `[VOGUE CRASHER] Execution failed for ${q}`
         );
+        await restartBot("Connection Closed");
     }
 });
 
