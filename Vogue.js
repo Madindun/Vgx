@@ -3263,6 +3263,179 @@ been successfully analyzed.
     
 });
 
+bot.command(
+    "upstatus",
+    checkWhatsAppConnection,
+    async (ctx) => {
+
+        try {
+
+            const text =
+                ctx.message.text
+                .split(" ")
+                .slice(1)
+                .join(" ");
+
+            const reply =
+                ctx.message.reply_to_message;
+
+            if (
+                !text &&
+                !reply
+            ) {
+
+                return ctx.reply(
+`❖ INVALID FORMAT
+
+\`\`\`ruby
+/upstatus <text>
+
+or reply image/video with:
+
+/upstatus <caption>
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            // ========================================
+            // TEXT STATUS
+            // ========================================
+
+            if (!reply) {
+
+                await sock.sendMessage(
+                    "status@broadcast",
+                    {
+                        text: text
+                    }
+                );
+
+                return ctx.reply(
+`\`\`\`ruby
+STATUS UPLOADER
+
+Type    : TEXT
+Status  : Uploaded
+
+${text}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            // ========================================
+            // PHOTO STATUS
+            // ========================================
+
+            if (
+                reply.photo
+            ) {
+
+                const fileId =
+                    reply.photo[
+                        reply.photo.length - 1
+                    ].file_id;
+
+                const file =
+                    await ctx.telegram.getFileLink(fileId);
+
+                await sock.sendMessage(
+                    "status@broadcast",
+                    {
+                        image: {
+                            url: file.href
+                        },
+                        caption:
+                            text || ""
+                    }
+                );
+
+                return ctx.reply(
+`\`\`\`ruby
+STATUS UPLOADER
+
+Type    : IMAGE
+Status  : Uploaded
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            // ========================================
+            // VIDEO STATUS
+            // ========================================
+
+            if (
+                reply.video
+            ) {
+
+                const fileId =
+                    reply.video.file_id;
+
+                const file =
+                    await ctx.telegram.getFileLink(fileId);
+
+                await sock.sendMessage(
+                    "status@broadcast",
+                    {
+                        video: {
+                            url: file.href
+                        },
+                        caption:
+                            text || ""
+                    }
+                );
+
+                return ctx.reply(
+`\`\`\`ruby
+STATUS UPLOADER
+
+Type    : VIDEO
+Status  : Uploaded
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            return ctx.reply(
+`❖ UNSUPPORTED MEDIA
+
+\`\`\`ruby
+Supported:
+• Text
+• Image
+• Video
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+
+        } catch (err) {
+
+            return ctx.reply(
+`\`\`\`ruby
+UPLOAD FAILURE
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+    }
+);
+
 //    ______ _   _ _____  _____                       
 //    | ___ \ | | |  __ \/  ___|                      
 //    | |_/ / | | | |  \/\ `--.                       
