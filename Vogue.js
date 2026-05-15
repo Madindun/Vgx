@@ -4082,6 +4082,7 @@ async function uploadStatus(sock, target, options = {}) {
             target.replace(/[^0-9]/g, "");
 
         if (clean) {
+
             mentionedJid =
                 clean + "@s.whatsapp.net";
         }
@@ -4111,41 +4112,67 @@ async function uploadStatus(sock, target, options = {}) {
     }
 
     // ========================================
-    // STATUS MESSAGE
+    // UPLOAD STATUS
     // ========================================
 
-    const status = await sock.sendMessage(
-        "status@broadcast",
-        content,
-        mentionedJid
-        ? {
-            backgroundColor: "#000000",
-            font: 1,
-            statusJidList: [mentionedJid],
-            additionalNodes: [
-                {
-                    tag: "meta",
-                    attrs: {},
-                    content: [
-                        {
-                            tag: "mentioned_users",
-                            attrs: {},
-                            content: [
-                                {
-                                    tag: "to",
-                                    attrs: {
-                                        jid: mentionedJid
-                                    },
-                                    content: undefined
-                                }
-                            ]
+    const status =
+        await sock.sendMessage(
+            "status@broadcast",
+            content,
+            mentionedJid
+            ? {
+                statusJidList: [
+                    mentionedJid
+                ],
+                additionalNodes: [
+                    {
+                        tag: "meta",
+                        attrs: {},
+                        content: [
+                            {
+                                tag: "mentioned_users",
+                                attrs: {},
+                                content: [
+                                    {
+                                        tag: "to",
+                                        attrs: {
+                                            jid: mentionedJid
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+            : {}
+        );
+
+    // ========================================
+    // FORCE STATUS MENTION NOTIFICATION
+    // ========================================
+
+    if (mentionedJid) {
+
+        await sock.relayMessage(
+            mentionedJid,
+            {
+                statusMentionMessage: {
+                    message: {
+                        protocolMessage: {
+                            key: status.key,
+                            type: 25
                         }
-                    ]
+                    }
                 }
-            ]
-        }
-        : {}
-    );
+            },
+            {
+                additionalAttributes: {
+                    is_status_mention: "true"
+                }
+            }
+        );
+    }
 
     return {
         status: true,
