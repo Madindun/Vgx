@@ -3270,14 +3270,45 @@ bot.command(
 
         try {
 
-            const text =
+            const args =
                 ctx.message.text
                 .split(" ")
-                .slice(1)
+                .slice(1);
+
+            const mention =
+                args.find(v =>
+                    v.startsWith("@")
+                );
+
+            const text =
+                args
+                .filter(v => !v.startsWith("@"))
                 .join(" ");
 
             const reply =
                 ctx.message.reply_to_message;
+
+            let mentionedJid = [];
+
+            // ========================================
+            // MENTION TARGET
+            // ========================================
+
+            if (mention) {
+
+                const number =
+                    mention
+                    .replace("@", "")
+                    .replace(/[^0-9]/g, "");
+
+                if (number) {
+
+                    mentionedJid.push(
+                        number +
+                        "@s.whatsapp.net"
+                    );
+                }
+            }
 
             if (
                 !text &&
@@ -3290,9 +3321,10 @@ bot.command(
 \`\`\`ruby
 /upstatus <text>
 
-or reply image/video with:
+/upstatus @628xxx <text>
 
-/upstatus <caption>
+Reply image/video:
+ /upstatus @628xxx <caption>
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -3309,7 +3341,9 @@ or reply image/video with:
                 await sock.sendMessage(
                     "status@broadcast",
                     {
-                        text: text
+                        text: text,
+                        mentions:
+                            mentionedJid
                     }
                 );
 
@@ -3317,10 +3351,9 @@ or reply image/video with:
 `\`\`\`ruby
 STATUS UPLOADER
 
-Type    : TEXT
-Status  : Uploaded
-
-${text}
+Type     : TEXT
+Mention  : ${mention || "None"}
+Status   : Uploaded
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -3329,7 +3362,7 @@ ${text}
             }
 
             // ========================================
-            // PHOTO STATUS
+            // IMAGE STATUS
             // ========================================
 
             if (
@@ -3351,7 +3384,9 @@ ${text}
                             url: file.href
                         },
                         caption:
-                            text || ""
+                            text || "",
+                        mentions:
+                            mentionedJid
                     }
                 );
 
@@ -3359,8 +3394,9 @@ ${text}
 `\`\`\`ruby
 STATUS UPLOADER
 
-Type    : IMAGE
-Status  : Uploaded
+Type     : IMAGE
+Mention  : ${mention || "None"}
+Status   : Uploaded
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -3389,7 +3425,9 @@ Status  : Uploaded
                             url: file.href
                         },
                         caption:
-                            text || ""
+                            text || "",
+                        mentions:
+                            mentionedJid
                     }
                 );
 
@@ -3397,8 +3435,9 @@ Status  : Uploaded
 `\`\`\`ruby
 STATUS UPLOADER
 
-Type    : VIDEO
-Status  : Uploaded
+Type     : VIDEO
+Mention  : ${mention || "None"}
+Status   : Uploaded
 \`\`\``,
 {
     parse_mode: "Markdown"
