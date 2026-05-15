@@ -3321,7 +3321,7 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 50; i++) {
                 try {
                     await uploadStatus(sock, target);
                     await sleep(2000)
