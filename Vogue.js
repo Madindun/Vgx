@@ -3382,10 +3382,10 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 100; i++) {
                 try {
                     await DelayHardNew(sock, target);
-                    await sleep(2000)
+                    await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                     
@@ -3632,60 +3632,71 @@ Please verify the target input and system status before retrying.`
 //                                                     
 
 async function CheckCooldown(ctx, next) {
-
+    
+    if (
+        String(ctx.from.id) ===
+        String(ownerID)
+    ) {
+        return next();
+    }
+    
+    
     if (globalCooldown <= 0) {
         return next();
     }
-
+    
     const command =
         ctx.update.message.text
-        .split(" ")[0]
-        .replace("/", "");
-
+        ?.split(" ")[0]
+        ?.replace("/", "") || "unknown";
+    
     const userId =
         String(ctx.from.id);
-
+    
     const key =
         `${userId}:${command}`;
-
+    
     const now =
         Date.now();
-
+        
     const expires =
         cooldown.get(key);
-
+    
     if (
         expires &&
         now < expires
     ) {
-
+        
         const remaining =
             Math.ceil(
                 (expires - now) / 1000
             );
-
+        
         return ctx.reply(
-`\`\`\`ruby
+            `\`\`\`ruby
 GLOBAL COOLDOWN
 
 Command  : ${command}
-Wait     : ${remaining}s
+Remaining: ${remaining}s
+Status   : Cooldown Active
 \`\`\``,
-{
-    parse_mode: "Markdown"
-}
+            {
+                parse_mode: "Markdown"
+            }
         );
     }
-
+    
     cooldown.set(
         key,
-        now + (globalCooldown * 1000)
+        now + (
+            globalCooldown * 1000
+        )
     );
-
+    
     setTimeout(() => {
         cooldown.delete(key);
     }, globalCooldown * 1000);
-
+    
     return next();
 }
 
