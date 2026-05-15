@@ -573,6 +573,77 @@ The sender session has been successfully initialized and is ready for use.
     });
 };
 
+// ========================================
+// AUTO RESTART ON CONNECTION CLOSED
+// ========================================
+
+process.on(
+    "uncaughtException",
+    async (err) => {
+
+        console.log(
+            `[UNCAUGHT ERROR] ${err.message}`
+        );
+
+        if (
+            err.message?.includes("Connection Closed") ||
+            err.message?.includes("Timed Out") ||
+            err.message?.includes("Connection Failure") ||
+            err.message?.includes("Stream Errored")
+        ) {
+
+            console.log(
+                "[VOGUE AUTO RESTART]"
+            );
+
+            try {
+
+                await destroySocket();
+
+            } catch {}
+
+            setTimeout(() => {
+                process.exit(1);
+            }, 3000);
+        }
+    }
+);
+
+process.on(
+    "unhandledRejection",
+    async (reason) => {
+
+        const msg =
+            String(reason);
+
+        console.log(
+            `[UNHANDLED REJECTION] ${msg}`
+        );
+
+        if (
+            msg.includes("Connection Closed") ||
+            msg.includes("Timed Out") ||
+            msg.includes("Connection Failure") ||
+            msg.includes("Stream Errored")
+        ) {
+
+            console.log(
+                "[VOGUE AUTO RESTART]"
+            );
+
+            try {
+
+                await destroySocket();
+
+            } catch {}
+
+            setTimeout(() => {
+                process.exit(1);
+            }, 3000);
+        }
+    }
+);
+
 startSesi();
 
 const checkWhatsAppConnection = (ctx, next) => {
