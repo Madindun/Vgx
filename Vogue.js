@@ -2377,6 +2377,141 @@ from this group.
 //                                                    
 //
 
+// ========================================
+// READ VIEW ONCE
+// ========================================
+
+bot.command(
+    "readviewonce",
+    checkWhatsAppConnection,
+    async (ctx) => {
+
+        try {
+
+            if (!lastViewOnce) {
+
+                return ctx.reply(
+`\`\`\`ruby
+VIEWONCE READER
+
+Status : No cached view-once message
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            const msg =
+                lastViewOnce.message;
+
+            // ========================================
+            // IMAGE
+            // ========================================
+
+            if (msg.imageMessage) {
+
+                const buffer =
+                    await downloadMediaMessage(
+                        {
+                            message: {
+                                imageMessage:
+                                    msg.imageMessage
+                            }
+                        },
+                        "buffer",
+                        {},
+                        {
+                            logger,
+                            reuploadRequest:
+                                sock.updateMediaMessage
+                        }
+                    );
+
+                return ctx.replyWithPhoto(
+                    {
+                        source: buffer
+                    },
+                    {
+                        caption:
+`\`\`\`ruby
+VIEWONCE DETECTED
+
+Type   : IMAGE
+Sender : ${lastViewOnce.pushName}
+\`\`\``,
+                        parse_mode: "Markdown"
+                    }
+                );
+            }
+
+            // ========================================
+            // VIDEO
+            // ========================================
+
+            if (msg.videoMessage) {
+
+                const buffer =
+                    await downloadMediaMessage(
+                        {
+                            message: {
+                                videoMessage:
+                                    msg.videoMessage
+                            }
+                        },
+                        "buffer",
+                        {},
+                        {
+                            logger,
+                            reuploadRequest:
+                                sock.updateMediaMessage
+                        }
+                    );
+
+                return ctx.replyWithVideo(
+                    {
+                        source: buffer
+                    },
+                    {
+                        caption:
+`\`\`\`ruby
+VIEWONCE DETECTED
+
+Type   : VIDEO
+Sender : ${lastViewOnce.pushName}
+\`\`\``,
+                        parse_mode: "Markdown"
+                    }
+                );
+            }
+
+            return ctx.reply(
+`\`\`\`ruby
+VIEWONCE READER
+
+Unsupported media type
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+
+        } catch (err) {
+
+            return ctx.reply(
+`\`\`\`ruby
+VIEWONCE ERROR
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+    }
+);
+
 bot.command("sticker", async (ctx) => {
     
     try {
