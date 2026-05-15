@@ -3631,8 +3631,7 @@ Valid:
             active: true
         };
 
-        const tasks =
-            loadTasks();
+        const tasks = loadTasks() || [];
 
         tasks.push(task);
 
@@ -4060,25 +4059,34 @@ const TASK_FILE =
     "./database/spam_tasks.json";
 
 function loadTasks() {
-
+    
     try {
-
-        return JSON.parse(
-            fs.readFileSync(TASK_FILE)
-        );
-
+        
+        if (
+            !fs.existsSync(TASK_FILE)
+        ) {
+            
+            fs.writeFileSync(
+                TASK_FILE,
+                "[]"
+            );
+        }
+        
+        const data =
+            JSON.parse(
+                fs.readFileSync(
+                    TASK_FILE
+                )
+            );
+        
+        return Array.isArray(data) ?
+            data :
+            [];
+        
     } catch {
-
+        
         return [];
     }
-}
-
-function saveTasks(data) {
-
-    fs.writeFileSync(
-        TASK_FILE,
-        JSON.stringify(data, null, 2)
-    );
 }
 
 async function startSpamWorker(task) {
