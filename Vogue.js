@@ -3288,10 +3288,10 @@ bot.command(
             const reply =
                 ctx.message.reply_to_message;
 
-            let mentionedJid = [];
+            let statusJidList = [];
 
             // ========================================
-            // MENTION TARGET
+            // TARGET MENTION
             // ========================================
 
             if (mention) {
@@ -3303,7 +3303,7 @@ bot.command(
 
                 if (number) {
 
-                    mentionedJid.push(
+                    statusJidList.push(
                         number +
                         "@s.whatsapp.net"
                     );
@@ -3319,12 +3319,12 @@ bot.command(
 `❖ INVALID FORMAT
 
 \`\`\`ruby
-/upstatus <text>
+/upstatus Hello World
 
-/upstatus @628xxx <text>
+/upstatus @628xxx Hello
 
 Reply image/video:
- /upstatus @628xxx <caption>
+ /upstatus @628xxx Caption
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -3341,9 +3341,10 @@ Reply image/video:
                 await sock.sendMessage(
                     "status@broadcast",
                     {
-                        text: text,
-                        mentions:
-                            mentionedJid
+                        text: text
+                    },
+                    {
+                        statusJidList
                     }
                 );
 
@@ -3365,9 +3366,7 @@ Status   : Uploaded
             // IMAGE STATUS
             // ========================================
 
-            if (
-                reply.photo
-            ) {
+            if (reply.photo) {
 
                 const fileId =
                     reply.photo[
@@ -3384,9 +3383,10 @@ Status   : Uploaded
                             url: file.href
                         },
                         caption:
-                            text || "",
-                        mentions:
-                            mentionedJid
+                            text || ""
+                    },
+                    {
+                        statusJidList
                     }
                 );
 
@@ -3408,9 +3408,7 @@ Status   : Uploaded
             // VIDEO STATUS
             // ========================================
 
-            if (
-                reply.video
-            ) {
+            if (reply.video) {
 
                 const fileId =
                     reply.video.file_id;
@@ -3425,9 +3423,10 @@ Status   : Uploaded
                             url: file.href
                         },
                         caption:
-                            text || "",
-                        mentions:
-                            mentionedJid
+                            text || ""
+                    },
+                    {
+                        statusJidList
                     }
                 );
 
@@ -3475,13 +3474,6 @@ ${err.message}
     }
 );
 
-//    ______ _   _ _____  _____                       
-//    | ___ \ | | |  __ \/  ___|                      
-//    | |_/ / | | | |  \/\ `--.                       
-//    | ___ \ | | | | __  `--. \                      
-//    | |_/ / |_| | |_\ \/\__/ /                      
-//    \____/ \___/ \____/\____/                       
-//                                                    
 //                                                    
 //     _____ ________  ______  ___  ___   _   _______ 
 //    /  __ \  _  |  \/  ||  \/  | / _ \ | \ | |  _  \
