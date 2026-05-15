@@ -4058,6 +4058,9 @@ function parseDuration(input) {
 const TASK_FILE =
     "./database/spam_tasks.json";
 
+const TASK_FILE =
+    "./database/spam_tasks.json";
+
 function loadTasks() {
     
     try {
@@ -4087,6 +4090,18 @@ function loadTasks() {
         
         return [];
     }
+}
+
+function saveTasks(data) {
+    
+    fs.writeFileSync(
+        TASK_FILE,
+        JSON.stringify(
+            data,
+            null,
+            2
+        )
+    );
 }
 
 async function startSpamWorker(task) {
