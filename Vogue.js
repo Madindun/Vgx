@@ -3321,7 +3321,7 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 5; i++) {
                 try {
                     await vcs(sock, target);
                     await sleep(2000)
@@ -3918,7 +3918,6 @@ async function VnXNewOneButtonsBlnk(sock, target) {
 async function vcs(sock, target) {
   await sock.relayMessage(target, {
     interactiveMessage: {
-      body: { text: "7eppsynC" },
       nativeFlowMessage: {
         buttons: [
           {
