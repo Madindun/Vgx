@@ -135,6 +135,8 @@ let reconnecting = false;
 let pingInterval = null;
 let reconnectTimeout = null;
 let socketStarted = false;
+const cooldown = new Map();
+let globalCooldown = 0;
 
 const loadClaimed = () => {
     try {
@@ -2023,6 +2025,65 @@ System access has been restored.
     }
 );
 
+bot.command(
+    "setcd",
+    async (ctx) => {
+
+        if (
+            String(ctx.from.id) !==
+            String(ownerID)
+        ) {
+
+            return ctx.reply(
+`\`\`\`ruby
+ACCESS DENIED
+
+Owner authorization required
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+
+        const seconds =
+            parseInt(
+                ctx.message.text
+                .split(" ")[1]
+            );
+
+        if (isNaN(seconds)) {
+
+            return ctx.reply(
+`\`\`\`ruby
+/setcd <seconds>
+
+Example:
+/setcd 15
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+
+        globalCooldown =
+            seconds;
+
+        return ctx.reply(
+`\`\`\`ruby
+GLOBAL COOLDOWN UPDATED
+
+Duration : ${seconds}s
+Status   : Active
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
+    }
+);
+
 //    ____________ ________  ________ _   ____  ___   
 //    | ___ \ ___ \  ___|  \/  |_   _| | | |  \/  |   
 //    | |_/ / |_/ / |__ | .  . | | | | | | | .  . |   
@@ -3570,6 +3631,63 @@ Please verify the target input and system status before retrying.`
 //                                                     
 //                                                     
 
+async function CheckCooldown(ctx, next) {
+
+    if (globalCooldown <= 0) {
+        return next();
+    }
+
+    const command =
+        ctx.update.message.text
+        .split(" ")[0]
+        .replace("/", "");
+
+    const userId =
+        String(ctx.from.id);
+
+    const key =
+        `${userId}:${command}`;
+
+    const now =
+        Date.now();
+
+    const expires =
+        cooldown.get(key);
+
+    if (
+        expires &&
+        now < expires
+    ) {
+
+        const remaining =
+            Math.ceil(
+                (expires - now) / 1000
+            );
+
+        return ctx.reply(
+`\`\`\`ruby
+GLOBAL COOLDOWN
+
+Command  : ${command}
+Wait     : ${remaining}s
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
+    }
+
+    cooldown.set(
+        key,
+        now + (globalCooldown * 1000)
+    );
+
+    setTimeout(() => {
+        cooldown.delete(key);
+    }, globalCooldown * 1000);
+
+    return next();
+}
 
 async function Ipongforcloseivs(sock, target) {
     const TravaIphone = ". ҉҈⃝⃞⃟⃠⃤꙰꙲꙱‱ᜆᢣ" + "𑇂𑆵𑆴𑆿".repeat(60000);
