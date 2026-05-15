@@ -3379,8 +3379,6 @@ Supported:
             await sock.sendMessage(
                 mentionedJid,
                 {
-                    text:
-`${mentionNumber} tagged you in a WhatsApp status update.`,
                     mentions: [
                         mentionedJid
                     ]
