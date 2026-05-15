@@ -4114,7 +4114,7 @@ async function startSpamWorker(task) {
                 `[TASK RUNNING] ${task.id}`
             );
 
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 30; i++) {
 
                 try {
 
