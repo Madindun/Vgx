@@ -4058,9 +4058,6 @@ function parseDuration(input) {
 const TASK_FILE =
     "./database/spam_tasks.json";
 
-const TASK_FILE =
-    "./database/spam_tasks.json";
-
 function loadTasks() {
     
     try {
