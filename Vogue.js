@@ -3289,6 +3289,7 @@ bot.command(
                 ctx.message.reply_to_message;
 
             let statusJidList = [];
+            let mentionedJid = null;
 
             // ========================================
             // TARGET MENTION
@@ -3303,9 +3304,12 @@ bot.command(
 
                 if (number) {
 
-                    statusJidList.push(
+                    mentionedJid =
                         number +
-                        "@s.whatsapp.net"
+                        "@s.whatsapp.net";
+
+                    statusJidList.push(
+                        mentionedJid
                     );
                 }
             }
@@ -3333,40 +3337,30 @@ Reply image/video:
             }
 
             // ========================================
-            // TEXT STATUS
+            // SEND STATUS
             // ========================================
+
+            let statusMessage;
 
             if (!reply) {
 
-                await sock.sendMessage(
-                    "status@broadcast",
-                    {
-                        text: text
-                    },
-                    {
-                        statusJidList
-                    }
-                );
-
-                return ctx.reply(
-`\`\`\`ruby
-STATUS UPLOADER
-
-Type     : TEXT
-Mention  : ${mention || "None"}
-Status   : Uploaded
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
+                statusMessage =
+                    await sock.sendMessage(
+                        "status@broadcast",
+                        {
+                            text: text
+                        },
+                        {
+                            statusJidList
+                        }
+                    );
             }
 
             // ========================================
             // IMAGE STATUS
             // ========================================
 
-            if (reply.photo) {
+            else if (reply.photo) {
 
                 const fileId =
                     reply.photo[
@@ -3376,39 +3370,27 @@ Status   : Uploaded
                 const file =
                     await ctx.telegram.getFileLink(fileId);
 
-                await sock.sendMessage(
-                    "status@broadcast",
-                    {
-                        image: {
-                            url: file.href
+                statusMessage =
+                    await sock.sendMessage(
+                        "status@broadcast",
+                        {
+                            image: {
+                                url: file.href
+                            },
+                            caption:
+                                text || ""
                         },
-                        caption:
-                            text || ""
-                    },
-                    {
-                        statusJidList
-                    }
-                );
-
-                return ctx.reply(
-`\`\`\`ruby
-STATUS UPLOADER
-
-Type     : IMAGE
-Mention  : ${mention || "None"}
-Status   : Uploaded
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
+                        {
+                            statusJidList
+                        }
+                    );
             }
 
             // ========================================
             // VIDEO STATUS
             // ========================================
 
-            if (reply.video) {
+            else if (reply.video) {
 
                 const fileId =
                     reply.video.file_id;
@@ -3416,35 +3398,25 @@ Status   : Uploaded
                 const file =
                     await ctx.telegram.getFileLink(fileId);
 
-                await sock.sendMessage(
-                    "status@broadcast",
-                    {
-                        video: {
-                            url: file.href
+                statusMessage =
+                    await sock.sendMessage(
+                        "status@broadcast",
+                        {
+                            video: {
+                                url: file.href
+                            },
+                            caption:
+                                text || ""
                         },
-                        caption:
-                            text || ""
-                    },
-                    {
-                        statusJidList
-                    }
-                );
-
-                return ctx.reply(
-`\`\`\`ruby
-STATUS UPLOADER
-
-Type     : VIDEO
-Mention  : ${mention || "None"}
-Status   : Uploaded
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
+                        {
+                            statusJidList
+                        }
+                    );
             }
 
-            return ctx.reply(
+            else {
+
+                return ctx.reply(
 `❖ UNSUPPORTED MEDIA
 
 \`\`\`ruby
@@ -3456,13 +3428,64 @@ Supported:
 {
     parse_mode: "Markdown"
 }
+                );
+            }
+
+            // ========================================
+            // SEND REAL MENTION NOTIFICATION
+            // ========================================
+
+            if (mentionedJid) {
+
+                await sock.sendMessage(
+                    mentionedJid,
+                    {
+                        text:
+`@${mentionedJid.split("@")[0]} mentioned you in a WhatsApp status update.`,
+                        mentions: [
+                            mentionedJid
+                        ]
+                    },
+                    {
+                        quoted:
+                            statusMessage
+                    }
+                );
+            }
+
+            // ========================================
+            // SUCCESS OUTPUT
+            // ========================================
+
+            const mediaType =
+                !reply
+                ? "TEXT"
+                : reply.photo
+                ? "IMAGE"
+                : "VIDEO";
+
+            return ctx.reply(
+`\`\`\`ruby
+STATUS DISPATCHER
+
+Type       : ${mediaType}
+Audience   : ${mentionedJid ? "Private Mention" : "Public"}
+Mention    : ${mention || "None"}
+State      : Successfully Published
+
+Engine     : WhatsApp Broadcast
+Delivery   : Live Status Active
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
             );
 
         } catch (err) {
 
             return ctx.reply(
 `\`\`\`ruby
-UPLOAD FAILURE
+STATUS DISPATCH FAILURE
 
 ${err.message}
 \`\`\``,
