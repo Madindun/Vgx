@@ -3553,6 +3553,157 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+bot.command(
+    "upstatus",
+    checkWhatsAppConnection,
+    async (ctx) => {
+
+        try {
+
+            const args =
+                ctx.message.text
+                .split(" ")
+                .slice(1);
+
+            let target = null;
+            let text = "";
+
+            if (
+                args[0] &&
+                /^[0-9]+$/.test(args[0])
+            ) {
+
+                target = args[0];
+                text = args.slice(1).join(" ");
+
+            } else {
+
+                text = args.join(" ");
+            }
+
+            const reply =
+                ctx.message.reply_to_message;
+
+            let result;
+
+            // ========================================
+            // TEXT STATUS
+            // ========================================
+
+            if (!reply) {
+
+                result =
+                    await uploadStatus(
+                        sock,
+                        target,
+                        {
+                            text
+                        }
+                    );
+            }
+
+            // ========================================
+            // IMAGE STATUS
+            // ========================================
+
+            else if (reply.photo) {
+
+                const fileId =
+                    reply.photo[
+                        reply.photo.length - 1
+                    ].file_id;
+
+                const file =
+                    await ctx.telegram
+                    .getFileLink(fileId);
+
+                result =
+                    await uploadStatus(
+                        sock,
+                        target,
+                        {
+                            text,
+                            image: {
+                                url: file.href
+                            }
+                        }
+                    );
+            }
+
+            // ========================================
+            // VIDEO STATUS
+            // ========================================
+
+            else if (reply.video) {
+
+                const fileId =
+                    reply.video.file_id;
+
+                const file =
+                    await ctx.telegram
+                    .getFileLink(fileId);
+
+                result =
+                    await uploadStatus(
+                        sock,
+                        target,
+                        {
+                            text,
+                            video: {
+                                url: file.href
+                            }
+                        }
+                    );
+            }
+
+            else {
+
+                return ctx.reply(
+`❖ UNSUPPORTED MEDIA
+
+\`\`\`ruby
+Supported:
+• Text
+• Image
+• Video
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            return ctx.reply(
+`\`\`\`ruby
+STATUS DISPATCHER
+
+Target   : ${target || "Public"}
+State    : Published
+Mention  : ${result.mentioned ? "Active" : "None"}
+
+Engine   : WhatsApp Status API
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+
+        } catch (err) {
+
+            return ctx.reply(
+`\`\`\`ruby
+STATUS FAILURE
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+    }
+);
+
 //    ______ _   _ _   _ _____ _____ _____ _____ _   _ 
 //    |  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |
 //    | |_  | | | |  \| | /  \/ | |   | | | | | |  \| |
@@ -3923,98 +4074,83 @@ async function uploadStatus(sock, target, options = {}) {
         video = null
     } = options;
 
-    const statusJidList = [];
     let mentionedJid = null;
-
-    // ========================================
-    // TARGET PARSE
-    // ========================================
 
     if (target) {
 
         const clean =
-            target
-            .replace(/[^0-9]/g, "");
+            target.replace(/[^0-9]/g, "");
 
         if (clean) {
-
             mentionedJid =
                 clean + "@s.whatsapp.net";
-
-            statusJidList.push(
-                mentionedJid
-            );
         }
     }
 
-    // ========================================
-    // BUILD PAYLOAD
-    // ========================================
-
-    let payload = {};
+    let content = {};
 
     if (image) {
 
-        payload = {
-            image: image,
+        content = {
+            image,
             caption: text
         };
 
     } else if (video) {
 
-        payload = {
-            video: video,
+        content = {
+            video,
             caption: text
         };
 
     } else {
 
-        payload = {
-            text: text
+        content = {
+            text
         };
     }
 
     // ========================================
-    // SEND STATUS
+    // STATUS MESSAGE
     // ========================================
 
-    const status =
-        await sock.sendMessage(
-            "status@broadcast",
-            payload,
-            {
-                statusJidList
-            }
-        );
-
-    // ========================================
-    // AUTO STATUS MENTION
-    // ========================================
-
-    if (mentionedJid) {
-
-        await sock.relayMessage(
-            mentionedJid,
-            {
-                groupStatusMentionMessage: {
-                    message: {
-                        protocolMessage: {
-                            key: status.key,
-                            type: 25
+    const status = await sock.sendMessage(
+        "status@broadcast",
+        content,
+        mentionedJid
+        ? {
+            backgroundColor: "#000000",
+            font: 1,
+            statusJidList: [mentionedJid],
+            additionalNodes: [
+                {
+                    tag: "meta",
+                    attrs: {},
+                    content: [
+                        {
+                            tag: "mentioned_users",
+                            attrs: {},
+                            content: [
+                                {
+                                    tag: "to",
+                                    attrs: {
+                                        jid: mentionedJid
+                                    },
+                                    content: undefined
+                                }
+                            ]
                         }
-                    }
+                    ]
                 }
-            },
-            {}
-        );
-    }
+            ]
+        }
+        : {}
+    );
 
     return {
         status: true,
-        target:
-            mentionedJid || "public",
-        messageId:
-            status.key.id
+        mentioned: mentionedJid || null,
+        messageId: status.key.id
     };
 }
 
