@@ -580,67 +580,72 @@ The sender session has been successfully initialized and is ready for use.
 process.on(
     "uncaughtException",
     async (err) => {
-
+        
+        const msg =
+            err?.message || String(err);
+        
         console.log(
-            `[UNCAUGHT ERROR] ${err.message}`
+            `[!] Error Strike: ${msg}`
         );
-
-        if (
-            err.message?.includes("Connection Closed") ||
-            err.message?.includes("Timed Out") ||
-            err.message?.includes("Connection Failure") ||
-            err.message?.includes("Stream Errored")
-        ) {
-
-            console.log(
-                "[VOGUE AUTO RESTART]"
-            );
-
-            try {
-
-                await destroySocket();
-
-            } catch {}
-
-            setTimeout(() => {
-                process.exit(1);
-            }, 3000);
-        }
+        
+        const shouldRestart =
+            msg.includes("Connection Closed") ||
+            msg.includes("Timed Out") ||
+            msg.includes("Connection Failure") ||
+            msg.includes("Stream Errored") ||
+            msg.includes("Precondition Required");
+        
+        if (!shouldRestart) return;
+        
+        console.log(
+            "[VOGUE] Restart Triggered"
+        );
+        
+        try {
+            
+            await destroySocket();
+            
+        } catch {}
+        
+        setTimeout(() => {
+            process.exit(1);
+        }, 2000);
     }
 );
 
 process.on(
     "unhandledRejection",
-    async (reason) => {
-
+    async (err) => {
+        
         const msg =
-            String(reason);
-
+            err?.message || String(err);
+        
         console.log(
-            `[UNHANDLED REJECTION] ${msg}`
+            `[!] Error Strike: ${msg}`
         );
-
-        if (
+        
+        const shouldRestart =
             msg.includes("Connection Closed") ||
             msg.includes("Timed Out") ||
             msg.includes("Connection Failure") ||
-            msg.includes("Stream Errored")
-        ) {
-
-            console.log(
-                "[VOGUE AUTO RESTART]"
-            );
-
-            try {
-
-                await destroySocket();
-
-            } catch {}
-
-            setTimeout(() => {
-                process.exit(1);
-            }, 3000);
-        }
+            msg.includes("Stream Errored") ||
+            msg.includes("Precondition Required");
+        
+        if (!shouldRestart) return;
+        
+        console.log(
+            "[VOGUE] Restart Triggered"
+        );
+        
+        try {
+            
+            await destroySocket();
+            
+        } catch {}
+        
+        setTimeout(() => {
+            process.exit(1);
+        }, 2000);
     }
 );
 
