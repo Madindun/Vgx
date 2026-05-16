@@ -650,8 +650,6 @@ process.on(
 
 startSesi();
 
-restoreSpamTasks();
-
 const checkWhatsAppConnection = (ctx, next) => {
     if (!isWhatsAppConnected) {
         ctx.reply("🪧 ☇ Tidak ada sender yang terhubung");
