@@ -1577,14 +1577,14 @@ Framework   : Javascript
     
     const keyboard = [
         [
-            { text: "All Menu", callback_data: "/controls" },
-            { text: "Bug Menu", callback_data: "/bug" }
+            { text: "All Menu", callback_data: "/controls", style: "success" },
+            { text: "Bug Menu", callback_data: "/bug", style: "success" }
         ],
         [
-            { text: "Developer", callback_data: "/tqto" }
+            { text: "Developer", callback_data: "/tqto", style: "danger" }
         ],
         [
-            { text: "Free Premium", callback_data: "free_premium_info" }
+            { text: "Free Premium", callback_data: "free_premium_info", style: "primary" }
         ]
     ];
     
@@ -1624,21 +1624,15 @@ Select one of the available options below to continue system interaction.
 \`\`\``;
     
     const keyboard = [
-        [ 
-            { text: "Tools Menu", callback_data: "/controls" },
-            { text: "Bug Menu", callback_data: "/bug" }
+        [
+            { text: "All Menu", callback_data: "/controls", style: "success" },
+            { text: "Bug Menu", callback_data: "/bug", style: "success" }
         ],
         [
-            {
-                text: "Developer",
-                callback_data: "/tqto"
-            }
+            { text: "Developer", callback_data: "/tqto", style: "danger" }
         ],
         [
-            {
-                text: "Free Premium",
-                callback_data: "free_premium_info"
-            }
+            { text: "Free Premium", callback_data: "free_premium_info", style: "primary" }
         ]
     ];
     
