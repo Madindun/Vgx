@@ -2819,7 +2819,7 @@ ${err.message}
     }
 );
 
-bot.command("forensic+", checkWhatsAppConnection, async (ctx) => {
+bot.command("forensic", checkWhatsAppConnection, async (ctx) => {
 
     try {
 
