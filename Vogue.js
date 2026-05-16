@@ -144,6 +144,7 @@ const fs = require("fs");
 const queueFile = "./Database/spamQueue.json";
 let spamQueue = [];
 let queueRunning = false;
+const LOG_QUEUE_CHANNEL_ID = -1003824559958;
 
 const loadClaimed = () => {
     try {
@@ -3962,85 +3963,114 @@ async function restoreQueue() {
 }
 
 async function processSpamQueue() {
-
+    
     if (queueRunning) return;
-
+    
     queueRunning = true;
-
+    
     while (spamQueue.length > 0) {
-
+        
         const job = spamQueue[0];
-
+        
         const {
             target,
             number
         } = job;
-
+        
+        const queueNumber =
+            spamQueue.findIndex(
+                x => x.number === number
+            ) + 1;
+        
         const instanceId =
             Date.now() + Math.random();
-
+        
         console.log(
-            `[QUEUE] Starting ${number}`
+            `[QUEUE #${queueNumber}] Starting ${number}`
         );
-
+        
         try {
-
+            
             for (let i = 0; i < 30; i++) {
-
+                
                 try {
-
+                    
                     await VogueSpamInvis(
                         sock,
                         target
                     );
-
+                    
                     console.log(
-                        `[WORKER ${instanceId}] Loop ${i + 1}/30`
+                        `[QUEUE #${queueNumber}] [WORKER ${instanceId}] Loop ${i + 1}/30`
                     );
-
+                    
                     await sleep(3000);
-
+                    
                 } catch (e) {
-
+                    
                     console.log(
-                        `[WORKER ${instanceId}] ${e.message}`
+                        `[QUEUE #${queueNumber}] [WORKER ${instanceId}] ${e.message}`
                     );
-
+                    
                     await restartBot(
                         "Connection Closed"
                     );
-
+                    
                     break;
                 }
             }
-
+            
             console.log(
-                `[QUEUE] Finished ${number}`
+                `[QUEUE #${queueNumber}] Finished ${number}`
             );
+            
+            try {
+                
+                await bot.telegram.sendMessage(
+                    LOG_QUEUE_CHANNEL_ID,
+                    `\`\`\`ruby
+QUEUE COMPLETED
 
+Queue ID : #${queueNumber}
+Loop     : 30
+Status   : Finished
+Engine   : Vogue Queue System
+\`\`\``,
+                    {
+                        parse_mode: "Markdown"
+                    }
+                );
+                
+            } catch (e) {
+                
+                console.log(
+                    `[LOG ERROR] ${e.message}`
+                );
+            }
+            
             removeFirstQueue();
-
+            
             if (spamQueue.length > 0) {
-
+                
                 console.log(
                     `[QUEUE] Waiting 3 minutes before next task`
                 );
-
+                
                 await sleep(
                     3 * 60 * 1000
                 );
             }
-
+            
         } catch (err) {
-
+            
             console.log(
                 `[QUEUE ERROR] ${err.message}`
             );
-
+            
             removeFirstQueue();
         }
     }
-
+    
     queueRunning = false;
 }
 
