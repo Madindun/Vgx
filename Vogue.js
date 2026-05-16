@@ -140,7 +140,6 @@ const cooldown = new Map();
 let globalCooldown = 0;
 const spamQueue = [];
 let queueRunning = false;
-const fs = require("fs");
 const queueFile = "./Database/spamQueue.json";
 let spamQueue = [];
 let queueRunning = false;
