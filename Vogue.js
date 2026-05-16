@@ -2814,25 +2814,21 @@ Engine      : Vogue Forensic
     `\`\`\`ruby
 V O G U E • C R A S H E R
 ════════════════════════
+F O R E N S I C • R E P O R T
 
-WHATSAPP INTELLIGENCE REPORT
-
-TARGET INFORMATION
-
+I N F O R M A T I O N
 Number      : ${clean}
 Account     : Registered
 Display     : ${displayName}
 Username    : ${username}
 
-ACCOUNT ANALYSIS
-
+A C C O U N T
 Category    : ${business}
 Profile     : ${profile}
 Privacy     : ${privacy}
 Device      : ${device}
 
-IDENTITY METADATA
-
+I D E N T I T Y
 Biography   : ${about}
 Updated     : ${lastUpdate}
 
