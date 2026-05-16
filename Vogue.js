@@ -4474,7 +4474,7 @@ Description : Combo Delay Hard + Drainet!
             }
         );
 
-        processDelayComboQueue();
+        processSpamQueue();
 
     } catch (error) {
 
