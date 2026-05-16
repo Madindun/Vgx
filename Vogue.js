@@ -2827,7 +2827,7 @@ bot.command("forensic", checkWhatsAppConnection, async (ctx) => {
 `❖ INVALID FORMAT
 
 \`\`\`ruby
-/forensic+ 628xxxxxxxx
+/forensic 628xxxxxxxx
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -2858,12 +2858,12 @@ bot.command("forensic", checkWhatsAppConnection, async (ctx) => {
 
             return ctx.reply(
 `\`\`\`ruby
-FORENSIC+ ANALYZER
+FORENSIC ANALYZER
 
 Target      : ${clean}
 Status      : Not Registered
 
-Engine      : Vogue Forensic+
+Engine      : Vogue Forensic
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -3300,7 +3300,7 @@ Status        : Active
 
         return ctx.reply(
 `\`\`\`ruby
-FORENSIC+ FAILURE
+FORENSIC FAILURE
 
 ${err.message}
 \`\`\``,
