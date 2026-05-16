@@ -2432,6 +2432,211 @@ from this group.
 // READ VIEW ONCE
 // ========================================
 
+bot.command(
+    "forensic",
+    checkWhatsAppConnection,
+    CheckCooldown,
+    async (ctx) => {
+
+        try {
+
+            const q =
+                ctx.message.text
+                .split(" ")[1];
+
+            if (!q) {
+
+                return ctx.reply(
+`❖ INVALID FORMAT
+
+\`\`\`ruby
+/forensic 628xxxxxxxx
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            const clean =
+                q.replace(
+                    /[^0-9]/g,
+                    ""
+                );
+
+            const jid =
+                clean +
+                "@s.whatsapp.net";
+
+            // ========================================
+            // CHECK REGISTERED
+            // ========================================
+
+            const check =
+                await sock.onWhatsApp(
+                    jid
+                );
+
+            const registered =
+                check?.[0]?.exists ||
+                false;
+
+            if (!registered) {
+
+                return ctx.reply(
+`\`\`\`ruby
+FORENSIC ANALYZER
+
+Target     : ${clean}
+Status     : Not Registered
+
+Engine     : Vogue Forensic
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            // ========================================
+            // PROFILE PICTURE
+            // ========================================
+
+            let profile =
+                "Unavailable";
+
+            let ppUrl =
+                null;
+
+            try {
+
+                ppUrl =
+                    await sock.profilePictureUrl(
+                        jid,
+                        "image"
+                    );
+
+                if (ppUrl)
+                    profile =
+                        "Available";
+
+            } catch {}
+
+            // ========================================
+            // BUSINESS CHECK
+            // ========================================
+
+            let business =
+                "Personal";
+
+            try {
+
+                const biz =
+                    await sock.getBusinessProfile(
+                        jid
+                    );
+
+                if (biz)
+                    business =
+                        "Business";
+            } catch {}
+
+            // ========================================
+            // STATUS PRIVACY
+            // ========================================
+
+            let privacy =
+                "Open";
+
+            try {
+
+                await sock.fetchStatus(
+                    jid
+                );
+
+            } catch {
+
+                privacy =
+                    "Restricted";
+            }
+
+            // ========================================
+            // LAST SEEN / DEVICE INDICATOR
+            // ========================================
+
+            let device =
+                "Unknown";
+
+            try {
+
+                const deviceData =
+                    check?.[0];
+
+                if (
+                    deviceData?.jid
+                ) {
+
+                    device =
+                        "Mobile";
+                }
+
+            } catch {}
+
+            // ========================================
+            // OUTPUT
+            // ========================================
+
+            const caption =
+`\`\`\`ruby
+FORENSIC ANALYZER
+
+Target      : ${clean}
+Account     : Registered
+Type        : ${business}
+Profile     : ${profile}
+Privacy     : ${privacy}
+Device      : ${device}
+
+Engine      : Vogue Forensic
+Status      : Active
+\`\`\``;
+
+            if (ppUrl) {
+
+                return ctx.replyWithPhoto(
+                    ppUrl,
+                    {
+                        caption,
+                        parse_mode:
+                            "Markdown"
+                    }
+                );
+            }
+
+            return ctx.reply(
+                caption,
+                {
+                    parse_mode:
+                        "Markdown"
+                }
+            );
+
+        } catch (err) {
+
+            return ctx.reply(
+`\`\`\`ruby
+FORENSIC FAILURE
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+    }
+);
+
 bot.command("sticker", async (ctx) => {
     
     try {
