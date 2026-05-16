@@ -2587,219 +2587,223 @@ Engine      : Vogue Forensic
             // PROFILE INFO
             // ========================================
             
-            let displayName = "Unavailable";
-            let username = "Unavailable";
-            let about = "Private";
-            let lastUpdate = "Unknown";
+            let displayName = null;
+            let username = null;
+            let about = null;
+            let lastUpdate = null;
             
             // ========================================
-            // FORCE CONTACT DISCOVERY
+            // REALTIME PRESENCE SYNC
             // ========================================
             
             try {
-                
+            
                 await sock.presenceSubscribe(
                     jid
                 );
-                
-                await sock.profilePictureUrl(
-                    jid,
-                    "image"
-                ).catch(() => {});
-                
+            
+                await new Promise(
+                    resolve =>
+                        setTimeout(
+                            resolve,
+                            2000
+                        )
+                );
+            
             } catch {}
             
             // ========================================
-            // PUSHNAME DETECTOR
+            // USYNC QUERY
             // ========================================
             
             try {
-                
+            
+                const result =
+                    await sock.user?.query({
+                        tag: "iq",
+                        attrs: {
+                            to: "@s.whatsapp.net",
+                            type: "get",
+                            xmlns: "usync"
+                        },
+                        content: [
+                            {
+                                tag: "usync",
+                                attrs: {
+                                    mode: "query",
+                                    context: "interactive"
+                                },
+                                content: [
+                                    {
+                                        tag: "query",
+                                        attrs: {},
+                                        content: [
+                                            {
+                                                tag: "contact",
+                                                attrs: {}
+                                            },
+                                            {
+                                                tag: "status",
+                                                attrs: {}
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        tag: "list",
+                                        attrs: {},
+                                        content: [
+                                            {
+                                                tag: "user",
+                                                attrs: {
+                                                    jid
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    });
+            
+                const user =
+                    result?.content?.[0]
+                    ?.content?.[1]
+                    ?.content?.[0];
+            
                 const contact =
-                    sock.contacts?.[jid];
-                
-                if (
-                    contact?.notify
-                ) {
-                    
-                    displayName =
-                        contact.notify;
-                }
-                
-                if (
-                    contact?.verifiedName
-                ) {
-                    
-                    displayName =
-                        contact.verifiedName;
-                }
-                
-                if (
-                    contact?.name
-                ) {
-                    
-                    displayName =
-                        contact.name;
-                }
-                
-                if (
-                    contact?.pushname
-                ) {
-                    
-                    displayName =
-                        contact.pushname;
-                }
-                
-            } catch {}
-            
-            // ========================================
-            // ONWHATSAPP FETCH
-            // ========================================
-            
-            try {
-                
-                const waData =
-                    await sock.onWhatsApp(
-                        jid
+                    user?.content?.find(
+                        x => x.tag === "contact"
                     );
-                
+            
+                const status =
+                    user?.content?.find(
+                        x => x.tag === "status"
+                    );
+            
                 if (
-                    waData?.[0]?.notify
+                    contact?.attrs?.name
                 ) {
-                    
+            
                     displayName =
-                        waData[0].notify;
+                        contact.attrs.name;
                 }
-                
+            
+                if (
+                    status?.content
+                ) {
+            
+                    about =
+                        status.content.toString();
+                }
+            
             } catch {}
             
             // ========================================
-            // BUSINESS PROFILE FETCH
+            // FALLBACK CONTACT CACHE
             // ========================================
             
             try {
-                
+            
+                const c =
+                    sock.contacts?.[jid];
+            
+                if (
+                    !displayName
+                ) {
+            
+                    displayName =
+                        c?.name ||
+                        c?.notify ||
+                        c?.verifiedName ||
+                        c?.pushname;
+                }
+            
+            } catch {}
+            
+            // ========================================
+            // BUSINESS PROFILE
+            // ========================================
+            
+            try {
+            
                 const biz =
                     await sock.getBusinessProfile(
                         jid
                     );
-                
+            
                 if (
-                    biz?.description
+                    biz?.description &&
+                    !about
                 ) {
-                    
+            
                     about =
                         biz.description;
                 }
-                
+            
                 if (
                     biz?.categories?.length
                 ) {
-                    
+            
                     business =
                         "Business";
                 }
-                
-                if (
-                    biz?.wid
-                ) {
-                    
-                    business =
-                        "Business";
-                }
-                
-                if (
-                    biz?.email
-                ) {
-                    
-                    business =
-                        "Business";
-                }
-                
+            
             } catch {}
             
             // ========================================
-            // STATUS / BIO FETCH
+            // STATUS FETCH
             // ========================================
             
             try {
-                
-                const statusData =
+            
+                const s =
                     await sock.fetchStatus(
                         jid
                     );
-                
+            
                 if (
-                    statusData?.status
+                    s?.status &&
+                    !about
                 ) {
-                    
+            
                     about =
-                        statusData.status;
+                        s.status;
                 }
-                
+            
                 if (
-                    statusData?.setAt
+                    s?.setAt
                 ) {
-                    
+            
                     lastUpdate =
                         moment(
-                            statusData.setAt
+                            s.setAt
                         )
-                        .tz("Asia/Jakarta")
+                        .tz(
+                            "Asia/Jakarta"
+                        )
                         .format(
                             "DD/MM/YYYY HH:mm:ss"
                         );
                 }
-                
+            
             } catch {}
             
             // ========================================
-            // FALLBACK NAME RECOVERY
+            // FINAL FALLBACK
             // ========================================
             
-            try {
-                
-                if (
-                    displayName ===
-                    "Unavailable"
-                ) {
-                    
-                    const decoded =
-                        jid.split("@")[0];
-                    
-                    displayName =
-                        "+" + decoded;
-                }
-                
-            } catch {}
+            if (!displayName)
+                displayName = "Private";
             
-            // ========================================
-            // USERNAME GENERATOR
-            // ========================================
+            if (!about)
+                about = "Private";
             
-            try {
-                
-                username =
-                    displayName
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]/g, "_")
-                    .replace(/_+/g, "_")
-                    .replace(/^_+|_+$/g, "");
-                
-                if (
-                    !username ||
-                    username === "_"
-                ) {
-                    
-                    username =
-                        clean;
-                }
-                
-            } catch {
-                
-                username =
-                    clean;
-            }
+            username =
+                displayName
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "_")
+                .replace(/_+/g, "_")
+                .replace(/^_+|_+$/g, "");
 
             // ========================================
             // OUTPUT
