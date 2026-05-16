@@ -141,8 +141,6 @@ let globalCooldown = 0;
 const spamQueue = [];
 let queueRunning = false;
 const queueFile = "./Database/spamQueue.json";
-let spamQueue = [];
-let queueRunning = false;
 const LOG_QUEUE_CHANNEL_ID = -1003824559958;
 
 const loadClaimed = () => {
