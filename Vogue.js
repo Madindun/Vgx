@@ -3735,7 +3735,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamandro', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
+bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
