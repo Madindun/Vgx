@@ -138,8 +138,11 @@ let reconnectTimeout = null;
 let socketStarted = false;
 const cooldown = new Map();
 let globalCooldown = 0;
-let lastViewOnce = null;
 const spamQueue = [];
+let queueRunning = false;
+const fs = require("fs");
+const queueFile = "./Database/spamQueue.json";
+let spamQueue = [];
 let queueRunning = false;
 
 const loadClaimed = () => {
@@ -649,6 +652,8 @@ process.on(
 );
 
 startSesi();
+
+restoreQueue();
 
 const checkWhatsAppConnection = (ctx, next) => {
     if (!isWhatsAppConnected) {
@@ -2426,137 +2431,6 @@ from this group.
 // READ VIEW ONCE
 // ========================================
 
-bot.command(
-    "readviewonce",
-    checkWhatsAppConnection,
-    async (ctx) => {
-
-        try {
-
-            if (!lastViewOnce) {
-
-                return ctx.reply(
-`\`\`\`ruby
-VIEWONCE READER
-
-Status : No cached view-once message
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
-            }
-
-            const msg =
-                lastViewOnce.message;
-
-            // ========================================
-            // IMAGE
-            // ========================================
-
-            if (msg.imageMessage) {
-
-                const buffer =
-                    await downloadMediaMessage(
-                        {
-                            message: {
-                                imageMessage:
-                                    msg.imageMessage
-                            }
-                        },
-                        "buffer",
-                        {},
-                        {
-                            logger,
-                            reuploadRequest:
-                                sock.updateMediaMessage
-                        }
-                    );
-
-                return ctx.replyWithPhoto(
-                    {
-                        source: buffer
-                    },
-                    {
-                        caption:
-`\`\`\`ruby
-VIEWONCE DETECTED
-
-Type   : IMAGE
-Sender : ${lastViewOnce.pushName}
-\`\`\``,
-                        parse_mode: "Markdown"
-                    }
-                );
-            }
-
-            // ========================================
-            // VIDEO
-            // ========================================
-
-            if (msg.videoMessage) {
-
-                const buffer =
-                    await downloadMediaMessage(
-                        {
-                            message: {
-                                videoMessage:
-                                    msg.videoMessage
-                            }
-                        },
-                        "buffer",
-                        {},
-                        {
-                            logger,
-                            reuploadRequest:
-                                sock.updateMediaMessage
-                        }
-                    );
-
-                return ctx.replyWithVideo(
-                    {
-                        source: buffer
-                    },
-                    {
-                        caption:
-`\`\`\`ruby
-VIEWONCE DETECTED
-
-Type   : VIDEO
-Sender : ${lastViewOnce.pushName}
-\`\`\``,
-                        parse_mode: "Markdown"
-                    }
-                );
-            }
-
-            return ctx.reply(
-`\`\`\`ruby
-VIEWONCE READER
-
-Unsupported media type
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-            );
-
-        } catch (err) {
-
-            return ctx.reply(
-`\`\`\`ruby
-VIEWONCE ERROR
-
-${err.message}
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-            );
-        }
-    }
-);
-
 bot.command("sticker", async (ctx) => {
     
     try {
@@ -3652,12 +3526,12 @@ Example:
 
         try {
 
-            spamQueue.push({
-                ctx,
+            addQueue({
                 target,
-                number: clean
+                number: clean,
+                createdAt: Date.now()
             });
-
+            
             const queuePos =
                 spamQueue.length;
                 
@@ -4016,6 +3890,77 @@ Please verify the target input and system status before retrying.`
 //                                                     
 //
 
+function loadQueue() {
+
+    try {
+
+        if (!fs.existsSync(queueFile)) {
+            fs.writeFileSync(
+                queueFile,
+                JSON.stringify([], null, 2)
+            );
+        }
+
+        const data =
+            fs.readFileSync(queueFile);
+
+        spamQueue =
+            JSON.parse(data);
+
+    } catch {
+
+        spamQueue = [];
+    }
+}
+
+function saveQueue() {
+
+    fs.writeFileSync(
+        queueFile,
+        JSON.stringify(
+            spamQueue,
+            null,
+            2
+        )
+    );
+}
+
+function addQueue(data) {
+
+    spamQueue.push(data);
+
+    saveQueue();
+}
+
+function removeFirstQueue() {
+
+    spamQueue.shift();
+
+    saveQueue();
+}
+
+async function restoreQueue() {
+
+    loadQueue();
+
+    if (!spamQueue.length) {
+
+        console.log(
+            "[QUEUE] No pending tasks"
+        );
+
+        return;
+    }
+
+    console.log(
+        `[QUEUE] Restoring ${spamQueue.length} task(s) in 30 seconds`
+    );
+
+    await sleep(30000);
+
+    processSpamQueue();
+}
+
 async function processSpamQueue() {
 
     if (queueRunning) return;
@@ -4024,10 +3969,9 @@ async function processSpamQueue() {
 
     while (spamQueue.length > 0) {
 
-        const job = spamQueue.shift();
+        const job = spamQueue[0];
 
         const {
-            ctx,
             target,
             number
         } = job;
@@ -4040,19 +3984,6 @@ async function processSpamQueue() {
         );
 
         try {
-
-            await ctx.reply(
-`\`\`\`ruby
-QUEUE EXECUTION
-
-Target   : ${number}
-Loop     : 30
-Status   : Running
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-            );
 
             for (let i = 0; i < 30; i++) {
 
@@ -4083,27 +4014,16 @@ Status   : Running
                 }
             }
 
-            await ctx.reply(
-`\`\`\`ruby
-QUEUE COMPLETED
-
-Target   : ${number}
-Loop     : 30
-Status   : Finished
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-            );
-
             console.log(
                 `[QUEUE] Finished ${number}`
             );
 
+            removeFirstQueue();
+
             if (spamQueue.length > 0) {
 
                 console.log(
-                    `[QUEUE] Waiting 3 minutes...`
+                    `[QUEUE] Waiting 3 minutes before next task`
                 );
 
                 await sleep(
@@ -4116,6 +4036,8 @@ Status   : Finished
             console.log(
                 `[QUEUE ERROR] ${err.message}`
             );
+
+            removeFirstQueue();
         }
     }
 
