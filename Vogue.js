@@ -3530,14 +3530,18 @@ Example:
                 createdAt: Date.now()
             });
             
-            const queuePos =
-                spamQueue.length;
+            const queuePos = spamQueue.length;
+
+            const estimatedMs =
+                (queuePos - 1) * (3 * 60 * 1000);
+            
+            const nextQueueTime = new Date(Date.now() + estimatedMs).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
                 
             await ctx.replyWithPhoto(
                 thumbnailUrl,
                 {
                     caption:
-`\`\`\`ruby
+    `\`\`\`ruby
 V O G U E • C R A S H E R
 ────────────────────────
 
@@ -3546,8 +3550,7 @@ QUEUE STATUS
 Target    : ${clean}
 Loop      : 30
 Queue     : #${queuePos}
-Delay     : 3 Minutes / Task
-
+Next Run  : ${nextQueueTime}
 State     : Added To Queue
 ────────────────────────
 \`\`\``,
