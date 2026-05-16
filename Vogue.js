@@ -2487,10 +2487,10 @@ bot.command(
 `\`\`\`ruby
 FORENSIC ANALYZER
 
-Target     : ${clean}
-Status     : Not Registered
+Target      : ${clean}
+Status      : Not Registered
 
-Engine     : Vogue Forensic
+Engine      : Vogue Forensic
 \`\`\``,
 {
     parse_mode: "Markdown"
@@ -2539,6 +2539,7 @@ Engine     : Vogue Forensic
                 if (biz)
                     business =
                         "Business";
+
             } catch {}
 
             // ========================================
@@ -2561,7 +2562,7 @@ Engine     : Vogue Forensic
             }
 
             // ========================================
-            // LAST SEEN / DEVICE INDICATOR
+            // DEVICE INDICATOR
             // ========================================
 
             let device =
@@ -2583,6 +2584,82 @@ Engine     : Vogue Forensic
             } catch {}
 
             // ========================================
+            // PROFILE INFO
+            // ========================================
+
+            let displayName =
+                "Unknown";
+
+            let username =
+                "Unavailable";
+
+            let about =
+                "Unavailable";
+
+            try {
+
+                const contact =
+                    await sock.getBusinessProfile(
+                        jid
+                    );
+
+                if (
+                    contact?.description
+                ) {
+
+                    about =
+                        contact.description;
+                }
+
+            } catch {}
+
+            try {
+
+                const statusData =
+                    await sock.fetchStatus(
+                        jid
+                    );
+
+                if (
+                    statusData?.status
+                ) {
+
+                    about =
+                        statusData.status;
+                }
+
+                if (
+                    statusData?.setAt
+                ) {
+
+                    username =
+                        moment(
+                            statusData.setAt * 1000
+                        )
+                        .tz("Asia/Jakarta")
+                        .format(
+                            "DD/MM/YYYY HH:mm:ss"
+                        );
+                }
+
+            } catch {}
+
+            try {
+
+                const nameData =
+                    check?.[0];
+
+                if (
+                    nameData?.notify
+                ) {
+
+                    displayName =
+                        nameData.notify;
+                }
+
+            } catch {}
+
+            // ========================================
             // OUTPUT
             // ========================================
 
@@ -2592,10 +2669,17 @@ FORENSIC ANALYZER
 
 Target      : ${clean}
 Account     : Registered
+Name        : ${displayName}
+Username    : ${displayName.toLowerCase().replace(/ /g, "_")}
+
 Type        : ${business}
 Profile     : ${profile}
 Privacy     : ${privacy}
 Device      : ${device}
+
+Bio         : ${about}
+
+Last Update : ${username}
 
 Engine      : Vogue Forensic
 Status      : Active
