@@ -142,6 +142,8 @@ let spamQueue = [];
 let queueRunning = false;
 const queueFile = "./database/spamQueue.json";
 const LOG_QUEUE_CHANNEL_ID = "@LogVagues";
+const TASK_DURATION =
+    (30 * 3000) + (3 * 60 * 1000);
 
 const loadClaimed = () => {
     try {
@@ -3525,6 +3527,7 @@ Example:
         try {
 
             addQueue({
+                id: Date.now(),
                 target,
                 number: clean,
                 createdAt: Date.now()
@@ -3533,9 +3536,13 @@ Example:
             const queuePos =
                 spamQueue.length;
             
+            const TASK_DURATION =
+                (30 * 3000) +
+                (3 * 60 * 1000);
+            
             const estimatedMs =
                 (queuePos - 1) *
-                (3 * 60 * 1000);
+                TASK_DURATION;
             
             const nextQueueTime =
                 moment(
@@ -3557,7 +3564,7 @@ QUEUE STATUS
 Target    : ${clean}
 Loop      : 30
 Queue     : #${queuePos}
-Next Run  : ${nextQueueTime}
+Next Run  : ${nextQueueTime} WIB
 State     : Added To Queue
 ────────────────────────
 \`\`\``,
@@ -3985,15 +3992,13 @@ async function processSpamQueue() {
         } = job;
         
         const queueNumber =
-            spamQueue.findIndex(
-                x => x.number === number
-            ) + 1;
+            job.id;
         
         const instanceId =
             Date.now() + Math.random();
         
         console.log(
-            `[QUEUE #${queueNumber}] Starting ${number}`
+            `[QUEUE ID ${queueNumber}] Starting ${number}`
         );
         
         try {
