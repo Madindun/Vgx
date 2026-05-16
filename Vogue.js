@@ -338,7 +338,7 @@ const startSesi = async () => {
 
 » Information:
   Developer: Prince
-  Version: 1.0 Pro
+  Version: 1.1 Stable
   Status: Bot Connected
   `))
     
@@ -440,7 +440,7 @@ VOGUE CRASH • PAIRING SYSTEM
 Session Information
 
 Client Name   : Vogue Crasher
-Developer     : @ScriptKits
+Developer     : @PrinceXVogue
 Version       : 1.0
 Prefix        : /
 
@@ -481,7 +481,7 @@ The sender session has been successfully initialized and is ready for use.
 ▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
 » Information:
   Developer: Prince
-  Version: 1.0 Pro
+  Version: 1.1 Stable
   Status: Sender Connected
   `))
             pingInterval = setInterval(() => {
@@ -1435,8 +1435,8 @@ V O G U E  •  C R A S H E R
 System Information
 
 User        : ${ctx.from.first_name}
-Developer   : @ScriptKits
-Version     : 1.0 Pro
+Developer   : @PrinceXVogue
+Version     : 1.1 Stable
 Prefix      : /
 Framework   : Javascript
 
@@ -1476,8 +1476,8 @@ V O G U E  •  C R A S H E R
 System Information
 
 User        : ${ctx.from.first_name}
-Developer   : @ScriptKits
-Version     : 1.0 Pro
+Developer   : @PrinceXVogue
+Version     : 1.1 Stable
 Prefix      : /
 
 Description
@@ -1642,8 +1642,8 @@ bot.action('/controls', async (ctx) => {
 V O G U E  •  C R A S H E R  
 ──────────────────────────
 User        : ${ctx.from.first_name}
-Developer   : @ScriptKits
-Version     : 1.0 Pro
+Developer   : @PrinceXVogue
+Version     : 1.1 Stable
 Prefix      : /
 ──────────────────────────
 
@@ -1715,8 +1715,8 @@ bot.action('/bug', async (ctx) => {
 V O G U E • C R A S H E R
 ────────────────────────
 User   : ${ctx.from.first_name}
-Dev    : @ScriptKits
-Ver    : 1.0 Pro
+Dev    : @PrinceXVogue
+Ver    : 1.1 Stable
 Prefix : /
 ────────────────────────
 
@@ -1763,14 +1763,14 @@ V O G U E  •  C R A S H E R
 ACKNOWLEDGEMENT PANEL
 
 User        : ${ctx.from.first_name}
-Developer   : @ScriptKits
-Version     : 1.0 Pro
+Developer   : @PrinceXVogue
+Version     : 1.1 Stable
 Prefix      : /
 
 ──────────────────────────
 
 Support Team
-@ScriptKits
+@PrinceXVogue
 @PrinceXVogue
 
 ──────────────────────────
@@ -1869,8 +1869,8 @@ Trash Matrix WhatsApp engine.
 
 Session Information
 
-Developer     : @ScriptKits
-Version       : 1.0 Pro
+Developer     : @PrinceXVogue
+Version       : 1.1 Stable
 Prefix        : /
 
 ────────────────────────────
@@ -1920,8 +1920,8 @@ authenticated and is now operational.
 
 System Information
 
-Developer     : @ScriptKits
-Version       : 1.0 Pro
+Developer     : @PrinceXVogue
+Version       : 1.1 Stable
 Prefix        : /
 
 ──────────────────────────────
@@ -3479,10 +3479,10 @@ bot.command("info", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.0 Pro
+  1.1 Stable
 
 › Developer
-  @ScriptKits
+  @PrinceXVogue
 
 › Runtime
   ${runtime}
@@ -3669,10 +3669,10 @@ bot.on("callback_query", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.0 Pro
+  1.1 Stable
 
 › Developer
-  @ScriptKits
+  @PrinceXVogue
 
 › Runtime
   ${runtime}
