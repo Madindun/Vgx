@@ -2586,77 +2586,159 @@ Engine      : Vogue Forensic
             // ========================================
             // PROFILE INFO
             // ========================================
-
+            
             let displayName =
-                "Unknown";
-
+                "Hidden";
+            
             let username =
-                "Unavailable";
-
+                "Hidden";
+            
             let about =
-                "Unavailable";
-
+                "Hidden";
+            
+            let lastUpdate =
+                "Unknown";
+            
+            // ========================================
+            // GET CONTACT NAME
+            // ========================================
+            
             try {
-
+                
                 const contact =
-                    await sock.getBusinessProfile(
+                    sock.contacts?.[jid];
+                
+                if (
+                    contact?.name
+                ) {
+                    
+                    displayName =
+                        contact.name;
+                    
+                } else if (
+                    contact?.notify
+                ) {
+                    
+                    displayName =
+                        contact.notify;
+                    
+                } else if (
+                    check?.[0]?.notify
+                ) {
+                    
+                    displayName =
+                        check[0].notify;
+                }
+                
+            } catch {}
+            
+            // ========================================
+            // FORCE FETCH CONTACT
+            // ========================================
+            
+            try {
+                
+                const fetched =
+                    await sock.onWhatsApp(
                         jid
                     );
-
+                
                 if (
-                    contact?.description
+                    fetched?.[0]?.notify
                 ) {
-
-                    about =
-                        contact.description;
+                    
+                    displayName =
+                        fetched[0].notify;
                 }
-
+                
             } catch {}
-
+            
+            // ========================================
+            // USERNAME GENERATOR
+            // ========================================
+            
             try {
-
+                
+                if (
+                    displayName &&
+                    displayName !== "Hidden"
+                ) {
+                    
+                    username =
+                        displayName
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, "_")
+                        .replace(/_+/g, "_");
+                }
+                
+            } catch {}
+            
+            // ========================================
+            // BIO / ABOUT
+            // ========================================
+            
+            try {
+                
                 const statusData =
                     await sock.fetchStatus(
                         jid
                     );
-
+                
                 if (
                     statusData?.status
                 ) {
-
+                    
                     about =
                         statusData.status;
                 }
-
+                
                 if (
                     statusData?.setAt
                 ) {
-
-                    username =
+                    
+                    lastUpdate =
                         moment(
-                            statusData.setAt * 1000
+                            statusData.setAt
                         )
                         .tz("Asia/Jakarta")
                         .format(
                             "DD/MM/YYYY HH:mm:ss"
                         );
                 }
-
-            } catch {}
-
+                
+            } catch {
+                
+                about =
+                    "Private";
+            }
+            
+            // ========================================
+            // BUSINESS PROFILE
+            // ========================================
+            
             try {
-
-                const nameData =
-                    check?.[0];
-
+                
+                const biz =
+                    await sock.getBusinessProfile(
+                        jid
+                    );
+                
                 if (
-                    nameData?.notify
+                    biz?.description
                 ) {
-
-                    displayName =
-                        nameData.notify;
+                    
+                    about =
+                        biz.description;
                 }
-
+                
+                if (
+                    biz?.wid
+                ) {
+                    
+                    business =
+                        "Business";
+                }
+                
             } catch {}
 
             // ========================================
@@ -2664,25 +2746,29 @@ Engine      : Vogue Forensic
             // ========================================
 
             const caption =
-`\`\`\`ruby
+    `\`\`\`ruby
+V O G U E • C R A S H E R
+────────────────────────
+
 FORENSIC ANALYZER
 
 Target      : ${clean}
 Account     : Registered
-Name        : ${displayName}
-Username    : ${displayName.toLowerCase().replace(/ /g, "_")}
+Display     : ${displayName}
+Username    : ${username}
 
-Type        : ${business}
+Category    : ${business}
 Profile     : ${profile}
 Privacy     : ${privacy}
 Device      : ${device}
 
-Bio         : ${about}
+Biography   : ${about}
+Last Update : ${lastUpdate}
 
-Last Update : ${username}
-
+────────────────────────
 Engine      : Vogue Forensic
-Status      : Active
+System      : Operational
+────────────────────────
 \`\`\``;
 
             if (ppUrl) {
