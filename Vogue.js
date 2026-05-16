@@ -2819,441 +2819,474 @@ ${err.message}
     }
 );
 
-bot.command("forensic", checkWhatsAppConnection, async (ctx) => {
+bot.command("forensic+", checkWhatsAppConnection, async (ctx) => {
 
-        try {
+    try {
 
-            const q =
-                ctx.message.text
-                .split(" ")[1];
+        const q =
+            ctx.message.text
+            .split(" ")[1];
 
-            if (!q) {
+        if (!q) {
 
-                return ctx.reply(
+            return ctx.reply(
 `❖ INVALID FORMAT
 
 \`\`\`ruby
-/forensic 628xxxxxxxx
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
-            }
-
-            const clean =
-                q.replace(
-                    /[^0-9]/g,
-                    ""
-                );
-
-            const jid =
-                clean +
-                "@s.whatsapp.net";
-
-            // ========================================
-            // CHECK REGISTERED
-            // ========================================
-
-            const check =
-                await sock.onWhatsApp(
-                    jid
-                );
-
-            const registered =
-                check?.[0]?.exists ||
-                false;
-
-            if (!registered) {
-
-                return ctx.reply(
-`\`\`\`ruby
-FORENSIC ANALYZER
-
-Target      : ${clean}
-Status      : Not Registered
-
-Engine      : Vogue Forensic
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
-            }
-
-            // ========================================
-            // PROFILE PICTURE
-            // ========================================
-
-            let profile =
-                "Unavailable";
-
-            let ppUrl =
-                null;
-
-            try {
-
-                ppUrl =
-                    await sock.profilePictureUrl(
-                        jid,
-                        "image"
-                    );
-
-                if (ppUrl)
-                    profile =
-                        "Available";
-
-            } catch {}
-
-            // ========================================
-            // BUSINESS CHECK
-            // ========================================
-
-            let business =
-                "Personal";
-
-            try {
-
-                const biz =
-                    await sock.getBusinessProfile(
-                        jid
-                    );
-
-                if (biz)
-                    business =
-                        "Business";
-
-            } catch {}
-
-            // ========================================
-            // STATUS PRIVACY
-            // ========================================
-
-            let privacy =
-                "Open";
-
-            try {
-
-                await sock.fetchStatus(
-                    jid
-                );
-
-            } catch {
-
-                privacy =
-                    "Restricted";
-            }
-
-            // ========================================
-            // DEVICE INDICATOR
-            // ========================================
-
-            let device =
-                "Unknown";
-
-            try {
-
-                const deviceData =
-                    check?.[0];
-
-                if (
-                    deviceData?.jid
-                ) {
-
-                    device =
-                        "Mobile";
-                }
-
-            } catch {}
-
-            // ========================================
-            // PROFILE INFO
-            // ========================================
-            
-            let displayName = null;
-            let username = null;
-            let about = null;
-            let lastUpdate = null;
-            
-            // ========================================
-            // REALTIME PRESENCE SYNC
-            // ========================================
-            
-            try {
-            
-                await sock.presenceSubscribe(
-                    jid
-                );
-            
-                await new Promise(
-                    resolve =>
-                        setTimeout(
-                            resolve,
-                            2000
-                        )
-                );
-            
-            } catch {}
-            
-            // ========================================
-            // USYNC QUERY
-            // ========================================
-            
-            try {
-            
-                const result =
-                    await sock.user?.query({
-                        tag: "iq",
-                        attrs: {
-                            to: "@s.whatsapp.net",
-                            type: "get",
-                            xmlns: "usync"
-                        },
-                        content: [
-                            {
-                                tag: "usync",
-                                attrs: {
-                                    mode: "query",
-                                    context: "interactive"
-                                },
-                                content: [
-                                    {
-                                        tag: "query",
-                                        attrs: {},
-                                        content: [
-                                            {
-                                                tag: "contact",
-                                                attrs: {}
-                                            },
-                                            {
-                                                tag: "status",
-                                                attrs: {}
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        tag: "list",
-                                        attrs: {},
-                                        content: [
-                                            {
-                                                tag: "user",
-                                                attrs: {
-                                                    jid
-                                                }
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    });
-            
-                const user =
-                    result?.content?.[0]
-                    ?.content?.[1]
-                    ?.content?.[0];
-            
-                const contact =
-                    user?.content?.find(
-                        x => x.tag === "contact"
-                    );
-            
-                const status =
-                    user?.content?.find(
-                        x => x.tag === "status"
-                    );
-            
-                if (
-                    contact?.attrs?.name
-                ) {
-            
-                    displayName =
-                        contact.attrs.name;
-                }
-            
-                if (
-                    status?.content
-                ) {
-            
-                    about =
-                        status.content.toString();
-                }
-            
-            } catch {}
-            
-            // ========================================
-            // FALLBACK CONTACT CACHE
-            // ========================================
-            
-            try {
-            
-                const c =
-                    sock.contacts?.[jid];
-            
-                if (
-                    !displayName
-                ) {
-            
-                    displayName =
-                        c?.name ||
-                        c?.notify ||
-                        c?.verifiedName ||
-                        c?.pushname;
-                }
-            
-            } catch {}
-            
-            // ========================================
-            // BUSINESS PROFILE
-            // ========================================
-            
-            try {
-            
-                const biz =
-                    await sock.getBusinessProfile(
-                        jid
-                    );
-            
-                if (
-                    biz?.description &&
-                    !about
-                ) {
-            
-                    about =
-                        biz.description;
-                }
-            
-                if (
-                    biz?.categories?.length
-                ) {
-            
-                    business =
-                        "Business";
-                }
-            
-            } catch {}
-            
-            // ========================================
-            // STATUS FETCH
-            // ========================================
-            
-            try {
-            
-                const s =
-                    await sock.fetchStatus(
-                        jid
-                    );
-            
-                if (
-                    s?.status &&
-                    !about
-                ) {
-            
-                    about =
-                        s.status;
-                }
-            
-                if (
-                    s?.setAt
-                ) {
-            
-                    lastUpdate =
-                        moment(
-                            s.setAt
-                        )
-                        .tz(
-                            "Asia/Jakarta"
-                        )
-                        .format(
-                            "DD/MM/YYYY HH:mm:ss"
-                        );
-                }
-            
-            } catch {}
-            
-            // ========================================
-            // FINAL FALLBACK
-            // ========================================
-            
-            if (!displayName)
-                displayName = "Private";
-            
-            if (!about)
-                about = "Private";
-            
-            username =
-                displayName
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, "_")
-                .replace(/_+/g, "_")
-                .replace(/^_+|_+$/g, "");
-
-            // ========================================
-            // OUTPUT
-            // ========================================
-
-            const caption =
-    `\`\`\`ruby
-V O G U E • C R A S H E R
-════════════════════════
-F O R E N S I C • R E P O R T
-
-I N F O R M A T I O N
-Number      : ${clean}
-Account     : Registered
-Display     : ${displayName}
-Username    : ${username}
-
-A C C O U N T
-Category    : ${business}
-Profile     : ${profile}
-Privacy     : ${privacy}
-Device      : ${device}
-
-I D E N T I T Y
-Biography   : ${about}
-Updated     : ${lastUpdate}
-
-════════════════════════
-Engine      : Vogue Forensic Engine
-Status      : Active
-════════════════════════
-\`\`\``;
-
-            if (ppUrl) {
-
-                return ctx.replyWithPhoto(
-                    ppUrl,
-                    {
-                        caption,
-                        parse_mode:
-                            "Markdown"
-                    }
-                );
-            }
-
-            return ctx.reply(
-                caption,
-                {
-                    parse_mode:
-                        "Markdown"
-                }
-            );
-
-        } catch (err) {
-
-            return ctx.reply(
-`\`\`\`ruby
-FORENSIC FAILURE
-
-${err.message}
+/forensic+ 628xxxxxxxx
 \`\`\``,
 {
     parse_mode: "Markdown"
 }
             );
         }
-    });
+
+        const clean =
+            q.replace(
+                /[^0-9]/g,
+                ""
+            );
+
+        const jid =
+            clean +
+            "@s.whatsapp.net";
+
+        const check =
+            await sock.onWhatsApp(
+                jid
+            );
+
+        const registered =
+            check?.[0]?.exists ||
+            false;
+
+        if (!registered) {
+
+            return ctx.reply(
+`\`\`\`ruby
+FORENSIC+ ANALYZER
+
+Target      : ${clean}
+Status      : Not Registered
+
+Engine      : Vogue Forensic+
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+
+        let profile =
+            "Unavailable";
+
+        let ppUrl =
+            null;
+
+        try {
+
+            ppUrl =
+                await sock.profilePictureUrl(
+                    jid,
+                    "image"
+                );
+
+            if (ppUrl)
+                profile =
+                    "Available";
+
+        } catch {}
+
+        let business =
+            "Personal";
+
+        let businessCategory =
+            "Unknown";
+
+        let verified =
+            "No";
+
+        try {
+
+            const biz =
+                await sock.getBusinessProfile(
+                    jid
+                );
+
+            if (biz) {
+
+                business =
+                    "Business";
+
+                if (
+                    biz?.categories?.[0]
+                        ?.name
+                ) {
+
+                    businessCategory =
+                        biz.categories[0]
+                        .name;
+                }
+
+                if (
+                    biz?.verifiedLevel
+                ) {
+
+                    verified =
+                        "Yes";
+                }
+            }
+
+        } catch {}
+
+        let privacy =
+            "Open";
+
+        try {
+
+            await sock.fetchStatus(
+                jid
+            );
+
+        } catch {
+
+            privacy =
+                "Restricted";
+        }
+
+        let device =
+            "Mobile";
+
+        let multiDevice =
+            "Unknown";
+
+        try {
+
+            const deviceData =
+                check?.[0];
+
+            if (
+                deviceData?.lid
+            ) {
+
+                multiDevice =
+                    "Enabled";
+            } else {
+
+                multiDevice =
+                    "Disabled";
+            }
+
+        } catch {}
+
+        let displayName =
+            null;
+
+        let username =
+            null;
+
+        let about =
+            null;
+
+        let lastUpdate =
+            null;
+
+        let accountAge =
+            "Unknown";
+
+        let riskLevel =
+            "Low";
+
+        let profileHash =
+            "Unavailable";
+
+        try {
+
+            await sock.presenceSubscribe(
+                jid
+            );
+
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        2000
+                    )
+            );
+
+        } catch {}
+
+        try {
+
+            const result =
+                await sock.user?.query({
+                    tag: "iq",
+                    attrs: {
+                        to: "@s.whatsapp.net",
+                        type: "get",
+                        xmlns: "usync"
+                    },
+                    content: [
+                        {
+                            tag: "usync",
+                            attrs: {
+                                mode: "query",
+                                context: "interactive"
+                            },
+                            content: [
+                                {
+                                    tag: "query",
+                                    attrs: {},
+                                    content: [
+                                        {
+                                            tag: "contact",
+                                            attrs: {}
+                                        },
+                                        {
+                                            tag: "status",
+                                            attrs: {}
+                                        }
+                                    ]
+                                },
+                                {
+                                    tag: "list",
+                                    attrs: {},
+                                    content: [
+                                        {
+                                            tag: "user",
+                                            attrs: {
+                                                jid
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                });
+
+            const user =
+                result?.content?.[0]
+                ?.content?.[1]
+                ?.content?.[0];
+
+            const contact =
+                user?.content?.find(
+                    x => x.tag === "contact"
+                );
+
+            const status =
+                user?.content?.find(
+                    x => x.tag === "status"
+                );
+
+            if (
+                contact?.attrs?.name
+            ) {
+
+                displayName =
+                    contact.attrs.name;
+            }
+
+            if (
+                status?.content
+            ) {
+
+                about =
+                    status.content.toString();
+            }
+
+        } catch {}
+
+        try {
+
+            const c =
+                sock.contacts?.[jid];
+
+            if (
+                !displayName
+            ) {
+
+                displayName =
+                    c?.name ||
+                    c?.notify ||
+                    c?.verifiedName ||
+                    c?.pushname;
+            }
+
+        } catch {}
+
+        try {
+
+            const s =
+                await sock.fetchStatus(
+                    jid
+                );
+
+            if (
+                s?.status &&
+                !about
+            ) {
+
+                about =
+                    s.status;
+            }
+
+            if (
+                s?.setAt
+            ) {
+
+                lastUpdate =
+                    moment(
+                        s.setAt
+                    )
+                    .tz(
+                        "Asia/Jakarta"
+                    )
+                    .format(
+                        "DD/MM/YYYY HH:mm:ss"
+                    );
+            }
+
+        } catch {}
+
+        if (!displayName)
+            displayName =
+                "Private";
+
+        if (!about)
+            about =
+                "Private";
+
+        username =
+            displayName
+            .toLowerCase()
+            .replace(
+                /[^a-z0-9]/g,
+                "_"
+            )
+            .replace(
+                /_+/g,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
+
+        if (
+            clean.startsWith("62")
+        ) {
+
+            accountAge =
+                "Old Region ID";
+        }
+
+        if (
+            about.length > 80
+        ) {
+
+            riskLevel =
+                "Medium";
+        }
+
+        if (
+            business === "Business"
+        ) {
+
+            riskLevel =
+                "Trusted";
+        }
+
+        try {
+
+            const crypto =
+                require("crypto");
+
+            if (ppUrl) {
+
+                profileHash =
+                    crypto
+                    .createHash("md5")
+                    .update(ppUrl)
+                    .digest("hex")
+                    .slice(0, 16);
+            }
+
+        } catch {}
+
+        const caption =
+`\`\`\`ruby
+V O G U E • C R A S H E R
+════════════════════════════
+F O R E N S I C • P L U S
+
+T A R G E T
+Number        : ${clean}
+Account       : Registered
+Display       : ${displayName}
+Username      : ${username}
+
+A C C O U N T
+Category      : ${business}
+Business Type : ${businessCategory}
+Verified       : ${verified}
+Profile        : ${profile}
+Privacy        : ${privacy}
+
+D E V I C E
+Platform      : ${device}
+Multi Device  : ${multiDevice}
+
+I D E N T I T Y
+Biography     : ${about}
+Last Update   : ${lastUpdate}
+
+A N A L Y T I C S
+Risk Level    : ${riskLevel}
+Profile Hash  : ${profileHash}
+Account Age   : ${accountAge}
+
+════════════════════════════
+Engine        : Vogue Forensic+
+Status        : Active
+════════════════════════════
+\`\`\``;
+
+        if (ppUrl) {
+
+            return ctx.replyWithPhoto(
+                ppUrl,
+                {
+                    caption,
+                    parse_mode:
+                        "Markdown"
+                }
+            );
+        }
+
+        return ctx.reply(
+            caption,
+            {
+                parse_mode:
+                    "Markdown"
+            }
+        );
+
+    } catch (err) {
+
+        return ctx.reply(
+`\`\`\`ruby
+FORENSIC+ FAILURE
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
+    }
+});
 
 bot.command("sticker", async (ctx) => {
     
