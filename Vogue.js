@@ -3530,12 +3530,19 @@ Example:
                 createdAt: Date.now()
             });
             
-            const queuePos = spamQueue.length;
-
-            const estimatedMs =
-                (queuePos - 1) * (3 * 60 * 1000);
+            const queuePos =
+                spamQueue.length;
             
-            const nextQueueTime = new Date(Date.now() + estimatedMs).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+            const estimatedMs =
+                (queuePos - 1) *
+                (3 * 60 * 1000);
+            
+            const nextQueueTime =
+                moment(
+                    Date.now() + estimatedMs
+                )
+                .tz("Asia/Jakarta")
+                .format("HH:mm:ss");
                 
             await ctx.replyWithPhoto(
                 thumbnailUrl,
