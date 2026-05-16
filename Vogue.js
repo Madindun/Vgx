@@ -21,7 +21,7 @@
 //    /\__/ / |___| |\  | |/ /| |___| |\ \  
 //    \____/\____/\_| \_/___/ \____/\_| \_| 
 //                                          
-//                                          
+//                                         
 
 const { Telegraf } = require("telegraf");
 const { spawn } = require('child_process')
