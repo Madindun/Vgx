@@ -2433,11 +2433,293 @@ from this group.
 // READ VIEW ONCE
 // ========================================
 
-bot.command(
-    "forensic",
-    checkWhatsAppConnection,
-    CheckCooldown,
-    async (ctx) => {
+bot.command("cektele", async (ctx) => {
+        try {
+
+            let input =
+                ctx.message.text
+                .split(" ")[1];
+
+            let targetUser =
+                null;
+
+            // ========================================
+            // REPLY FORWARDED MESSAGE
+            // ========================================
+
+            if (
+                ctx.message.reply_to_message
+            ) {
+
+                const reply =
+                    ctx.message.reply_to_message;
+
+                if (
+                    reply.forward_from
+                ) {
+
+                    targetUser =
+                        reply.forward_from;
+
+                } else if (
+                    reply.from
+                ) {
+
+                    targetUser =
+                        reply.from;
+                }
+            }
+
+            // ========================================
+            // USERNAME / ID LOOKUP
+            // ========================================
+
+            if (
+                !targetUser &&
+                input
+            ) {
+
+                // USER ID
+                if (
+                    /^[0-9]+$/.test(input)
+                ) {
+
+                    try {
+
+                        const chat =
+                            await ctx.telegram.getChat(
+                                input
+                            );
+
+                        targetUser =
+                            chat;
+
+                    } catch {}
+                }
+
+                // USERNAME
+                else if (
+                    input.startsWith("@")
+                ) {
+
+                    try {
+
+                        const chat =
+                            await ctx.telegram.getChat(
+                                input
+                            );
+
+                        targetUser =
+                            chat;
+
+                    } catch {}
+                }
+            }
+
+            // ========================================
+            // INVALID TARGET
+            // ========================================
+
+            if (
+                !targetUser
+            ) {
+
+                return ctx.reply(
+`❖ INVALID TARGET
+
+\`\`\`ruby
+Usage:
+/cektele <userid>
+/cektele @username
+/reply forwarded user
+
+Example:
+/cektele 598xxxxxx
+/cektele @username
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+                );
+            }
+
+            // ========================================
+            // DATA EXTRACTION
+            // ========================================
+
+            const userId =
+                targetUser.id ||
+                "Unknown";
+
+            const firstName =
+                targetUser.first_name ||
+                "Hidden";
+
+            const lastName =
+                targetUser.last_name ||
+                "-";
+
+            const fullName =
+                `${firstName} ${lastName}`
+                .trim();
+
+            const username =
+                targetUser.username
+                ? `@${targetUser.username}`
+                : "Unavailable";
+
+            const isBot =
+                targetUser.is_bot
+                ? "Yes"
+                : "No";
+
+            const isPremium =
+                targetUser.is_premium
+                ? "Yes"
+                : "No";
+
+            const language =
+                targetUser.language_code ||
+                "Unknown";
+
+            const dcId =
+                targetUser.dc_id ||
+                "Unknown";
+
+            const scam =
+                targetUser.is_scam
+                ? "Detected"
+                : "Clean";
+
+            const fake =
+                targetUser.is_fake
+                ? "Detected"
+                : "Clean";
+
+            const verified =
+                targetUser.is_verified
+                ? "Verified"
+                : "No";
+
+            // ========================================
+            // PROFILE PHOTO
+            // ========================================
+
+            let photo =
+                null;
+
+            try {
+
+                const photos =
+                    await ctx.telegram.getUserProfilePhotos(
+                        userId,
+                        0,
+                        1
+                    );
+
+                if (
+                    photos.total_count > 0
+                ) {
+
+                    const fileId =
+                        photos.photos[0][0]
+                        .file_id;
+
+                    photo =
+                        await ctx.telegram.getFileLink(
+                            fileId
+                        );
+                }
+
+            } catch {}
+
+            // ========================================
+            // ACCOUNT TYPE
+            // ========================================
+
+            let accountType =
+                "User";
+
+            if (
+                targetUser.type
+            ) {
+
+                accountType =
+                    targetUser.type;
+            }
+
+            // ========================================
+            // OUTPUT
+            // ========================================
+
+            const caption =
+`\`\`\`ruby
+V O G U E • T E L E G R A M
+──────────────────────────
+
+TELEGRAM FORENSIC REPORT
+
+User ID      : ${userId}
+Username     : ${username}
+Display Name : ${fullName}
+
+Account Type : ${accountType}
+Bot Account  : ${isBot}
+Premium User : ${isPremium}
+Verified     : ${verified}
+
+Language     : ${language}
+Data Center  : ${dcId}
+
+Scam Status  : ${scam}
+Fake Status  : ${fake}
+
+──────────────────────────
+Engine       : Vogue Intelligence
+Status       : Live Detection
+\`\`\``;
+
+            // ========================================
+            // SEND RESULT
+            // ========================================
+
+            if (photo) {
+
+                return ctx.replyWithPhoto(
+                    photo.href,
+                    {
+                        caption,
+                        parse_mode:
+                            "Markdown"
+                    }
+                );
+            }
+
+            return ctx.reply(
+                caption,
+                {
+                    parse_mode:
+                        "Markdown"
+                }
+            );
+
+        } catch (err) {
+
+            return ctx.reply(
+`\`\`\`ruby
+TELEGRAM FORENSIC FAILURE
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
+    }
+);
+
+bot.command("forensic", checkWhatsAppConnection, async (ctx) => {
 
         try {
 
@@ -2871,8 +3153,7 @@ ${err.message}
 }
             );
         }
-    }
-);
+    });
 
 bot.command("sticker", async (ctx) => {
     
