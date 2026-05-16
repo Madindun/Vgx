@@ -1,3 +1,137 @@
+//     _____ _   _  _____ _____ ___   _      _      
+//    |_   _| \ | |/  ___|_   _/ _ \ | |    | |     
+//      | | |  \| |\ `--.  | |/ /_\ \| |    | |     
+//      | | | . ` | `--. \ | ||  _  || |    | |     
+//     _| |_| |\  |/\__/ / | || | | || |____| |____ 
+//     \___/\_| \_/\____/  \_/\_| |_/\_____/\_____/ 
+//                                                  
+//                                                  
+//    ______  ___  _____  _   __  ___  _____  _____ 
+//    | ___ \/ _ \/  __ \| | / / / _ \|  __ \|  ___|
+//    | |_/ / /_\ \ /  \/| |/ / / /_\ \ |  \/| |__  
+//    |  __/|  _  | |    |    \ |  _  | | __ |  __| 
+//    | |   | | | | \__/\| |\  \| | | | |_\ \| |___ 
+//    \_|   \_| |_/\____/\_| \_/\_| |_/\____/\____/ 
+//                                                  
+//                                                  
+
+const fs = require("fs");
+const { execSync } = require("child_process");
+
+const defaultPackage = {
+    name: "Vogue Crasher",
+    version: "1.0",
+    main: "Vogue.js",
+    scripts: {
+        start: "node Vogue.js"
+    },
+    dependencies: {
+        "@bellachu/baileys": "^2.1.9",
+        "axios": "^1.5.0",
+        "chalk": "^4.1.2",
+        "moment": "^2.29.1",
+        "@octokit/rest": "latest",
+        "moment-timezone": "latest",
+        "pino": "^9.5.0",
+        "readline-sync": "^1.4.10",
+        "telegraf": "^4.16.3"
+    }
+};
+
+if (!fs.existsSync("./package.json")) {
+    
+    console.log(`
+[VOGUE] package.json not found
+[VOGUE] Creating package.json...
+`);
+    
+    fs.writeFileSync(
+        "./package.json",
+        JSON.stringify(
+            defaultPackage,
+            null,
+            4
+        )
+    );
+    
+    console.log(`
+[VOGUE] package.json successfully created
+`);
+}
+
+const packageData = JSON.parse(
+    fs.readFileSync(
+        "./package.json",
+        "utf8"
+    )
+);
+
+const dependencies = {
+    ...packageData.dependencies
+};
+
+function autoInstallPackages() {
+    
+    console.log(`
+[VOGUE] Checking dependencies...
+`);
+    
+    for (const pkg of Object.keys(dependencies)) {
+        
+        try {
+            
+            require(pkg);
+            
+            console.log(
+                `[✓] ${pkg} installed`
+            );
+            
+        } catch {
+            
+            console.log(
+                `[!] Missing package: ${pkg}`
+            );
+            
+            console.log(
+                `[VOGUE] Installing ${pkg}...`
+            );
+            
+            try {
+                
+                execSync(
+                    `npm install ${pkg}`,
+                    {
+                        stdio: "inherit"
+                    }
+                );
+                
+                console.log(
+                    `[✓] ${pkg} installed successfully`
+                );
+                
+            } catch (err) {
+                
+                console.log(
+                    `[X] Failed installing ${pkg}`
+                );
+                
+                console.log(
+                    err.message
+                );
+                
+                process.exit(1);
+            }
+        }
+    }
+    
+    console.log(`
+[VOGUE] All dependencies ready
+`);
+}
+
+autoInstallPackages();
+
+
 //     _____ _____ _   _ ______ _____ _____ 
 //    /  __ \  _  | \ | ||  ___|_   _|  __ \
 //    | /  \/ | | |  \| || |_    | | | |  \/
@@ -28,12 +162,10 @@ const { spawn } = require('child_process')
 const { pipeline } = require('stream/promises');
 const { createWriteStream } = require('fs');
 const FormData = require("form-data");
-const fs = require('fs');
 const path = require('path');
 const jid = "0@s.whatsapp.net";
 const vm = require('vm')
 const os = require('os')
-const waapi =require('@api/waapi');
 const {
     default: makeWASocket,
     useMultiFileAuthState,
@@ -391,7 +523,7 @@ const startSesi = async () => {
                 );
                 
                 console.log(
-                    "[VOGUE] Heartbeat Ping"
+                    "[VOGUE CRASHER] Heartbeat Ping"
                 );
             }
             
@@ -496,7 +628,7 @@ The sender session has been successfully initialized and is ready for use.
                         sock.sendPresenceUpdate("available");
                         
                         console.log(
-                            "[VOGUE] Presence KeepAlive"
+                            "[VOGUE CRASHER] Presence KeepAlive"
                         );
                     }
                     
@@ -600,7 +732,7 @@ process.on(
         if (!shouldRestart) return;
         
         console.log(
-            "[VOGUE] Restart Triggered"
+            "[VOGUE CRASHER] Restart Triggered"
         );
         
         try {
@@ -636,7 +768,7 @@ process.on(
         if (!shouldRestart) return;
         
         console.log(
-            "[VOGUE] Restart Triggered"
+            "[VOGUE CRASHER] Restart Triggered"
         );
         
         try {
@@ -4290,7 +4422,7 @@ The system was unable to execute the requested module.`
             );
 
             console.log(
-                `[VOGUE] ${error.message}`
+                `[VOGUE CRASHER] ${error.message}`
             );
 
             await restartBot(
