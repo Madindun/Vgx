@@ -338,7 +338,7 @@ const startSesi = async () => {
 
 » Information:
   Developer: Prince
-  Version: 1.1 Stable
+  Version: 1.2 Stable
   Status: Bot Connected
   `))
     
@@ -481,7 +481,7 @@ The sender session has been successfully initialized and is ready for use.
 ▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
 » Information:
   Developer: Prince
-  Version: 1.1 Stable
+  Version: 1.2 Stable
   Status: Sender Connected
   `))
             pingInterval = setInterval(() => {
@@ -1436,7 +1436,7 @@ System Information
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.1 Stable
+Version     : 1.2 Stable
 Prefix      : /
 Framework   : Javascript
 
@@ -1477,7 +1477,7 @@ System Information
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.1 Stable
+Version     : 1.2 Stable
 Prefix      : /
 
 Description
@@ -1643,7 +1643,7 @@ V O G U E  •  C R A S H E R
 ──────────────────────────
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.1 Stable
+Version     : 1.2 Stable
 Prefix      : /
 ──────────────────────────
 
@@ -1717,7 +1717,7 @@ V O G U E • C R A S H E R
 ────────────────────────
 User   : ${ctx.from.first_name}
 Dev    : @PrinceXVogue
-Ver    : 1.1 Stable
+Ver    : 1.2 Stable
 Prefix : /
 ────────────────────────
 
@@ -1765,7 +1765,7 @@ ACKNOWLEDGEMENT PANEL
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.1 Stable
+Version     : 1.2 Stable
 Prefix      : /
 
 ──────────────────────────
@@ -1871,7 +1871,7 @@ Trash Matrix WhatsApp engine.
 Session Information
 
 Developer     : @PrinceXVogue
-Version       : 1.1 Stable
+Version       : 1.2 Stable
 Prefix        : /
 
 ────────────────────────────
@@ -1922,7 +1922,7 @@ authenticated and is now operational.
 System Information
 
 Developer     : @PrinceXVogue
-Version       : 1.1 Stable
+Version       : 1.2 Stable
 Prefix        : /
 
 ──────────────────────────────
@@ -2443,10 +2443,6 @@ bot.command("cektele", async (ctx) => {
             let targetUser =
                 null;
 
-            // ========================================
-            // REPLY FORWARDED MESSAGE
-            // ========================================
-
             if (
                 ctx.message.reply_to_message
             ) {
@@ -2469,10 +2465,6 @@ bot.command("cektele", async (ctx) => {
                         reply.from;
                 }
             }
-
-            // ========================================
-            // USERNAME / ID LOOKUP
-            // ========================================
 
             if (
                 !targetUser &&
@@ -2516,10 +2508,6 @@ bot.command("cektele", async (ctx) => {
                 }
             }
 
-            // ========================================
-            // INVALID TARGET
-            // ========================================
-
             if (
                 !targetUser
             ) {
@@ -2542,10 +2530,6 @@ Example:
 }
                 );
             }
-
-            // ========================================
-            // DATA EXTRACTION
-            // ========================================
 
             const userId =
                 targetUser.id ||
@@ -2601,10 +2585,6 @@ Example:
                 ? "Verified"
                 : "No";
 
-            // ========================================
-            // PROFILE PHOTO
-            // ========================================
-
             let photo =
                 null;
 
@@ -2633,10 +2613,6 @@ Example:
 
             } catch {}
 
-            // ========================================
-            // ACCOUNT TYPE
-            // ========================================
-
             let accountType =
                 "User";
 
@@ -2648,16 +2624,12 @@ Example:
                     targetUser.type;
             }
 
-            // ========================================
-            // OUTPUT
-            // ========================================
-
             const caption =
 `\`\`\`ruby
-V O G U E • T E L E G R A M
+V O G U E • C R A S H E R
 ──────────────────────────
 
-TELEGRAM FORENSIC REPORT
+F O R E N S I C • R E P O R T
 
 User ID      : ${userId}
 Username     : ${username}
@@ -2675,13 +2647,9 @@ Scam Status  : ${scam}
 Fake Status  : ${fake}
 
 ──────────────────────────
-Engine       : Vogue Intelligence
+Engine       : Vogue Forensic
 Status       : Live Detection
 \`\`\``;
-
-            // ========================================
-            // SEND RESULT
-            // ========================================
 
             if (photo) {
 
@@ -3757,7 +3725,7 @@ bot.command("info", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.1 Stable
+  1.2 Stable
 
 › Developer
   @PrinceXVogue
@@ -3947,7 +3915,7 @@ bot.on("callback_query", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.1 Stable
+  1.2 Stable
 
 › Developer
   @PrinceXVogue
