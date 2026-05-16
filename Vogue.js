@@ -140,7 +140,7 @@ const cooldown = new Map();
 let globalCooldown = 0;
 let spamQueue = [];
 let queueRunning = false;
-const queueFile = "./Database/spamQueue.json";
+const queueFile = "./database/spamQueue.json";
 const LOG_QUEUE_CHANNEL_ID = -1003824559958;
 
 const loadClaimed = () => {
