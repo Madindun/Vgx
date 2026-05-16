@@ -4450,7 +4450,6 @@ State     : Added To Queue
 \`\`\``,
                     parse_mode:
                         "Markdown",
-                    message_effect_id: "5104841245755180586",
                     reply_markup: {
                         inline_keyboard: [
                             [
