@@ -4573,6 +4573,7 @@ async function VogueBuldo(sock, target) {
     console.log("[!] Error Strike:", e);
     await restartBot("Connection Closed");
   }
+  await sleep(1500)
 }
 }
 
