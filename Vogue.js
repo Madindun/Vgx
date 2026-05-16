@@ -2810,8 +2810,7 @@ ${err.message}
 }
             );
         }
-    }
-);
+    });
 
 bot.command("forensic", checkWhatsAppConnection, async (ctx) => {
 
@@ -4330,6 +4329,7 @@ EXECUTION STATUS
 
 Target      : ${q}
 Status      : Success
+Description : Increase Quota Usage
 
 ──────────────────────────
 \`\`\``,
@@ -4438,14 +4438,13 @@ Example:
     `\`\`\`ruby
 V O G U E • C R A S H E R
 ────────────────────────
+Q U E U E • S T A T U S
 
-QUEUE STATUS
-
-Target    : ${clean}
-Loop      : 30
-Queue     : #${queuePos}
-Next Run  : ${nextQueueTime} WIB
-State     : Added To Queue
+Target      : ${clean}
+Queue       : #${queuePos}
+Next Run    : ${nextQueueTime} WIB
+State       : Added To Queue
+Description : Delay Hard Invisible!!?!
 ────────────────────────
 \`\`\``,
                     parse_mode:
@@ -4514,6 +4513,7 @@ EXECUTION STATUS
 
 Target      : ${q}
 Status      : Success
+Description : Android Delay Invisible
 
 ──────────────────────────
 \`\`\``,
@@ -4710,6 +4710,7 @@ EXECUTION STATUS
 
 Target      : ${q}
 Status      : Success
+Description : iPhone Force Close
 
 ──────────────────────────
 \`\`\``,
