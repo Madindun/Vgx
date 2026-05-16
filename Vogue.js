@@ -1722,6 +1722,7 @@ Prefix : /
 
 A N D R O I D
 › /spamandro    → Hard Delay Invisible
+› /hardspam     → Very Hard Delay Invisible
 › /drainet      → Increase Quota Usage
 
 
