@@ -2993,6 +2993,9 @@ Engine      : Vogue Forensic+
 
         let accountAge =
             "Unknown";
+        
+        let accountYear =
+            null;
 
         let riskLevel =
             "Low";
@@ -3115,6 +3118,33 @@ Engine      : Vogue Forensic+
             }
 
         } catch {}
+        
+        try {
+
+            if (check?.[0]?.jid) {
+        
+                const numeric =
+                    check[0].jid.split("@")[0];
+        
+        
+                if (numeric.startsWith("62")) {
+                    accountYear =
+                        ">= 2016 - 2026 (ID Region Pattern)";
+                }
+        
+                if (numeric.length >= 13) {
+                    accountYear =
+                        "Modern Account (2020+ Pattern)";
+                }
+        
+                if (numeric.length <= 11) {
+        
+                    accountYear =
+                        "Old Account (Possible 2015-2018)";
+                }
+            }
+        
+        } catch {}
 
         try {
 
@@ -3228,8 +3258,8 @@ Display       : ${displayName}
 Username      : ${username}
 
 A C C O U N T
-Category      : ${business}
-Business Type : ${businessCategory}
+Category       : ${business}
+Business Type  : ${businessCategory}
 Verified       : ${verified}
 Profile        : ${profile}
 Privacy        : ${privacy}
@@ -3245,7 +3275,6 @@ Last Update   : ${lastUpdate}
 A N A L Y T I C S
 Risk Level    : ${riskLevel}
 Profile Hash  : ${profileHash}
-Account Age   : ${accountAge}
 
 ════════════════════════════
 Engine        : Vogue Forensic+
