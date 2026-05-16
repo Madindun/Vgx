@@ -2818,16 +2818,11 @@ FORENSIC ANALYZER
 
 Target      : ${clean}
 Account     : Registered
-Display     : ${displayName}
-Username    : ${username}
-
 Category    : ${business}
 Profile     : ${profile}
 Privacy     : ${privacy}
 Device      : ${device}
-
 Biography   : ${about}
-Last Update : ${lastUpdate}
 
 ────────────────────────
 \`\`\``;
