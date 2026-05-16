@@ -2812,19 +2812,33 @@ Engine      : Vogue Forensic
             const caption =
     `\`\`\`ruby
 V O G U E • C R A S H E R
-────────────────────────
+════════════════════════
 
-FORENSIC ANALYZER
+WHATSAPP INTELLIGENCE REPORT
 
-Target      : ${clean}
+TARGET INFORMATION
+
+Number      : ${clean}
 Account     : Registered
+Display     : ${displayName}
+Username    : ${username}
+
+ACCOUNT ANALYSIS
+
 Category    : ${business}
 Profile     : ${profile}
 Privacy     : ${privacy}
 Device      : ${device}
-Biography   : ${about}
 
-────────────────────────
+IDENTITY METADATA
+
+Biography   : ${about}
+Updated     : ${lastUpdate}
+
+════════════════════════
+Engine      : Vogue Forensic Engine
+Status      : Active
+════════════════════════
 \`\`\``;
 
             if (ppUrl) {
