@@ -5050,7 +5050,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('spamandro3', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
