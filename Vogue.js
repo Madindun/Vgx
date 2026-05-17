@@ -4427,7 +4427,6 @@ ${bad}`
                 path,
                 chalk,
                 proto,
-                jidDecode,
                 generateWAMessage,
                 generateWAMessageFromContent,
                 prepareWAMessageMedia,
