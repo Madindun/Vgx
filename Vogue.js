@@ -4501,7 +4501,7 @@ Status    : Running
 
                 try {
 
-                    await runner(...values);
+                    await runner(...Object.values(context));
 
                     console.log(
 `[TESTFUNC ${instanceId}] Loop ${i + 1}/${loop}`
