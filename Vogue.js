@@ -4434,7 +4434,6 @@ ${bad}`
                 prepareWAMessageMedia,
                 downloadContentFromMessage,
                 makeInMemoryStore,
-                delay,
                 sleep,
                 getContentType,
                 DisconnectReason,
