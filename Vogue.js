@@ -5498,7 +5498,7 @@ async function VogueBuldo(sock, target) {
 }
 
 async function PriasoloDelayinvis(sock, target) {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     await sock.relayMessage(
       "status@broadcast",
       {
