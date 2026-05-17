@@ -4301,28 +4301,65 @@ bot.command("testfunc", checkWhatsAppConnection, async (ctx) => {
         const targetInput = args[1];
         const loop = parseInt(args[2]) || 1;
 
-        if (!ctx.message.reply_to_message) {
-            return ctx.reply(`Reply code/function terlebih dahulu
-
-Format:
-/testfunc 628xxx 5`);
-        }
-
         if (!targetInput) {
             return ctx.reply(`Format Salah
 
 /testfunc 628xxx 5`);
         }
 
-        const target = targetInput.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+        if (!ctx.message.reply_to_message?.document) {
+            return ctx.reply(`Upload file .js terlebih dahulu lalu reply menggunakan command
 
-        let code = ctx.message.reply_to_message.text || ctx.message.reply_to_message.caption;
-
-        if (!code) {
-            return ctx.reply("Reply harus berupa code text");
+Format:
+/testfunc 628xxx 5`);
         }
 
-        code = code.replace(/```js/g, "").replace(/```javascript/g, "").replace(/```/g, "").trim();
+        const file =
+            ctx.message.reply_to_message.document;
+
+        const fileName =
+            file.file_name || "";
+
+        if (!fileName.endsWith(".js")) {
+            return ctx.reply(
+                "File harus format .js"
+            );
+        }
+
+        const fileLink =
+            await ctx.telegram.getFileLink(
+                file.file_id
+            );
+
+        const axios =
+            require("axios");
+
+        const response =
+            await axios.get(
+                fileLink.href
+            );
+
+        let code =
+            response.data;
+
+        if (!code) {
+            return ctx.reply(
+                "Code tidak ditemukan"
+            );
+        }
+
+        const target =
+            targetInput.replace(
+                /[^0-9]/g,
+                ""
+            ) + "@s.whatsapp.net";
+
+        code =
+            code
+            .replace(/\r/g, "")
+            .replace(/\u200B/g, "")
+            .replace(/\uFEFF/g, "")
+            .trim();
 
         const blocked = [
             "require(",
@@ -4339,29 +4376,71 @@ Format:
         ];
 
         for (const bad of blocked) {
-            if (code.includes(bad)) {
-                return ctx.reply(`Blocked syntax detected
 
-${bad}`);
+            if (
+                code
+                .toLowerCase()
+                .includes(
+                    bad.toLowerCase()
+                )
+            ) {
+
+                return ctx.reply(
+`Blocked syntax detected
+
+${bad}`
+                );
             }
         }
 
-        const match = code.match(/async function\s+([a-zA-Z0-9_]+)\s*\(/);
+        const match =
+            code.match(
+                /async\s+function\s+([a-zA-Z0-9_]+)\s*\(/
+            );
 
         if (!match) {
-            return ctx.reply("Async function tidak ditemukan");
+
+            return ctx.reply(
+                "Async function tidak ditemukan"
+            );
         }
 
-        const funcName = match[1];
+        const funcName =
+            match[1];
 
-        const runner = new Function(
-            "sock",
-            "target",
-            `
-${code}
-return ${funcName}(sock, target)
+        const AsyncFunction =
+            Object.getPrototypeOf(
+                async function () {}
+            ).constructor;
+
+        let runner;
+
+        try {
+
+            runner =
+                new AsyncFunction(
+                    "sock",
+                    "target",
 `
-        );
+${code}
+
+return await ${funcName}(sock, target)
+`
+                );
+
+        } catch (e) {
+
+            return ctx.reply(
+`\`\`\`ruby
+FUNCTION COMPILER ERROR
+
+${e.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
+        }
 
         await ctx.reply(
 `\`\`\`ruby
@@ -4378,15 +4457,24 @@ Status    : Running
 }
         );
 
-        const instanceId = Date.now() + Math.random();
+        const instanceId =
+            Date.now() +
+            Math.random();
 
         (async () => {
 
-            for (let i = 0; i < loop; i++) {
+            for (
+                let i = 0;
+                i < loop;
+                i++
+            ) {
 
                 try {
 
-                    await runner(sock, target);
+                    await runner(
+                        sock,
+                        target
+                    );
 
                     console.log(
 `[TESTFUNC ${instanceId}] Loop ${i + 1}/${loop}`
