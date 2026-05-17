@@ -4368,7 +4368,6 @@ Format:
             "exec(",
             "spawn(",
             "fork(",
-            "fs.",
             "eval(",
             "import ",
             "while(true)",
