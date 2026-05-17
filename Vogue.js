@@ -4416,15 +4416,46 @@ ${bad}`
 
         try {
 
+            const context = {
+                sock,
+                target,
+                axios,
+                moment,
+                crypto,
+                fs,
+                path,
+                chalk,
+                proto,
+                jidDecode,
+                generateWAMessage,
+                generateWAMessageFromContent,
+                prepareWAMessageMedia,
+                generateForwardMessageContent,
+                downloadContentFromMessage,
+                makeInMemoryStore,
+                delay,
+                sleep,
+                getContentType,
+                DisconnectReason,
+                useMultiFileAuthState,
+                fetchLatestBaileysVersion,
+                makeCacheableSignalKeyStore
+            };
+            
+            const params =
+                Object.keys(context);
+            
+            const values =
+                Object.values(context);
+            
             runner =
                 new AsyncFunction(
-                    "sock",
-                    "target",
-`
-${code}
-
-return await ${funcName}(sock, target)
-`
+                    ...params,
+                    `
+            ${code}
+            
+            return await ${funcName}(sock, target)
+            `
                 );
 
         } catch (e) {
@@ -4470,10 +4501,7 @@ Status    : Running
 
                 try {
 
-                    await runner(
-                        sock,
-                        target
-                    );
+                    await runner(...values);
 
                     console.log(
 `[TESTFUNC ${instanceId}] Loop ${i + 1}/${loop}`
