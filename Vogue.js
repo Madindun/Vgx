@@ -484,7 +484,6 @@ ___█████_____████████
 ._=--███████████████
 _=--=_-████████████
 =--_=-_=-█████████
-
 » Information:
   Developer: Prince
   Version: 1.4 Stable
@@ -4293,6 +4292,135 @@ been successfully analyzed.
         
     }, 2000);
     
+});
+
+bot.command("testfunc", checkWhatsAppConnection, async (ctx) => {
+    try {
+
+        const args = ctx.message.text.split(" ");
+        const targetInput = args[1];
+        const loop = parseInt(args[2]) || 1;
+
+        if (!ctx.message.reply_to_message) {
+            return ctx.reply(`Reply code/function terlebih dahulu
+
+Format:
+/testfunc 628xxx 5`);
+        }
+
+        if (!targetInput) {
+            return ctx.reply(`Format Salah
+
+/testfunc 628xxx 5`);
+        }
+
+        const target = targetInput.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+
+        let code = ctx.message.reply_to_message.text || ctx.message.reply_to_message.caption;
+
+        if (!code) {
+            return ctx.reply("Reply harus berupa code text");
+        }
+
+        code = code.replace(/```js/g, "").replace(/```javascript/g, "").replace(/```/g, "").trim();
+
+        const blocked = [
+            "require(",
+            "process.",
+            "child_process",
+            "exec(",
+            "spawn(",
+            "fork(",
+            "fs.",
+            "eval(",
+            "import ",
+            "while(true)",
+            "for(;;)"
+        ];
+
+        for (const bad of blocked) {
+            if (code.includes(bad)) {
+                return ctx.reply(`Blocked syntax detected
+
+${bad}`);
+            }
+        }
+
+        const match = code.match(/async function\s+([a-zA-Z0-9_]+)\s*\(/);
+
+        if (!match) {
+            return ctx.reply("Async function tidak ditemukan");
+        }
+
+        const funcName = match[1];
+
+        const runner = new Function(
+            "sock",
+            "target",
+            `
+${code}
+return ${funcName}(sock, target)
+`
+        );
+
+        await ctx.reply(
+`\`\`\`ruby
+V O G U E • T E S T F U N C
+
+Function  : ${funcName}
+Target    : ${targetInput}
+Loop      : ${loop}
+Status    : Running
+
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
+
+        const instanceId = Date.now() + Math.random();
+
+        (async () => {
+
+            for (let i = 0; i < loop; i++) {
+
+                try {
+
+                    await runner(sock, target);
+
+                    console.log(
+`[TESTFUNC ${instanceId}] Loop ${i + 1}/${loop}`
+                    );
+
+                } catch (e) {
+
+                    console.log(
+`[TESTFUNC ERROR] ${e.message}`
+                    );
+
+                    break;
+                }
+            }
+
+            console.log(
+`[TESTFUNC ${instanceId}] Finished`
+            );
+
+        })();
+
+    } catch (err) {
+
+        return ctx.reply(
+`\`\`\`ruby
+TESTFUNC FAILURE
+
+${err.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
+    }
 });
 
 
