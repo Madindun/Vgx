@@ -4532,6 +4532,8 @@ Status    : Running
                             context
                         )
                     );
+                    
+                    await sleep(1500)
 
                     console.log(
 `[TESTFUNC ${instanceId}] Loop ${i + 1}/${loop}`
