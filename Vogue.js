@@ -1252,7 +1252,7 @@ To avoid sender overload and ban risk.
                         [
                         {
                             text: "Developer",
-                            url: "https://t.me/ScriptKits",
+                            url: "https://t.me/PrinceXVogue",
                             style: "danger"
                         }]
                     ]
