@@ -5497,7 +5497,7 @@ async function VogueBuldo(sock, target) {
 }
 }
 
-async function PriaSoloBlank(target) {
+async function PriaSoloBlank(sock, target) {
   const ButtonsX = [];
 
   for (let i = 0; i < 10; i++) {
