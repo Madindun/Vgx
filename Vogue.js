@@ -177,6 +177,8 @@ const {
     fetchLatestBaileysVersion,
     generateWAMessageFromContent,
     DisconnectReason,
+    getContentType,
+    makeCacheableSignalKeyStore,
     BufferJSON,
 } = require('@bellachu/baileys');
 const pino = require('pino');
@@ -4430,7 +4432,6 @@ ${bad}`
                 generateWAMessage,
                 generateWAMessageFromContent,
                 prepareWAMessageMedia,
-                generateForwardMessageContent,
                 downloadContentFromMessage,
                 makeInMemoryStore,
                 delay,
