@@ -168,6 +168,7 @@ const vm = require('vm')
 const os = require('os')
 const {
     default: makeWASocket,
+    proto,
     useMultiFileAuthState,
     downloadContentFromMessage,
     generateWAMessageContent,
