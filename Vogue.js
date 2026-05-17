@@ -4298,23 +4298,37 @@ been successfully analyzed.
 });
 
 bot.command("testfunc", checkWhatsAppConnection, async (ctx) => {
+
     try {
 
-        const args = ctx.message.text.split(" ");
-        const targetInput = args[1];
-        const loop = parseInt(args[2]) || 1;
+        const args =
+            ctx.message.text.split(" ");
+
+        const targetInput =
+            args[1];
+
+        const loop =
+            parseInt(args[2]) || 1;
 
         if (!targetInput) {
-            return ctx.reply(`Format Salah
 
-/testfunc 628xxx 5`);
+            return ctx.reply(
+`Format Salah
+
+/testfunc 628xxx 5`
+            );
         }
 
-        if (!ctx.message.reply_to_message?.document) {
-            return ctx.reply(`Upload file .js terlebih dahulu lalu reply menggunakan command
+        if (
+            !ctx.message.reply_to_message?.document
+        ) {
+
+            return ctx.reply(
+`Upload file .js lalu reply menggunakan command
 
 Format:
-/testfunc 628xxx 5`);
+/testfunc 628xxx 5`
+            );
         }
 
         const file =
@@ -4323,7 +4337,10 @@ Format:
         const fileName =
             file.file_name || "";
 
-        if (!fileName.endsWith(".js")) {
+        if (
+            !fileName.endsWith(".js")
+        ) {
+
             return ctx.reply(
                 "File harus format .js"
             );
@@ -4334,9 +4351,6 @@ Format:
                 file.file_id
             );
 
-        const axios =
-            require("axios");
-
         const response =
             await axios.get(
                 fileLink.href
@@ -4346,39 +4360,11 @@ Format:
             response.data;
 
         if (!code) {
+
             return ctx.reply(
                 "Code tidak ditemukan"
             );
         }
-        
-        const context = {
-                sock,
-                target,
-                axios,
-                moment,
-                crypto,
-                fs,
-                path,
-                chalk,
-                proto,
-                generateWAMessage,
-                generateWAMessageFromContent,
-                prepareWAMessageMedia,
-                downloadContentFromMessage,
-                makeInMemoryStore,
-                sleep,
-                getContentType,
-                DisconnectReason,
-                useMultiFileAuthState,
-                fetchLatestBaileysVersion,
-                makeCacheableSignalKeyStore
-            };
-
-        const target =
-            targetInput.replace(
-                /[^0-9]/g,
-                ""
-            ) + "@s.whatsapp.net";
 
         code =
             code
@@ -4433,29 +4419,69 @@ ${bad}`
         const funcName =
             match[1];
 
+        const target =
+            targetInput.replace(
+                /[^0-9]/g,
+                ""
+            ) +
+            "@s.whatsapp.net";
+
+        const context = {
+
+            sock,
+            target,
+
+            axios,
+            moment,
+            crypto,
+            fs,
+            path,
+            chalk,
+            proto,
+            jid,
+            os,
+            vm,
+
+            generateWAMessage,
+            generateWAMessageFromContent,
+            prepareWAMessageMedia,
+            generateWAMessageContent,
+            downloadContentFromMessage,
+            makeInMemoryStore,
+            getContentType,
+            DisconnectReason,
+            useMultiFileAuthState,
+            fetchLatestBaileysVersion,
+            makeCacheableSignalKeyStore,
+
+            sleep,
+            bot,
+
+            Buffer,
+            BufferJSON,
+            EventEmitter
+        };
+
         const AsyncFunction =
             Object.getPrototypeOf(
-                async function () {}
+                async function() {}
             ).constructor;
 
         let runner;
 
         try {
-            
+
             const params =
                 Object.keys(context);
-            
-            const values =
-                Object.values(context);
-            
+
             runner =
                 new AsyncFunction(
                     ...params,
-                    `
-            ${code}
-            
-            return await ${funcName}(sock, target)
-            `
+`
+${code}
+
+return await ${funcName}(sock, target)
+`
                 );
 
         } catch (e) {
@@ -4501,7 +4527,11 @@ Status    : Running
 
                 try {
 
-                    await runner(...Object.values(context));
+                    await runner(
+                        ...Object.values(
+                            context
+                        )
+                    );
 
                     console.log(
 `[TESTFUNC ${instanceId}] Loop ${i + 1}/${loop}`
@@ -4510,7 +4540,7 @@ Status    : Running
                 } catch (e) {
 
                     console.log(
-`[TESTFUNC ERROR] ${e.message}`
+`[TESTFUNC ERROR] ${e.stack || e.message}`
                     );
 
                     break;
@@ -4529,7 +4559,7 @@ Status    : Running
 `\`\`\`ruby
 TESTFUNC FAILURE
 
-${err.message}
+${err.stack || err.message}
 \`\`\``,
 {
     parse_mode: "Markdown"
