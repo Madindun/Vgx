@@ -4350,6 +4350,29 @@ Format:
                 "Code tidak ditemukan"
             );
         }
+        
+        const context = {
+                sock,
+                target,
+                axios,
+                moment,
+                crypto,
+                fs,
+                path,
+                chalk,
+                proto,
+                generateWAMessage,
+                generateWAMessageFromContent,
+                prepareWAMessageMedia,
+                downloadContentFromMessage,
+                makeInMemoryStore,
+                sleep,
+                getContentType,
+                DisconnectReason,
+                useMultiFileAuthState,
+                fetchLatestBaileysVersion,
+                makeCacheableSignalKeyStore
+            };
 
         const target =
             targetInput.replace(
@@ -4418,29 +4441,6 @@ ${bad}`
         let runner;
 
         try {
-
-            const context = {
-                sock,
-                target,
-                axios,
-                moment,
-                crypto,
-                fs,
-                path,
-                chalk,
-                proto,
-                generateWAMessage,
-                generateWAMessageFromContent,
-                prepareWAMessageMedia,
-                downloadContentFromMessage,
-                makeInMemoryStore,
-                sleep,
-                getContentType,
-                DisconnectReason,
-                useMultiFileAuthState,
-                fetchLatestBaileysVersion,
-                makeCacheableSignalKeyStore
-            };
             
             const params =
                 Object.keys(context);
