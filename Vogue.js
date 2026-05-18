@@ -280,6 +280,43 @@ const TASK_DURATION = (30 * 3000) + (3 * 60 * 1000);
 const DATABASE_API = "https://db.quietxhub.my.id/api/validate";
 const API_KEY = "VGXDATABASE";
 const tokenCache =new Map();
+const userDB = "./users.json";
+let botPool = [];
+
+const loginAllBots = () => {
+    const db = JSON.parse(fs.readFileSync("./tokensw.json", "utf8"));
+    const tokens = db.tokens || [];
+
+    botPool = tokens.map((token) => {
+        const bot = new Telegraf(token);
+
+        bot.on("message", (ctx) => {
+            if (ctx.from?.id) {
+                saveUser(ctx.from.id);
+            }
+        });
+
+        return bot;
+    });
+
+    console.log(`[SYSTEM] ${botPool.length} bots loaded`);
+};
+
+const getUsers = () => {
+    try {
+        return JSON.parse(fs.readFileSync(userDB, "utf8"));
+    } catch {
+        return [];
+    }
+};
+
+const saveUser = (id) => {
+    const db = getUsers();
+    if (!db.includes(id)) {
+        db.push(id);
+        fs.writeFileSync(userDB, JSON.stringify(db, null, 2));
+    }
+};
 
 const loadClaimed = () => {
     try {
@@ -2560,6 +2597,67 @@ from this group.
 //     \____/\___/\_|  |_/\_|  |_/\_| |_/\_| \_/___/  
 //                                                    
 //
+
+bot.command("loginallbot", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    try {
+        loginAllBots();
+
+        return ctx.reply(
+`SYSTEM ONLINE
+
+Bots Loaded : ${botPool.length}
+Status      : Active`
+        );
+
+    } catch (e) {
+        return ctx.reply("Login failed");
+    }
+});
+
+bot.command("broad", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    const message = ctx.message.text.split(" ").slice(1).join(" ");
+
+    if (!message) {
+        return ctx.reply("/broad <message>");
+    }
+
+    const users = getUsers();
+
+    let success = 0;
+    let failed = 0;
+
+    for (const bot of botPool) {
+
+        for (const userId of users) {
+
+            try {
+                await bot.telegram.sendMessage(userId, message);
+                success++;
+            } catch {
+                failed++;
+            }
+        }
+    }
+
+    return ctx.reply(
+`Broadcast Done
+
+Users   : ${users.length}
+Bots    : ${botPool.length}
+Success : ${success}
+Failed  : ${failed}`
+    );
+});
 
 bot.command("cektele", async (ctx) => {
         try {
@@ -5976,142 +6074,6 @@ async function VogueHardInvis(sock, target) {
         messageId: msg.key.id
     });
 }
-
-bot.command("broad", async (ctx) => {
-
-    try {
-
-        if (ctx.from.id != ownerID) {
-
-            return ctx.reply(
-`Access Denied
-
-This command is restricted to the owner.`
-            );
-        }
-
-        const message =
-            ctx.message.text
-            .split(" ")
-            .slice(1)
-            .join(" ");
-
-        if (!message) {
-
-            return ctx.reply(
-`Invalid Format
-
-Usage:
-/broad <message>
-
-Example:
-/broad Hello from Vogue System`
-            );
-        }
-
-        const loading =
-            await ctx.reply(
-`
-
-Initializing token broadcast...`
-            );
-
-        const db =
-            JSON.parse(
-                fs.readFileSync(
-                    "./tokenwl.json",
-                    "utf8"
-                )
-            );
-
-        const tokens =
-            db.tokens || [];
-
-        if (!tokens.length) {
-
-            return ctx.reply(
-`Broadcast Failed
-
-No tokens found inside tokenwl.json`
-            );
-        }
-
-        let success = 0;
-        let failed = 0;
-
-        for (const token of tokens) {
-
-            try {
-
-                const client =
-                    new Telegraf(token);
-
-                await client.telegram.sendMessage(-1003193820111, 
-`\`\`\`KONTOL
-
-${message}
-
-\`\`\``,
-                    {
-                        parse_mode:
-                            "Markdown"
-                    }
-                );
-
-                success++;
-
-            } catch (err) {
-
-                failed++;
-
-                console.log(
-                    `[TOKEN ERROR] ${err.message}`
-                );
-            }
-        }
-
-        await ctx.telegram.editMessageText(
-            ctx.chat.id,
-            loading.message_id,
-            undefined,
-`\`\`\`ruby
-
-Broadcast Completed
-
-Success :
-${success}
-
-Failed :
-${failed}
-
-Total Tokens :
-${tokens.length}
-\`\`\``,
-            {
-                parse_mode:
-                    "Markdown"
-            }
-        );
-
-    } catch (e) {
-
-        console.log(
-            `[BROAD ERROR] ${e.message}`
-        );
-
-        return ctx.reply(
-`\`\`\`
-BROADCAST FAILURE
-
-${e.message}
-\`\`\``,
-{
-    parse_mode: "Markdown"
-}
-        );
-    }
-});
-
 
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
