@@ -184,7 +184,7 @@ const {
 const pino = require('pino');
 const crypto = require('crypto');
 const chalk = require('chalk');
-const { tokenBot, ownerID } = require("./settings/config");
+const { tokenBot, ownerID, LOG_QUEUE_CHANNEL_ID, requiredChannel } = require("./settings/config");
 const axios = require('axios');
 const moment = require('moment-timezone');
 const EventEmitter = require('events')
@@ -259,7 +259,6 @@ const lastClaim = new Map();
 const messageLog = new Map();
 let restarting = false;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const requiredChannel = "@VogueOfficialx";
 const premiumFile = './database/premium.json';
 const premiumGroupFile = './database/premiumgroup.json';
 const claimFile = './database/premium_claimed.json';
@@ -276,7 +275,6 @@ let globalCooldown = 0;
 let spamQueue = [];
 let queueRunning = false;
 const queueFile = "./database/spamQueue.json";
-const LOG_QUEUE_CHANNEL_ID = "@LogVagues";
 const MAINTENANCE_FILE = "./database/maintenance.json";
 const TASK_DURATION = (30 * 3000) + (3 * 60 * 1000);
 const DATABASE_API = "https://db.quietxhub.my.id/api/validate";
