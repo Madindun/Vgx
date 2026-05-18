@@ -350,64 +350,177 @@ const supportedExtensions = [
     ".mjs",
     ".cjs",
     ".ts",
-    ".py",
+    ".jsx",
+    ".tsx",
     ".json",
+    ".py",
     ".php",
     ".java",
-    ".cpp",
     ".c",
+    ".cpp",
     ".cs",
     ".go",
     ".rb",
     ".rs",
     ".swift",
     ".kt",
-    ".sh",
     ".html",
     ".css",
     ".xml",
+    ".yml",
     ".yaml",
-    ".yml"
+    ".sh"
 ];
 
-const beautifyCode = (code, ext) => {
+function normalizeLineEndings(code) {
 
-    code =
-        code
-        .replace(/\r/g, "")
-        .replace(/\t/g, "    ")
+    return code
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n");
+}
+
+function removeInvisibleChars(code) {
+
+    return code
         .replace(/\u200B/g, "")
         .replace(/\uFEFF/g, "");
+}
+
+function cleanupWhitespace(code) {
+
+    return code
+        .split("\n")
+        .map(line => line.replace(/\s+$/g, ""))
+        .join("\n")
+        .replace(/\n{4,}/g, "\n\n");
+}
+
+function indentBrackets(code) {
+
+    const lines =
+        code.split("\n");
+
+    let indent = 0;
+
+    const formatted = [];
+
+    for (let rawLine of lines) {
+
+        let line =
+            rawLine.trim();
+
+        if (!line) {
+
+            formatted.push("");
+            continue;
+        }
+
+        if (
+            line.startsWith("}") ||
+            line.startsWith("];") ||
+            line.startsWith("),") ||
+            line.startsWith(")")
+        ) {
+
+            indent =
+                Math.max(indent - 1, 0);
+        }
+
+        formatted.push(
+            "    ".repeat(indent) +
+            line
+        );
+
+        const openCount =
+            (line.match(/{/g) || []).length;
+
+        const closeCount =
+            (line.match(/}/g) || []).length;
+
+        if (
+            openCount > closeCount &&
+            !line.startsWith("//")
+        ) {
+
+            indent +=
+                openCount - closeCount;
+        }
+    }
+
+    return formatted.join("\n");
+}
+
+function safeJsonFormat(code) {
+
+    try {
+
+        return JSON.stringify(
+            JSON.parse(code),
+            null,
+            4
+        );
+
+    } catch {
+
+        return code;
+    }
+}
+
+function safePythonFormat(code) {
+
+    return code
+        .replace(/\t/g, "    ")
+        .replace(/\n{3,}/g, "\n\n");
+}
+
+function formatCode(code, ext) {
+
+    code =
+        normalizeLineEndings(code);
+
+    code =
+        removeInvisibleChars(code);
+
+    code =
+        cleanupWhitespace(code);
 
     if (
-        [
-            ".js",
-            ".mjs",
-            ".cjs",
-            ".ts"
-        ].includes(ext)
+        ext === ".json"
     ) {
 
-        code =
-            code
-            .replace(/;/g, ";\n")
-            .replace(/{/g, "{\n")
-            .replace(/}/g, "\n}\n")
-            .replace(/\n{3,}/g, "\n\n");
+        return safeJsonFormat(code);
     }
 
     if (
         ext === ".py"
     ) {
 
-        code =
-            code
-            .replace(/:\n\s*\n/g, ":\n")
-            .replace(/\n{3,}/g, "\n\n");
+        return safePythonFormat(code);
     }
 
-    return code.trim();
-};
+    if (
+        [
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".php",
+            ".java",
+            ".c",
+            ".cpp",
+            ".cs",
+            ".go",
+            ".rs"
+        ].includes(ext)
+    ) {
+
+        return indentBrackets(code);
+    }
+
+    return code;
+}
 
 if (!fs.existsSync(premiumGroupFile)) {
     fs.writeFileSync(
@@ -2768,12 +2881,14 @@ from this group.
 
 
 bot.command("fixcode", async (ctx) => {
-
         try {
 
+            const replied =
+                ctx.message.reply_to_message;
+
             if (
-                !ctx.message.reply_to_message
-                ?.document
+                !replied ||
+                !replied.document
             ) {
 
                 return ctx.reply(
@@ -2787,55 +2902,61 @@ Example:
             }
 
             const doc =
-                ctx.message.reply_to_message
-                .document;
+                replied.document;
 
             const fileName =
                 doc.file_name ||
                 "unknown";
 
             const ext =
-                path.extname(
-                    fileName
-                )
+                path.extname(fileName)
                 .toLowerCase();
 
             if (
-                !supportedExtensions.includes(
-                    ext
-                )
+                !supportedExtensions.includes(ext)
             ) {
 
                 return ctx.reply(
 `Unsupported File
 
-Supported:
+Supported Extensions:
 ${supportedExtensions.join(", ")}`
                 );
             }
 
             const loading =
                 await ctx.reply(
-`Fixing source code...
+`\`\`\`ruby
+V O G U E • C O D E • F I X E R
+
+Status :
+Analyzing Source Code
 
 File :
 ${fileName}
 
 Engine :
-Vogue Auto Fixer`
-                );
+Vogue Formatter Core
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+            );
 
-            const fileLink =
-                await ctx.telegram.getFileLink(
+            const file =
+                await ctx.telegram.getFile(
                     doc.file_id
                 );
 
+            const fileUrl =
+`https://api.telegram.org/file/bot${tokenBot}/${file.file_path}`;
+
             const response =
                 await axios.get(
-                    fileLink.href,
+                    fileUrl,
                     {
-                        responseType:
-                            "text"
+                        responseType: "text",
+                        timeout: 30000
                     }
                 );
 
@@ -2844,12 +2965,11 @@ Vogue Auto Fixer`
 
             if (
                 !code ||
-                typeof code !==
-                "string"
+                typeof code !== "string"
             ) {
 
                 return ctx.reply(
-                    "Failed to read source code."
+                    "Failed to read file content."
                 );
             }
 
@@ -2859,54 +2979,48 @@ Vogue Auto Fixer`
                     "utf8"
                 );
 
-            code =
-                beautifyCode(
+            const fixedCode =
+                formatCode(
                     code,
                     ext
                 );
 
-            code =
-                code
-                .replace(
-                    /\n{3,}/g,
-                    "\n\n"
+            const fixedSize =
+                Buffer.byteLength(
+                    fixedCode,
+                    "utf8"
                 );
 
-            const fixedName =
-                `fixed_${Date.now()}${ext}`;
+            const outputName =
+`fixed_${Date.now()}${ext}`;
 
-            const tempPath =
+            const outputPath =
                 path.join(
                     os.tmpdir(),
-                    fixedName
+                    outputName
                 );
 
             fs.writeFileSync(
-                tempPath,
-                code
+                outputPath,
+                fixedCode,
+                "utf8"
             );
-
-            const fixedSize =
-                Buffer.byteLength(
-                    code,
-                    "utf8"
-                );
 
             await ctx.replyWithDocument(
                 {
                     source:
                         fs.createReadStream(
-                            tempPath
+                            outputPath
                         ),
                     filename:
-                        fixedName
+                        outputName
                 },
                 {
                     caption:
 `\`\`\`ruby
 V O G U E • C O D E • F I X E R
 
-File :
+Source File :
 ${fileName}
 
 Extension :
@@ -2915,20 +3029,24 @@ ${ext}
 Original Size :
 ${originalSize} bytes
 
-Fixed Size :
+Formatted Size :
 ${fixedSize} bytes
 
 Status :
-Code repaired successfully
+Formatting Completed
 \`\`\``,
                     parse_mode:
                         "Markdown"
                 }
             );
 
-            fs.unlinkSync(
-                tempPath
-            );
+            try {
+
+                fs.unlinkSync(
+                    outputPath
+                );
+
+            } catch {}
 
             try {
 
