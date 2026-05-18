@@ -5580,7 +5580,7 @@ async function processSpamQueue() {
                         );
                         
                         await sleep(
-                            1000
+                            3000
                         );
                         
                     } catch (e) {
@@ -5634,7 +5634,7 @@ async function processSpamQueue() {
                         );
                         
                         await sleep(
-                            1000
+                            3000
                         );
                         
                     } catch (e) {
