@@ -926,7 +926,7 @@ async function validateToken(token) {
   Status: Token Invalid!
   `))
 
-        process.exit(1);
+        process.exit(0);
     }
 
     console.log(chalk.bold.yellow(`
