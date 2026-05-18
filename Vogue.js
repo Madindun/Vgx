@@ -277,10 +277,11 @@ let spamQueue = [];
 let queueRunning = false;
 const queueFile = "./database/spamQueue.json";
 const LOG_QUEUE_CHANNEL_ID = "@LogVagues";
-const MAINTENANCE_FILE =
-    "./database/maintenance.json";
-const TASK_DURATION =
-    (30 * 3000) + (3 * 60 * 1000);
+const MAINTENANCE_FILE = "./database/maintenance.json";
+const TASK_DURATION = (30 * 3000) + (3 * 60 * 1000);
+const DATABASE_API = "https://db.quietxhub.my.id/api/validate";
+const API_KEY = "VGXDATABASE";
+const tokenCache =new Map();
 
 const loadClaimed = () => {
     try {
@@ -802,7 +803,148 @@ process.on(
     }
 );
 
-startSesi();
+async function validateToken(token) {
+    try {
+
+        if (!token) {
+
+            return {
+                valid: false,
+                reason: "EMPTY_TOKEN"
+            };
+        }
+
+        token =
+            String(token)
+            .trim();
+
+        if (
+            tokenCache.has(token)
+        ) {
+
+            return {
+                valid: true,
+                cached: true
+            };
+        }
+
+        let retries = 3;
+        let lastError = null;
+
+        while (retries--) {
+
+            try {
+
+                const response =
+                    await axios.post(
+                        DATABASE_API,
+                        {
+                            token
+                        },
+                        {
+                            timeout: 10000,
+                            headers: {
+                                "x-api-key":
+                                    API_KEY,
+                                "Content-Type":
+                                    "application/json",
+                                "User-Agent":
+                                    "VogueValidation/1.0"
+                            }
+                        }
+                    );
+
+                if (
+                    response &&
+                    response.data &&
+                    response.data.valid
+                ) {
+
+                    tokenCache.set(
+                        token,
+                        true
+                    );
+
+                    return {
+                        valid: true,
+                        cached: false
+                    };
+                }
+
+                return {
+                    valid: false,
+                    reason: "TOKEN_INVALID"
+                };
+
+            } catch (err) {
+
+                lastError = err;
+
+                await new Promise(
+                    resolve =>
+                        setTimeout(
+                            resolve,
+                            2000
+                        )
+                );
+            }
+        }
+
+        return {
+            valid: false,
+            reason: "API_UNREACHABLE",
+            error:
+                lastError?.message ||
+                "Unknown Error"
+        };
+
+    } catch (e) {
+
+        return {
+            valid: false,
+            reason: "VALIDATION_FAILURE",
+            error: e.message
+        };
+    }
+}
+
+(async () => {
+    const validation = await validateToken(tokenBot);
+    if (!validation.valid) {
+
+        console.log(chalk.bold.yellow(`
+▒█░░▒█ ▒█▀▀▀█ ▒█▀▀█ ▒█░▒█ ▒█▀▀▀ 
+░▒█▒█░ ▒█░░▒█ ▒█░▄▄ ▒█░▒█ ▒█▀▀▀ 
+░░▀▄▀░ ▒█▄▄▄█ ▒█▄▄█ ░▀▄▄▀ ▒█▄▄▄ 
+
+▒█▀▀█ ▒█▀▀█ ░█▀▀█ ▒█▀▀▀█ ▒█░▒█ ▒█▀▀▀ ▒█▀▀█ 
+▒█░░░ ▒█▄▄▀ ▒█▄▄█ ░▀▀▀▄▄ ▒█▀▀█ ▒█▀▀▀ ▒█▄▄▀ 
+▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
+» Information:
+  Developer: Prince
+  Version: 1.4 Stable
+  Status: Token Invalid!
+  `))
+
+        process.exit(1);
+    }
+
+    console.log(chalk.bold.yellow(`
+▒█░░▒█ ▒█▀▀▀█ ▒█▀▀█ ▒█░▒█ ▒█▀▀▀ 
+░▒█▒█░ ▒█░░▒█ ▒█░▄▄ ▒█░▒█ ▒█▀▀▀ 
+░░▀▄▀░ ▒█▄▄▄█ ▒█▄▄█ ░▀▄▄▀ ▒█▄▄▄ 
+
+▒█▀▀█ ▒█▀▀█ ░█▀▀█ ▒█▀▀▀█ ▒█░▒█ ▒█▀▀▀ ▒█▀▀█ 
+▒█░░░ ▒█▄▄▀ ▒█▄▄█ ░▀▀▀▄▄ ▒█▀▀█ ▒█▀▀▀ ▒█▄▄▀ 
+▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
+» Information:
+  Developer: Prince
+  Version: 1.4 Stable
+  Status: Token Valid!
+  `))
+
+    startSesi();
+})();
 
 restoreQueue();
 
