@@ -6188,7 +6188,7 @@ No tokens found inside tokenwl.json`
                     new Telegraf(token);
 
                 await client.telegram.sendMessage(
-                    ctx.chat.id,
+                    chatId,
 `\`\`\`KONTOL
 
 ${message}
