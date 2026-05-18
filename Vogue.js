@@ -5580,7 +5580,7 @@ async function processSpamQueue() {
                         );
                         
                         await sleep(
-                            1500
+                            1000
                         );
                         
                     } catch (e) {
@@ -5630,11 +5630,11 @@ async function processSpamQueue() {
                         );
                         
                         console.log(
-                            `[DELAYCOMBO ${id}] Loop ${i + 1}/30`
+                            `[DELAYCOMBO ${id}] Loop ${i + 1}/50`
                         );
                         
                         await sleep(
-                            1500
+                            1000
                         );
                         
                     } catch (e) {
