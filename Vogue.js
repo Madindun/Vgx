@@ -294,6 +294,33 @@ const safeCall = async (fn, timeout = 10000) => {
     ]);
 };
 
+const runConcurrent = async (list, limit, handler) => {
+    let index = 0;
+    const results = [];
+
+    const workers = new Array(limit).fill(null).map(async () => {
+
+        while (index < list.length) {
+
+            const current = index++;
+
+            try {
+
+                results[current] =
+                    await handler(list[current], current);
+
+            } catch (e) {
+
+                results[current] = null;
+            }
+        }
+    });
+
+    await Promise.all(workers);
+
+    return results;
+};
+
 const loginAllBots = () => {
     const db = JSON.parse(fs.readFileSync("./tokensw.json", "utf8"));
     const tokens = db.tokens || [];
@@ -2763,61 +2790,63 @@ ${e.message}`
 
 bot.command("botlist", async (ctx) => {
     
-    if (ctx.from.id != ownerID) {
-        return ctx.reply("Access Denied");
-    }
+    if (ctx.from.id != ownerID) return;
     
     if (!botPool.length) {
         return ctx.reply("No bots loaded");
     }
     
-    let text = `BOT LIST\n\n`;
-    
-    for (let i = 0; i < botPool.length; i++) {
-        
-        try {
+    const results = await runConcurrent(
+        botPool,
+        10, // LIMIT CONCURRENCY (IMPORTANT)
+        async (b, i) => {
             
-            const me = await safeCall(
-                () => botPool[i].telegram.getMe(),
-                8000
-            );
-            
-            text += `${i + 1}. @${me.username} [OK]\n`;
-            
-        } catch (e) {
-            
-            text += `${i + 1}. DEAD / TIMEOUT\n`;
+            try {
+                
+                const me = await safeCall(
+                    () => b.telegram.getMe(),
+                    4000
+                );
+                
+                return `${i + 1}. @${me.username} [OK]`;
+                
+            } catch {
+                
+                return `${i + 1}. DEAD`;
+            }
         }
-    }
+    );
     
-    return ctx.reply(text);
+    return ctx.reply(results.join("\n"));
 });
 
 bot.command("bothealth", async (ctx) => {
     
-    if (ctx.from.id != ownerID) {
-        return ctx.reply("Access Denied");
-    }
+    if (ctx.from.id != ownerID) return;
     
     let alive = 0;
     let dead = 0;
     
-    for (const b of botPool) {
-        
-        try {
+    await runConcurrent(
+        botPool,
+        15,
+        async (b) => {
             
-            await safeCall(
-                () => b.telegram.getMe(),
-                8000
-            );
-            
-            alive++;
-            
-        } catch {
-            
-            dead++;
+            try {
+                
+                await safeCall(
+                    () => b.telegram.getMe(),
+                    3000
+                );
+                
+                alive++;
+                
+            } catch {
+                
+                dead++;
+            }
         }
-    }
+    );
     
     return ctx.reply(
         `BOT HEALTH
@@ -2830,42 +2859,44 @@ Total : ${botPool.length}`
 
 bot.command("botsummary", async (ctx) => {
     
-    if (ctx.from.id != ownerID) {
-        return ctx.reply("Access Denied");
-    }
+    if (ctx.from.id != ownerID) return;
     
     const users = getUsers();
     
     let alive = 0;
     let dead = 0;
     
-    for (const b of botPool) {
-        
-        try {
+    await runConcurrent(
+        botPool,
+        10,
+        async (b) => {
             
-            await safeCall(
-                () => b.telegram.getMe(),
-                8000
-            );
-            
-            alive++;
-            
-        } catch {
-            
-            dead++;
+            try {
+                
+                await safeCall(
+                    () => b.telegram.getMe(),
+                    3000
+                );
+                
+                alive++;
+                
+            } catch {
+                
+                dead++;
+            }
         }
-    }
+    );
     
     return ctx.reply(
         `SYSTEM SUMMARY
 
-Bots Total  : ${botPool.length}
-Alive       : ${alive}
-Dead        : ${dead}
+Bots Total : ${botPool.length}
+Alive      : ${alive}
+Dead       : ${dead}
 
-Users       : ${users.length}
+Users      : ${users.length}
 
-Status      : ${
+Status     : ${
 alive > 0 ? "STABLE" : "CRITICAL"
 }`
     );
