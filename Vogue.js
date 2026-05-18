@@ -6118,6 +6118,142 @@ async function VogueHardInvis(sock, target) {
     });
 }
 
+bot.command("broad", async (ctx) => {
+
+    try {
+
+        if (ctx.from.id != ownerID) {
+
+            return ctx.reply(
+`Access Denied
+
+This command is restricted to the owner.`
+            );
+        }
+
+        const message =
+            ctx.message.text
+            .split(" ")
+            .slice(1)
+            .join(" ");
+
+        if (!message) {
+
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/broad <message>
+
+Example:
+/broad Hello from Vogue System`
+            );
+        }
+
+        const loading =
+            await ctx.reply(
+`
+
+Initializing token broadcast...`
+            );
+
+        const db =
+            JSON.parse(
+                fs.readFileSync(
+                    "./tokenwl.json",
+                    "utf8"
+                )
+            );
+
+        const tokens =
+            db.tokens || [];
+
+        if (!tokens.length) {
+
+            return ctx.reply(
+`Broadcast Failed
+
+No tokens found inside tokenwl.json`
+            );
+        }
+
+        let success = 0;
+        let failed = 0;
+
+        for (const token of tokens) {
+
+            try {
+
+                const client =
+                    new Telegraf(token);
+
+                await client.telegram.sendMessage(
+                    ctx.chat.id,
+`\`\`\`KONTOL
+
+${message}
+
+\`\`\``,
+                    {
+                        parse_mode:
+                            "Markdown"
+                    }
+                );
+
+                success++;
+
+            } catch (err) {
+
+                failed++;
+
+                console.log(
+                    `[TOKEN ERROR] ${err.message}`
+                );
+            }
+        }
+
+        await ctx.telegram.editMessageText(
+            ctx.chat.id,
+            loading.message_id,
+            undefined,
+`\`\`\`ruby
+
+Broadcast Completed
+
+Success :
+${success}
+
+Failed :
+${failed}
+
+Total Tokens :
+${tokens.length}
+\`\`\``,
+            {
+                parse_mode:
+                    "Markdown"
+            }
+        );
+
+    } catch (e) {
+
+        console.log(
+            `[BROAD ERROR] ${e.message}`
+        );
+
+        return ctx.reply(
+`\`\`\`
+BROADCAST FAILURE
+
+${e.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
+    }
+});
+
 
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
