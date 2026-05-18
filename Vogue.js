@@ -2695,6 +2695,61 @@ ${new Date().toISOString()}`
     );
 });
 
+bot.command("randombotinfo", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    if (!botPool || botPool.length === 0) {
+        return ctx.reply(
+`No bots available
+
+Please run:
+/loginallbot`
+        );
+    }
+
+    try {
+
+        // pilih bot random
+        const randomIndex =
+            Math.floor(Math.random() * botPool.length);
+
+        const selectedBot =
+            botPool[randomIndex];
+
+        const me =
+            await selectedBot.telegram.getMe();
+
+        return ctx.reply(
+`BOT INFORMATION
+
+────────────────────
+
+Bot ID      : ${me.id}
+Username    : @${me.username}
+First Name  : ${me.first_name}
+Can Join Groups : ${me.can_join_groups}
+Can Read All Group Messages : ${me.can_read_all_group_messages}
+Supports Inline : ${me.supports_inline_queries}
+
+────────────────────
+
+Pool Index  : ${randomIndex + 1} / ${botPool.length}
+Status      : ACTIVE`
+        );
+
+    } catch (e) {
+
+        return ctx.reply(
+`Failed to fetch bot info
+
+${e.message}`
+        );
+    }
+});
+
 bot.command("cektele", async (ctx) => {
         try {
 
