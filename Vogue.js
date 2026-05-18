@@ -283,6 +283,22 @@ const tokenCache =new Map();
 const userDB = "./users.json";
 let botPool = new Map(); // ubah dari array → controlled registry
 
+const safeLaunch = async (bot, token, timeout = 15000) => {
+
+    return Promise.race([
+
+        bot.launch({ dropPendingUpdates: true }),
+
+        new Promise((_, reject) =>
+            setTimeout(
+                () => reject(new Error("LAUNCH_TIMEOUT")),
+                timeout
+            )
+        )
+
+    ]);
+};
+
 const safeCall = async (fn, timeout = 10000) => {
     return Promise.race([
         fn(),
@@ -348,42 +364,40 @@ const loginAllBots = async () => {
     
     const tokens = db.tokens || [];
     
-    // stop old bots first (VERY IMPORTANT)
-    for (const [token] of botPool) {
-        await stopBot(token);
+    // STOP OLD BOT FIRST
+    for (const [token, bot] of botPool) {
+        try {
+            await bot.stop?.();
+        } catch {}
     }
     
+    botPool.clear();
+    
     for (const token of tokens) {
-        
-        if (botPool.has(token)) continue;
         
         try {
             
             const bot = new Telegraf(token);
             
-            bot.catch((err) => {
-                console.log(`[BOT ERROR] ${err.message}`);
-            });
-            
             bot.on("message", (ctx) => {
                 if (ctx.from?.id) saveUser(ctx.from.id);
             });
             
-            await bot.launch({
-                dropPendingUpdates: true
-            });
+            console.log(`[LOGIN] Starting bot ${token.slice(0, 10)}...`);
+            
+            await safeLaunch(bot, token, 20000); // IMPORTANT
             
             botPool.set(token, bot);
             
-            console.log(`[BOT LOADED] ${token.slice(0, 10)}...`);
+            console.log(`[CONNECTED] ${token.slice(0, 10)} OK`);
             
         } catch (e) {
             
-            console.log(`[BOT FAILED] ${e.message}`);
+            console.log(`[FAILED BOT] ${token.slice(0, 10)} → ${e.message}`);
         }
     }
     
-    console.log(`[SYSTEM] ACTIVE BOTS: ${botPool.size}`);
+    console.log(`[SYSTEM] READY BOT COUNT: ${botPool.size}`);
 };
 
 const getUsers = () => {
@@ -2688,15 +2702,20 @@ bot.command("loginallbot", async (ctx) => {
         return ctx.reply("Access Denied");
     }
     
+    const loading = await ctx.reply("Starting bot login process...");
+    
     try {
         
         await loginAllBots();
         
-        return ctx.reply(
+        return ctx.telegram.editMessageText(
+            ctx.chat.id,
+            loading.message_id,
+            undefined,
             `SYSTEM ONLINE
 
 Bots Loaded : ${botPool.size}
-Status      : Stable Multi-Bot Engine`
+Status      : Stable Sequential Engine`
         );
         
     } catch (e) {
