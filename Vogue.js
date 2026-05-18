@@ -2750,6 +2750,132 @@ ${e.message}`
     }
 });
 
+bot.command("botlist", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    if (!botPool.length) {
+        return ctx.reply("No bots loaded");
+    }
+
+    try {
+
+        let text =
+`BOT LIST
+
+────────────────────\n`;
+
+        for (let i = 0; i < botPool.length; i++) {
+
+            try {
+
+                const me =
+                    await botPool[i].telegram.getMe();
+
+                text +=
+`${i + 1}. @${me.username} (${me.id}) [ACTIVE]\n`;
+
+            } catch {
+
+                text +=
+`${i + 1}. UNKNOWN BOT [ERROR]\n`;
+            }
+        }
+
+        return ctx.reply(text);
+
+    } catch (e) {
+        return ctx.reply(e.message);
+    }
+});
+
+bot.command("bothealth", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    if (!botPool.length) {
+        return ctx.reply("No bots loaded");
+    }
+
+    let alive = 0;
+    let dead = 0;
+
+    for (const botInstance of botPool) {
+
+        try {
+
+            await botInstance.telegram.getMe();
+            alive++;
+
+        } catch {
+            dead++;
+        }
+    }
+
+    return ctx.reply(
+`BOT HEALTH CHECK
+
+────────────────────
+
+Alive Bots : ${alive}
+Dead Bots  : ${dead}
+Total      : ${botPool.length}
+
+Status     : ${
+alive > 0 ? "STABLE" : "CRITICAL"
+}`
+    );
+});
+
+bot.command("botsummary", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    const users = getUsers();
+
+    let alive = 0;
+    let dead = 0;
+
+    for (const b of botPool) {
+        try {
+            await b.telegram.getMe();
+            alive++;
+        } catch {
+            dead++;
+        }
+    }
+
+    return ctx.reply(
+`BOT SYSTEM SUMMARY
+
+────────────────────
+
+Total Bots     : ${botPool.length}
+Alive Bots     : ${alive}
+Dead Bots      : ${dead}
+
+Total Users    : ${users.length}
+
+System Status  : ${
+alive === botPool.length
+? "FULL OPERATION"
+: "PARTIAL DEGRADED"
+}
+
+Broadcast Ready: ${
+alive > 0 && users.length > 0
+? "YES"
+: "NO"
+}`
+    );
+});
+
 bot.command("cektele", async (ctx) => {
         try {
 
