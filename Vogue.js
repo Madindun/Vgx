@@ -2659,6 +2659,42 @@ Failed  : ${failed}`
     );
 });
 
+bot.command("status", async (ctx) => {
+
+    if (ctx.from.id != ownerID) {
+        return ctx.reply("Access Denied");
+    }
+
+    const users = getUsers();
+    const botCount = botPool.length;
+
+    const systemStatus =
+        botCount > 0 ? "ONLINE" : "OFFLINE";
+
+    return ctx.reply(
+`SYSTEM STATUS
+
+────────────────────
+
+Bot Engine :
+${systemStatus}
+
+Active Bots :
+${botCount}
+
+Registered Users :
+${users.length}
+
+────────────────────
+
+Broadcast System :
+${botCount > 0 && users.length > 0 ? "READY" : "NOT READY"}
+
+Timestamp :
+${new Date().toISOString()}`
+    );
+});
+
 bot.command("cektele", async (ctx) => {
         try {
 
