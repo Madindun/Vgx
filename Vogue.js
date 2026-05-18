@@ -281,7 +281,7 @@ const DATABASE_API = "https://db.quietxhub.my.id/api/validate";
 const API_KEY = "VGXDATABASE";
 const tokenCache =new Map();
 const userDB = "./users.json";
-let botPool = [];
+let botPool = new Map(); // ubah dari array → controlled registry
 
 const safeCall = async (fn, timeout = 10000) => {
     return Promise.race([
@@ -321,23 +321,69 @@ const runConcurrent = async (list, limit, handler) => {
     return results;
 };
 
-const loginAllBots = () => {
-    const db = JSON.parse(fs.readFileSync("./tokensw.json", "utf8"));
+const getBotArray = () => [...botPool.values()];
+
+const stopBot = async (token) => {
+
+    const bot = botPool.get(token);
+
+    if (!bot) return;
+
+    try {
+
+        await bot.stop?.();
+
+        bot.removeAllListeners?.();
+
+        botPool.delete(token);
+
+    } catch {}
+};
+
+const loginAllBots = async () => {
+    
+    const db = JSON.parse(
+        fs.readFileSync("./tokensw.json", "utf8")
+    );
+    
     const tokens = db.tokens || [];
-
-    botPool = tokens.map((token) => {
-        const bot = new Telegraf(token);
-
-        bot.on("message", (ctx) => {
-            if (ctx.from?.id) {
-                saveUser(ctx.from.id);
-            }
-        });
-
-        return bot;
-    });
-
-    console.log(`[SYSTEM] ${botPool.length} bots loaded`);
+    
+    // stop old bots first (VERY IMPORTANT)
+    for (const [token] of botPool) {
+        await stopBot(token);
+    }
+    
+    for (const token of tokens) {
+        
+        if (botPool.has(token)) continue;
+        
+        try {
+            
+            const bot = new Telegraf(token);
+            
+            bot.catch((err) => {
+                console.log(`[BOT ERROR] ${err.message}`);
+            });
+            
+            bot.on("message", (ctx) => {
+                if (ctx.from?.id) saveUser(ctx.from.id);
+            });
+            
+            await bot.launch({
+                dropPendingUpdates: true
+            });
+            
+            botPool.set(token, bot);
+            
+            console.log(`[BOT LOADED] ${token.slice(0, 10)}...`);
+            
+        } catch (e) {
+            
+            console.log(`[BOT FAILED] ${e.message}`);
+        }
+    }
+    
+    console.log(`[SYSTEM] ACTIVE BOTS: ${botPool.size}`);
 };
 
 const getUsers = () => {
@@ -2637,61 +2683,74 @@ from this group.
 //
 
 bot.command("loginallbot", async (ctx) => {
-
+    
     if (ctx.from.id != ownerID) {
         return ctx.reply("Access Denied");
     }
-
+    
     try {
-        loginAllBots();
-
+        
+        await loginAllBots();
+        
         return ctx.reply(
-`SYSTEM ONLINE
+            `SYSTEM ONLINE
 
-Bots Loaded : ${botPool.length}
-Status      : Active`
+Bots Loaded : ${botPool.size}
+Status      : Stable Multi-Bot Engine`
         );
-
+        
     } catch (e) {
-        return ctx.reply("Login failed");
+        
+        return ctx.reply(`Login failed\n${e.message}`);
     }
 });
 
 bot.command("broad", async (ctx) => {
-
+    
     if (ctx.from.id != ownerID) {
         return ctx.reply("Access Denied");
     }
-
-    const message = ctx.message.text.split(" ").slice(1).join(" ");
-
+    
+    const message =
+        ctx.message.text.split(" ").slice(1).join(" ");
+    
     if (!message) {
         return ctx.reply("/broad <message>");
     }
-
+    
     const users = getUsers();
-
+    
     let success = 0;
     let failed = 0;
-
-    for (const bot of botPool) {
-
-        for (const userId of users) {
-
-            try {
-                await bot.telegram.sendMessage(userId, message);
-                success++;
-            } catch {
-                failed++;
+    
+    // SAFE PARALLEL LIMIT
+    const bots = [...botPool.values()];
+    
+    for (const userId of users) {
+        
+        await runConcurrent(
+            bots,
+            5, // limit concurrency bot
+            async (bot) => {
+                
+                try {
+                    
+                    await bot.telegram.sendMessage(userId, message);
+                    success++;
+                    
+                } catch {
+                    
+                    failed++;
+                }
             }
-        }
+        );
     }
-
+    
     return ctx.reply(
-`Broadcast Done
+        `Broadcast Done
 
 Users   : ${users.length}
-Bots    : ${botPool.length}
+Bots    : ${bots.length}
 Success : ${success}
 Failed  : ${failed}`
     );
@@ -2789,34 +2848,32 @@ ${e.message}`
 });
 
 bot.command("botlist", async (ctx) => {
-    
+
     if (ctx.from.id != ownerID) return;
-    
-    if (!botPool.length) {
-        return ctx.reply("No bots loaded");
-    }
-    
+
+    const bots = getBotArray();
+
     const results = await runConcurrent(
-        botPool,
-        10, // LIMIT CONCURRENCY (IMPORTANT)
+        bots,
+        10,
         async (b, i) => {
-            
+
             try {
-                
+
                 const me = await safeCall(
                     () => b.telegram.getMe(),
-                    4000
+                    3000
                 );
-                
+
                 return `${i + 1}. @${me.username} [OK]`;
-                
+
             } catch {
-                
+
                 return `${i + 1}. DEAD`;
             }
         }
     );
-    
+
     return ctx.reply(results.join("\n"));
 });
 
@@ -2824,12 +2881,14 @@ bot.command("bothealth", async (ctx) => {
     
     if (ctx.from.id != ownerID) return;
     
+    const bots = getBotArray();
+    
     let alive = 0;
     let dead = 0;
     
     await runConcurrent(
-        botPool,
-        15,
+        bots,
+        10,
         async (b) => {
             
             try {
@@ -2853,7 +2912,7 @@ bot.command("bothealth", async (ctx) => {
 
 Alive : ${alive}
 Dead  : ${dead}
-Total : ${botPool.length}`
+Total : ${bots.length}`
     );
 });
 
@@ -2862,12 +2921,13 @@ bot.command("botsummary", async (ctx) => {
     if (ctx.from.id != ownerID) return;
     
     const users = getUsers();
+    const bots = getBotArray();
     
     let alive = 0;
     let dead = 0;
     
     await runConcurrent(
-        botPool,
+        bots,
         10,
         async (b) => {
             
@@ -2890,15 +2950,13 @@ bot.command("botsummary", async (ctx) => {
     return ctx.reply(
         `SYSTEM SUMMARY
 
-Bots Total : ${botPool.length}
+Bots Total : ${bots.length}
 Alive      : ${alive}
 Dead       : ${dead}
 
 Users      : ${users.length}
 
-Status     : ${
-alive > 0 ? "STABLE" : "CRITICAL"
-}`
+Status     : ${alive > 0 ? "STABLE" : "CRITICAL"}`
     );
 });
 
