@@ -283,6 +283,17 @@ const tokenCache =new Map();
 const userDB = "./users.json";
 let botPool = [];
 
+const safeCall = async (fn, timeout = 10000) => {
+    return Promise.race([
+        fn(),
+        new Promise((_, reject) =>
+            setTimeout(() =>
+                reject(new Error("BOT_TIMEOUT")), timeout
+            )
+        )
+    ]);
+};
+
 const loginAllBots = () => {
     const db = JSON.parse(fs.readFileSync("./tokensw.json", "utf8"));
     const tokens = db.tokens || [];
@@ -2751,127 +2762,111 @@ ${e.message}`
 });
 
 bot.command("botlist", async (ctx) => {
-
+    
     if (ctx.from.id != ownerID) {
         return ctx.reply("Access Denied");
     }
-
+    
     if (!botPool.length) {
         return ctx.reply("No bots loaded");
     }
-
-    try {
-
-        let text =
-`BOT LIST
-
-────────────────────\n`;
-
-        for (let i = 0; i < botPool.length; i++) {
-
-            try {
-
-                const me =
-                    await botPool[i].telegram.getMe();
-
-                text +=
-`${i + 1}. @${me.username} (${me.id}) [ACTIVE]\n`;
-
-            } catch {
-
-                text +=
-`${i + 1}. UNKNOWN BOT [ERROR]\n`;
-            }
+    
+    let text = `BOT LIST\n\n`;
+    
+    for (let i = 0; i < botPool.length; i++) {
+        
+        try {
+            
+            const me = await safeCall(
+                () => botPool[i].telegram.getMe(),
+                8000
+            );
+            
+            text += `${i + 1}. @${me.username} [OK]\n`;
+            
+        } catch (e) {
+            
+            text += `${i + 1}. DEAD / TIMEOUT\n`;
         }
-
-        return ctx.reply(text);
-
-    } catch (e) {
-        return ctx.reply(e.message);
     }
+    
+    return ctx.reply(text);
 });
 
 bot.command("bothealth", async (ctx) => {
-
+    
     if (ctx.from.id != ownerID) {
         return ctx.reply("Access Denied");
     }
-
-    if (!botPool.length) {
-        return ctx.reply("No bots loaded");
-    }
-
+    
     let alive = 0;
     let dead = 0;
-
-    for (const botInstance of botPool) {
-
+    
+    for (const b of botPool) {
+        
         try {
-
-            await botInstance.telegram.getMe();
+            
+            await safeCall(
+                () => b.telegram.getMe(),
+                8000
+            );
+            
             alive++;
-
+            
         } catch {
+            
             dead++;
         }
     }
-
+    
     return ctx.reply(
-`BOT HEALTH CHECK
+        `BOT HEALTH
 
-────────────────────
-
-Alive Bots : ${alive}
-Dead Bots  : ${dead}
-Total      : ${botPool.length}
-
-Status     : ${
-alive > 0 ? "STABLE" : "CRITICAL"
-}`
+Alive : ${alive}
+Dead  : ${dead}
+Total : ${botPool.length}`
     );
 });
 
 bot.command("botsummary", async (ctx) => {
-
+    
     if (ctx.from.id != ownerID) {
         return ctx.reply("Access Denied");
     }
-
+    
     const users = getUsers();
-
+    
     let alive = 0;
     let dead = 0;
-
+    
     for (const b of botPool) {
+        
         try {
-            await b.telegram.getMe();
+            
+            await safeCall(
+                () => b.telegram.getMe(),
+                8000
+            );
+            
             alive++;
+            
         } catch {
+            
             dead++;
         }
     }
-
+    
     return ctx.reply(
-`BOT SYSTEM SUMMARY
+        `SYSTEM SUMMARY
 
-────────────────────
+Bots Total  : ${botPool.length}
+Alive       : ${alive}
+Dead        : ${dead}
 
-Total Bots     : ${botPool.length}
-Alive Bots     : ${alive}
-Dead Bots      : ${dead}
+Users       : ${users.length}
 
-Total Users    : ${users.length}
-
-System Status  : ${
-alive === botPool.length
-? "FULL OPERATION"
-: "PARTIAL DEGRADED"
-}
-
-Broadcast Ready: ${
-alive > 0 && users.length > 0
-? "YES"
-: "NO"
+Status      : ${
+alive > 0 ? "STABLE" : "CRITICAL"
 }`
     );
 });
