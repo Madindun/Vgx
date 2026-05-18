@@ -2927,7 +2927,7 @@ Status       : Live Detection
             if (photo) {
 
                 return ctx.replyWithPhoto(
-                    photo.href,
+                    fileId,
                     {
                         caption,
                         parse_mode:
