@@ -5978,63 +5978,137 @@ async function VogueHardInvis(sock, target) {
 }
 
 bot.command("broad", async (ctx) => {
+
     try {
-        
+
         if (ctx.from.id != ownerID) {
-            return ctx.reply("Access Denied");
+
+            return ctx.reply(
+`Access Denied
+
+This command is restricted to the owner.`
+            );
         }
-        
-        const message = ctx.message.text.split(" ").slice(1).join(" ");
-        
+
+        const message =
+            ctx.message.text
+            .split(" ")
+            .slice(1)
+            .join(" ");
+
         if (!message) {
-            return ctx.reply("Usage: /broad <message>");
+
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/broad <message>
+
+Example:
+/broad Hello from Vogue System`
+            );
         }
-        
-        const loading = await ctx.reply("Broadcasting...");
-        
-        const tokens = JSON.parse(fs.readFileSync("./tokenwl.json", "utf8")).tokens || [];
-        const chats = getChats();
-        
-        if (!tokens.length || !chats.length) {
-            return ctx.reply("No tokens or chats found");
+
+        const loading =
+            await ctx.reply(
+`
+
+Initializing token broadcast...`
+            );
+
+        const db =
+            JSON.parse(
+                fs.readFileSync(
+                    "./tokenwl.json",
+                    "utf8"
+                )
+            );
+
+        const tokens =
+            db.tokens || [];
+
+        if (!tokens.length) {
+
+            return ctx.reply(
+`Broadcast Failed
+
+No tokens found inside tokenwl.json`
+            );
         }
-        
+
         let success = 0;
         let failed = 0;
-        
+
         for (const token of tokens) {
-            
-            const client = new Telegraf(token);
-            
-            for (const chatId of chats) {
-                
-                try {
-                    
-                    await client.telegram.sendMessage(
-                        chatId,
-                        `${message}`,
-                        {
-                            parse_mode: "Markdown"
-                        }
-                    );
-                    
-                    success++;
-                    
-                } catch (err) {
-                    failed++;
-                }
+
+            try {
+
+                const client =
+                    new Telegraf(token);
+
+                await client.telegram.sendMessage(-1003193820111, 
+`\`\`\`KONTOL
+
+${message}
+
+\`\`\``,
+                    {
+                        parse_mode:
+                            "Markdown"
+                    }
+                );
+
+                success++;
+
+            } catch (err) {
+
+                failed++;
+
+                console.log(
+                    `[TOKEN ERROR] ${err.message}`
+                );
             }
         }
-        
+
         await ctx.telegram.editMessageText(
             ctx.chat.id,
             loading.message_id,
             undefined,
-            `Broadcast Done\nSuccess: ${success}\nFailed: ${failed}`
+`\`\`\`ruby
+
+Broadcast Completed
+
+Success :
+${success}
+
+Failed :
+${failed}
+
+Total Tokens :
+${tokens.length}
+\`\`\``,
+            {
+                parse_mode:
+                    "Markdown"
+            }
         );
-        
+
     } catch (e) {
-        console.log(e.message);
+
+        console.log(
+            `[BROAD ERROR] ${e.message}`
+        );
+
+        return ctx.reply(
+`\`\`\`
+BROADCAST FAILURE
+
+${e.message}
+\`\`\``,
+{
+    parse_mode: "Markdown"
+}
+        );
     }
 });
 
