@@ -180,7 +180,7 @@ const {
     getContentType,
     makeCacheableSignalKeyStore,
     BufferJSON,
-} = require('@bellachu/baileys');
+} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const crypto = require('crypto');
 const chalk = require('chalk');
