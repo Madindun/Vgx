@@ -26,7 +26,7 @@ const defaultPackage = {
         start: "node Vogue.js"
     },
     dependencies: {
-        "@kurobails/socket": "npm:zeppeliorg/wbails",
+        "@whiskeysockets/baileys": "npm:@zeppeliorg/wbails",
         "axios": "^1.5.0",
         "chalk": "^4.1.2",
         "moment": "^2.29.1",
@@ -180,7 +180,7 @@ const {
     getContentType,
     makeCacheableSignalKeyStore,
     BufferJSON,
-} = require('@kurobails/socket');
+} = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const crypto = require('crypto');
 const chalk = require('chalk');
