@@ -509,11 +509,7 @@ _=--=_-████████████
         printQRInTerminal: !usePairingCode,
         logger: pino({ level: "silent" }),
         auth: state,
-        browser: [
-            'Ubuntu',
-            'Chrome',
-            '22.04.4'
-        ]
+        browser: ["Mac OS", "Safari", "17.3"]
     };
     sock = makeWASocket(connectionOptions);
     
