@@ -487,7 +487,7 @@ _=--=_-████████████
 =--_=-_=-█████████
 » Information:
   Developer: Prince
-  Version: 1.4 Stable
+  Version: 1.5 Stable
   Status: Bot Connected
   `))
     
@@ -630,7 +630,7 @@ The sender session has been successfully initialized and is ready for use.
 ▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
 » Information:
   Developer: Prince
-  Version: 1.4 Stable
+  Version: 1.5 Stable
   Status: Sender Connected
   `))
             pingInterval = setInterval(() => {
@@ -1585,7 +1585,7 @@ System Information
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.4 Stable
+Version     : 1.5 Stable
 Prefix      : /
 Framework   : Javascript
 
@@ -1626,7 +1626,7 @@ System Information
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.4 Stable
+Version     : 1.5 Stable
 Prefix      : /
 
 Description
@@ -1786,7 +1786,7 @@ V O G U E  •  C R A S H E R
 ──────────────────────────
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.4 Stable
+Version     : 1.5 Stable
 Prefix      : /
 ──────────────────────────
 
@@ -1860,7 +1860,7 @@ V O G U E • C R A S H E R
 ────────────────────────
 User   : ${ctx.from.first_name}
 Dev    : @PrinceXVogue
-Ver    : 1.4 Stable
+Ver    : 1.5 Stable
 Prefix : /
 ────────────────────────
 
@@ -1910,7 +1910,7 @@ ACKNOWLEDGEMENT PANEL
 
 User        : ${ctx.from.first_name}
 Developer   : @PrinceXVogue
-Version     : 1.4 Stable
+Version     : 1.5 Stable
 Prefix      : /
 
 ──────────────────────────
@@ -2016,7 +2016,7 @@ Trash Matrix WhatsApp engine.
 Session Information
 
 Developer     : @PrinceXVogue
-Version       : 1.4 Stable
+Version       : 1.5 Stable
 Prefix        : /
 
 ────────────────────────────
@@ -2067,7 +2067,7 @@ authenticated and is now operational.
 System Information
 
 Developer     : @PrinceXVogue
-Version       : 1.4 Stable
+Version       : 1.5 Stable
 Prefix        : /
 
 ──────────────────────────────
@@ -3914,7 +3914,7 @@ bot.command("info", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.4 Stable
+  1.5 Stable
 
 › Developer
   @PrinceXVogue
@@ -4104,7 +4104,7 @@ bot.on("callback_query", async (ctx) => {
   Vogue Crasher
 
 › Version
-  1.4 Stable
+  1.5 Stable
 
 › Developer
   @PrinceXVogue
