@@ -251,7 +251,7 @@ const question = (query) => new Promise((resolve) => {
 });
 const thumbnailUrl = "https://files.catbox.moe/eyhahn.png";
 const bot = new Telegraf(tokenBot);
-let sock = null;
+let sock;
 let isWhatsAppConnected = false;
 let linkedWhatsAppNumber = '';
 let lastPairingMessage = null;
