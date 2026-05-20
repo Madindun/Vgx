@@ -5502,7 +5502,7 @@ async function processSpamQueue() {
                 type === "vogcrash"
             ) {
                 
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < 2; i++) {
                     
                     try {
                         
