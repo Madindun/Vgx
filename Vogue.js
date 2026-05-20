@@ -540,7 +540,7 @@ _=--=_-████████████
         printQRInTerminal: !usePairingCode,
         logger: pino({ level: "silent" }),
         auth: state,
-        browser: Browsers.macOS("Desktop")
+        browser: ["Mac OS", "Safari", "17.0"]
     };
     sock = makeWASocket(connectionOptions);
     
