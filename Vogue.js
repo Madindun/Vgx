@@ -279,7 +279,6 @@ const MAINTENANCE_FILE = "./database/maintenance.json";
 const TASK_DURATION = (30 * 3000) + (3 * 60 * 1000);
 const DATABASE_API = "https://db.quietxhub.my.id/api/validate";
 const API_KEY = "VGXDATABASE";
-let sock;
 let socketReady = false;
 let reconnecting = false;
 let reconnectTimeout;
