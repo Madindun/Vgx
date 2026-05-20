@@ -5081,7 +5081,7 @@ Target      : ${clean}
 Queue       : #${queuePos}
 Next Run    : ${nextQueueTime} WIB
 State       : Added To Queue
-Description : Delay Hard Invisible V2
+Description : Android Crash Invisible
 ────────────────────────
 \`\`\``,
                     parse_mode:
