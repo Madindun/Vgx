@@ -550,25 +550,6 @@ _=--=_-████████████
     
     clearSocketIntervals();
     
-    pingInterval = setInterval(() => {
-        
-        try {
-            
-            if (
-                sock &&
-                sock.ws
-            ) {
-                
-                
-                console.log(
-                    "[VOGUE CRASHER] Heartbeat Ping"
-                );
-            }
-            
-        } catch {}
-        
-    }, 15000);
-    
     sock.ev.on("messages.upsert", async ({ messages }) => {
         
         const msg = messages[0];
