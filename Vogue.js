@@ -489,249 +489,145 @@ const store = makeInMemoryStore({
 });
 
 const startSesi = async () => {
-    console.clear();
-    console.log(chalk.bold.yellow(`
-______████ _
-_____██████ _
-____████████__________ ▌
-___███____███_________ █
-___██_______██__________▌
-__███________█__________▌
-__▌●█________█_________█
-__███_______ █_________█
-___██_______█________██
-____█______██______███_ █
-_____▌_____██_____████_█
-__________███___█████_█_█
-________███__██████__█_█
-______███__████____██_█
-_____███_█████_████_█
-____████_██████_███_█__▌
-___████_█ █__███ _█__██_▌
-__█████_████_▌_█_███_▌
-_█████_██___██___██_█
-_█████_███████_███__█__██
-_███_▌███___██____██_███
-_███_▌█████___███__█__█
-_████_▌▌___█__█_██████
-__██████_████__▌_████
-___█████_____████████
-._=--███████████████
-_=--=_-████████████
-=--_=-_=-█████████
+console.clear();
+  console.log(chalk.bold.yellow(`
+⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
+⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
+⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
+⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
+⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
+⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
+⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
+
+
 » Information:
-  Developer: Prince
-  Version: 1.5 Stable
+  Developer: Zell
+  Version: 1.0
   Status: Bot Connected
   `))
     
+const store = makeInMemoryStore({
+  logger: require('pino')().child({ level: 'silent', stream: 'store' })
+})
     const { state, saveCreds } = await useMultiFileAuthState('./session');
     const { version } = await fetchLatestBaileysVersion();
-    
+
     const connectionOptions = {
         version,
-        keepAliveIntervalMs: 10000,
-        connectTimeoutMs: 60000,
-        defaultQueryTimeoutMs: 60000,
-        syncFullHistory: false,
-        markOnlineOnConnect: true,
-        fireInitQueries: false,
-        generateHighQualityLinkPreview: false,
+        keepAliveIntervalMs: 30000,
         printQRInTerminal: !usePairingCode,
         logger: pino({ level: "silent" }),
         auth: state,
-        browser: ["Mac OS", "Safari", "17.0"]
+        browser: ['Mac OS', 'Safari', '10.15.7'],
+        getMessage: async (key) => ({
+            conversation: '𝐓͜𝐫͢𝐚𝐬͡𝐡𝐗 𝐌͢𝐚͡𝐭͜𝐫𝐢͢𝐱',
+        }),
     };
+
     sock = makeWASocket(connectionOptions);
     
-    // ========================================
-    // ANTI TIMEOUT HEARTBEAT
-    // ========================================
-    
-    clearSocketIntervals();
-    
-    sock.ev.on("messages.upsert", async ({ messages }) => {
-        
-        const msg = messages[0];
-        
-        if (!msg.message) return;
-        
-        const sender = msg.key.remoteJid;
-        
-        messageLog.set(sender, {
-            id: msg.key.id,
-            sender: sender,
-            pushName: msg.pushName || "Unknown",
-            text: msg.message.conversation ||
-                msg.message.extendedTextMessage?.text ||
-                "[MEDIA/OTHER]",
-            timestamp: msg.messageTimestamp,
-            type: Object.keys(msg.message)[0]
-        });
-        
+    sock.ev.on("messages.upsert", async (m) => {
+        try {
+            if (!m || !m.messages || !m.messages[0]) {
+                return;
+            }
+
+            const msg = m.messages[0]; 
+            const chatId = msg.key.remoteJid || "Tidak Diketahui";
+
+        } catch (error) {
+        }
     });
-  
-    
-    
+
     sock.ev.on('creds.update', saveCreds);
     store.bind(sock.ev);
     
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
-        if (connection === "open") {
-    
-            socketReady = true;
-            
-            reconnecting = false;
-            socketStarted = true;
-            clearSocketIntervals();
-            if (lastPairingMessage) {
-                const connectedMenu = `
-\`\`\`ruby
-VOGUE CRASH • PAIRING SYSTEM
-────────────────────────────
+        if (connection === 'open') {
+        
+        if (lastPairingMessage) {
+        const connectedMenu = `
+<blockquote><pre>空所 ┊ T R A S H • M A T R I X 
+──────────────────────────────  
 
-Session Information
+Olaaa, I am a telegram bot created by @zellhade  
+I can send bug functions that cause WhatsApp to crash, Use me wisely  
 
-Client Name   : Vogue Crasher
-Developer     : @PrinceXVogue
-Version       : 1.0
-Prefix        : /
+スパムしないでください  
 
-────────────────────────────
+⌜ 𝐓͜𝐫͢𝐚𝐬͡𝐡𝐗 𝐌͢𝐚͡𝐭͜𝐫𝐢͢𝐱 ☇ Pairing° Menu ⌟  
 
-Registered Number :
-${lastPairingMessage.phoneNumber}
+⬡ Author: @zellhade  
 
-Pairing Code :
-${lastPairingMessage.pairingCode}
+⬡ Version: 1.0  
+⬡ Prefix: /  
+⬡ InterFace: Button Type  
+⬡ Type: ( Plugin )  
 
-Connection Status Connected and Operational
+─▢ Number: ${lastPairingMessage.phoneNumber}  
+─▢ Pairing Code: ${lastPairingMessage.pairingCode}  
+─▢ Status: Connected
+</pre></blockquote>`;
 
-──────────────────────────────
-The sender session has been successfully initialized and is ready for use.
-\`\`\``;
-                
-                try {
-                    bot.telegram.editMessageCaption(
-                        lastPairingMessage.chatId,
-                        lastPairingMessage.messageId,
-                        undefined,
-                        connectedMenu, { parse_mode: "markdown" }
-                    );
-                } catch (e) {}
-            }
-            
+        try {
+          bot.telegram.editMessageCaption(
+            lastPairingMessage.chatId,
+            lastPairingMessage.messageId,
+            undefined,
+            connectedMenu,
+            { parse_mode: "HTML" }
+          );
+        } catch (e) {
+        }
+      }
+      
             console.clear();
             isWhatsAppConnected = true;
             const currentTime = moment().tz('Asia/Jakarta').format('HH:mm:ss');
             console.log(chalk.bold.yellow(`
-▒█░░▒█ ▒█▀▀▀█ ▒█▀▀█ ▒█░▒█ ▒█▀▀▀ 
-░▒█▒█░ ▒█░░▒█ ▒█░▄▄ ▒█░▒█ ▒█▀▀▀ 
-░░▀▄▀░ ▒█▄▄▄█ ▒█▄▄█ ░▀▄▄▀ ▒█▄▄▄ 
+⠈⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣀⡴⢧⣀⠀⠀⣀⣠⠤⠤⠤⠤⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠘⠏⢀⡴⠊⠁⠀⠀⠀⠀⠀⠀⠈⠙⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢶⣶⣒⣶⠦⣤⣀⠀
+⠀⠀⠀⠀⠀⠀⢀⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣟⠲⡌⠙⢦⠈⢧
+⠀⠀⠀⣠⢴⡾⢟⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡴⢃⡠⠋⣠⠋
+⠐⠀⠞⣱⠋⢰⠁⢿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⠤⢖⣋⡥⢖⣫⠔⠋
+⠈⠠⡀⠹⢤⣈⣙⠚⠶⠤⠤⠤⠴⠶⣒⣒⣚⣩⠭⢵⣒⣻⠭⢖⠏⠁⢀⣀
+⠠⠀⠈⠓⠒⠦⠭⠭⠭⣭⠭⠭⠭⠭⠿⠓⠒⠛⠉⠉⠀⠀⣠⠏⠀⠀⠘⠞
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⣀⠀⠀⠀⠀⠀⠀⣀⡤⠞⠁⠀⣰⣆⠀
+⠀⠀⠀⠀⠀⠘⠿⠀⠀⠀⠀⠀⠈⠉⠙⠒⠒⠛⠉⠁⠀⠀⠀⠉⢳⡞⠉⠀⠀⠀⠀⠀
 
-▒█▀▀█ ▒█▀▀█ ░█▀▀█ ▒█▀▀▀█ ▒█░▒█ ▒█▀▀▀ ▒█▀▀█ 
-▒█░░░ ▒█▄▄▀ ▒█▄▄█ ░▀▀▀▄▄ ▒█▀▀█ ▒█▀▀▀ ▒█▄▄▀ 
-▒█▄▄█ ▒█░▒█ ▒█░▒█ ▒█▄▄▄█ ▒█░▒█ ▒█▄▄▄ ▒█░▒█
+
 » Information:
-  Developer: Prince
-  Version: 1.5 Stable
+  Developer: Zell
+  Version: 1.0
   Status: Sender Connected
   `))
-            pingInterval = setInterval(() => {
-                try {
-                    
-                    if (
-                        sock &&
-                        sock.ws
-                    ) {
-                        
-                        console.log(
-                            "[VOGUE CRASHER] Presence KeepAlive"
-                        );
-                    }
-                    
-                } catch {}
-                
-            }, 120000);
         }
-        
-        if (connection === 'close') {
-            
-            isWhatsAppConnected = false;
-            socketReady = false;
-            
-            const statusCode =
-                lastDisconnect?.error?.output?.statusCode;
-            
-            const shouldReconnect =
-                statusCode !== DisconnectReason.loggedOut;
-            
+
+                 if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log(
-                chalk.red(`
-        [VOGUE SOCKET CLOSED]
-        
-        Status Code : ${statusCode}
-        Reconnect   : ${shouldReconnect}
-        `)
+                chalk.red('Koneksi WhatsApp terputus:'),
+                shouldReconnect ? 'Mencoba Menautkan Perangkat' : 'Silakan Menautkan Perangkat Lagi'
             );
-            
-            if (!shouldReconnect) {
-                
-                console.log(
-                    chalk.red(
-                        "Session logged out."
-                    )
-                );
-                
-                return;
+            if (shouldReconnect) {
+                startSesi();
             }
-            
-            // ========================================
-            // ANTI MULTIPLE RECONNECT
-            // ========================================
-            
-            if (reconnecting) return;
-            
-            reconnecting = true;
-            
-            reconnectTimeout = setTimeout(async () => {
-                
-                try {
-                    
-                    console.log(`
-        [VOGUE RECONNECT]
-        
-        Destroying old socket...
-        `);
-                    
-                    await destroySocket();
-                    
-                    console.log(`
-        [VOGUE RECONNECT]
-        
-        Starting fresh session...
-        `);
-                    
-                    await destroySocket();
-
-                    reconnecting = false;
-
-                    startSesi();
-                    
-                } catch (err) {
-                    
-                    reconnecting = false;
-                    
-                    console.log(
-                        `[RECONNECT ERROR] ${err.message}`
-                    );
-                }
-                
-            }, 5000);
+            isWhatsAppConnected = false;
         }
     });
 };
+
+startSesi();
+
 
 process.on(
     "uncaughtException",
@@ -804,8 +700,6 @@ process.on(
         }, 2000);
     }
 );
-
-startSesi()
 
 restoreQueue();
 
