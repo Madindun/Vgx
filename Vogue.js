@@ -180,6 +180,7 @@ const {
     getContentType,
     makeCacheableSignalKeyStore,
     BufferJSON,
+    Browsers
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const crypto = require('crypto');
@@ -266,7 +267,6 @@ const activeAnimatedMenus = new Map();
 const lockedMenus = new Set();
 const styleCycle = ["primary", "success", "danger"];
 let currentStyleIndex = 0;
-let reconnecting = false;
 let pingInterval = null;
 let reconnectTimeout = null;
 let socketStarted = false;
@@ -279,6 +279,11 @@ const MAINTENANCE_FILE = "./database/maintenance.json";
 const TASK_DURATION = (30 * 3000) + (3 * 60 * 1000);
 const DATABASE_API = "https://db.quietxhub.my.id/api/validate";
 const API_KEY = "VGXDATABASE";
+let sock;
+let socketReady = false;
+let reconnecting = false;
+let reconnectTimeout;
+let presenceInterval;
 
 const loadClaimed = () => {
     try {
@@ -418,41 +423,72 @@ This feature is restricted to premium users or premium groups.`
 //                                                           
 //                                                           
 
-function clearSocketIntervals() {
-    
-    if (pingInterval) {
-        clearInterval(pingInterval);
-        pingInterval = null;
+const clearSocketIntervals = () => {
+
+    if (presenceInterval) {
+
+        clearInterval(
+            presenceInterval
+        );
+
+        presenceInterval = null;
     }
-    
+
     if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+
+        clearTimeout(
+            reconnectTimeout
+        );
+
         reconnectTimeout = null;
     }
-}
+};
 
-async function destroySocket() {
+const destroySocket = async () => {
     
     try {
         
+        socketReady = false;
+        
         clearSocketIntervals();
         
-        if (sock?.ws) {
+        if (sock) {
+            
             try {
-                sock.ws.close();
+                
+                sock.ev.removeAllListeners();
+                
             } catch {}
+            
+            try {
+                
+                sock.ws.close();
+                
+            } catch {}
+            
+            try {
+                
+                sock.end();
+                
+            } catch {}
+            
+            sock = null;
         }
         
-        try {
-            sock.end();
-        } catch {}
+    } catch (e) {
         
-        try {
-            sock.ev.removeAllListeners();
-        } catch {}
-        
-    } catch (e) {}
-}
+        console.log(
+            `[DESTROY SOCKET ERROR] ${e.message}`
+        );
+    }
+};
+
+const store = makeInMemoryStore({
+    logger: require("pino")().child({
+        level: "silent",
+        stream: "store"
+    })
+});
 
 const startSesi = async () => {
     console.clear();
@@ -491,9 +527,6 @@ _=--=_-████████████
   Status: Bot Connected
   `))
     
-    const store = makeInMemoryStore({
-        logger: require('pino')().child({ level: 'silent', stream: 'store' })
-    })
     const { state, saveCreds } = await useMultiFileAuthState('./session');
     const { version } = await fetchLatestBaileysVersion();
     
@@ -509,7 +542,7 @@ _=--=_-████████████
         printQRInTerminal: !usePairingCode,
         logger: pino({ level: "silent" }),
         auth: state,
-        browser: ["Mac OS", "Safari", "17.3"]
+        browser: Browsers.macOS("Desktop")
     };
     sock = makeWASocket(connectionOptions);
     
@@ -525,15 +558,9 @@ _=--=_-████████████
             
             if (
                 sock &&
-                sock.ws &&
-                sock.ws.readyState === 1
+                sock.ws
             ) {
                 
-                sock.ws.send(
-                    JSON.stringify({
-                        type: "ping"
-                    })
-                );
                 
                 console.log(
                     "[VOGUE CRASHER] Heartbeat Ping"
@@ -572,7 +599,10 @@ _=--=_-████████████
     
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
-        if (connection === 'open') {
+        if (connection === "open") {
+    
+            socketReady = true;
+            
             reconnecting = false;
             socketStarted = true;
             clearSocketIntervals();
@@ -634,11 +664,8 @@ The sender session has been successfully initialized and is ready for use.
                     
                     if (
                         sock &&
-                        sock.ws &&
-                        sock.ws.readyState === 1
+                        sock.ws
                     ) {
-                        
-                        sock.sendPresenceUpdate("available");
                         
                         console.log(
                             "[VOGUE CRASHER] Presence KeepAlive"
@@ -647,12 +674,13 @@ The sender session has been successfully initialized and is ready for use.
                     
                 } catch {}
                 
-            }, 20000);
+            }, 120000);
         }
         
         if (connection === 'close') {
             
             isWhatsAppConnected = false;
+            socketReady = false;
             
             const statusCode =
                 lastDisconnect?.error?.output?.statusCode;
@@ -706,8 +734,10 @@ The sender session has been successfully initialized and is ready for use.
         Starting fresh session...
         `);
                     
+                    await destroySocket();
+
                     reconnecting = false;
-                    
+
                     startSesi();
                     
                 } catch (err) {
