@@ -268,7 +268,6 @@ const lockedMenus = new Set();
 const styleCycle = ["primary", "success", "danger"];
 let currentStyleIndex = 0;
 let pingInterval = null;
-let reconnectTimeout = null;
 let socketStarted = false;
 const cooldown = new Map();
 let globalCooldown = 0;
